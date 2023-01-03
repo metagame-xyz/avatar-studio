@@ -54,7 +54,7 @@ function Siwe() {
     return (
         // <Layout>
         <button
-            className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+            className="min-w-fit rounded-md bg-brand px-10 py-3 font-semibold text-black no-underline transition hover:bg-black"
             onClick={(e) => {
                 e.preventDefault()
                 if (!isConnected) {
