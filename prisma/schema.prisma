@@ -49,7 +49,8 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  firstName     String?
+  lastName      String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
@@ -59,15 +60,35 @@ model User {
   projects      MembersOfProjects[]
   achievements  MemberAchievements[]
   organizations MembersOfOrganizations[]
+  invitations   OrganizationInvitation[]
+//   role          UserRole?
+  role          String?
+}
+
+model OrganizationInvitation {
+    id             Int          @id @unique @default(autoincrement())
+    organization   Organization @relation(fields: [organizationId], references: [id])
+    organizationId Int
+    // email          String
+    inviteeAddress String
+    // role           OrganizationRole @default(ADMIN)
+    role           String
+    // status         InvitationStatus @default(PENDING)
+    status         String       @default("PENDING")
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+    issuedBy       User         @relation(fields: [issuedById], references: [id])
+    issuedById     String
+
 }
 
 model Organization {
   id             Int                      @id @unique @default(autoincrement())
   name           String                   @unique
-//   adminAddresses String[]
-  adminAddress   String
+  slug           String                   @unique
   projects       Project[]
   admins         MembersOfOrganizations[]
+  invitations    OrganizationInvitation[]
 }
 
 model MembersOfOrganizations {
@@ -83,7 +104,8 @@ model MembersOfOrganizations {
 
 model Project {
   id                  Int                   @id @unique @default(autoincrement())
-  name                String?
+  name                String                @unique
+  slug                String                @unique
   contractAddress     String?               @unique
   description         String?
   traitCategories     TraitCategory[]
@@ -190,4 +212,9 @@ model MemberAchievements {
 // enum OrganizationRole {
 //   ADMIN
 //   OWNER
+// }
+
+// enum UserRole {
+//   METAGAME_ADMIN
+//   METAGAME_OWNER
 // }

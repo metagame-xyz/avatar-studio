@@ -1,5 +1,7 @@
 import { type NextPage } from 'next'
 
+import { useRouter } from 'next/router'
+
 import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -7,6 +9,9 @@ import Link from 'next/link'
 import { trpc } from 'utils/trpc'
 
 const Home: NextPage = () => {
+    const router = useRouter()
+    const { org } = router.query
+
     // const hello = trpc.example.hello.useQuery({ text: 'from the homepage' })
     // const { data: sessionData } = useSession()
 
@@ -36,9 +41,7 @@ const Home: NextPage = () => {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
                         <h3 className="text-2xl font-bold">Organizations</h3>
                         <div className="text-lg">
-                            <Link href={`/org/${user?.organizations[0]?.name}`}>
-                                {user?.organizations[0]?.name}
-                            </Link>
+                            {user?.organizations[0]?.name}
                         </div>
                         <h3 className="text-2xl font-bold">Projects</h3>
                         <div className="text-lg">{user?.projects[0]?.name}</div>
