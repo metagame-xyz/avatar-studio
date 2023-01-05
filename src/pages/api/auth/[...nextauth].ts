@@ -59,6 +59,11 @@ export function requestWrapper(
                         const siwe = new SiweMessage(
                             JSON.parse(credentials?.message || '{}'),
                         )
+
+                        // we *always* lowercase the address
+                        const lowercaseAddress = siwe.address.toLowerCase()
+
+                        console.log('siwe.address', siwe.address)
                         const nextAuthUrl = new URL(NEXTAUTH_URL)
 
                         const result = await siwe.verify({
@@ -71,18 +76,19 @@ export function requestWrapper(
                             let user: AdapterUser | User | null =
                                 await prismaAdapter.getUserByAccount({
                                     provider: 'ethereum',
-                                    providerAccountId: siwe.address,
+                                    providerAccountId: lowercaseAddress,
                                 })
                             if (!user) {
                                 user = await prisma.user.create({
                                     data: {
                                         email: 'undefined',
                                         emailVerified: null,
-                                        address: siwe.address,
+                                        address: lowercaseAddress,
                                         accounts: {
                                             create: {
                                                 provider: 'ethereum',
-                                                providerAccountId: siwe.address,
+                                                providerAccountId:
+                                                    lowercaseAddress,
                                                 type: 'evm',
                                             },
                                         },
@@ -92,8 +98,8 @@ export function requestWrapper(
 
                             return {
                                 ...user,
-                                address: siwe.address,
-                                id: siwe.address,
+                                address: lowercaseAddress,
+                                id: lowercaseAddress,
                             }
                         }
                         return null

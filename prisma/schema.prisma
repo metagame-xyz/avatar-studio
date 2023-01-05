@@ -56,12 +56,138 @@ model User {
   address       String?   @unique
   accounts      Account[]
   sessions      Session[]
+  projects      MembersOfProjects[]
+  achievements  MemberAchievements[]
+  organizations MembersOfOrganizations[]
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
+model Organization {
+  id             Int                      @id @unique @default(autoincrement())
+  name           String                   @unique
+//   adminAddresses String[]
+  adminAddress   String
+  projects       Project[]
+  admins         MembersOfOrganizations[]
 }
+
+model MembersOfOrganizations {
+  member         User             @relation(fields: [userId], references: [id])
+  userId         String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  organizationId Int
+//   role           OrganizationRole @default(ADMIN)
+  role           String           @default("ADMIN")
+
+  @@id([organizationId, userId])
+}
+
+model Project {
+  id                  Int                   @id @unique @default(autoincrement())
+  name                String?
+  contractAddress     String?               @unique
+  description         String?
+  traitCategories     TraitCategory[]
+  organization        Organization          @relation(fields: [organizationId], references: [id])
+  members             MembersOfProjects[]
+  organizationId      Int
+  AchievementCategory AchievementCategory[]
+}
+
+model MembersOfProjects {
+  member    User        @relation(fields: [userId], references: [id])
+  project   Project     @relation(fields: [projectId], references: [id])
+//   role      ProjectRole
+  role      String
+
+  userId    String
+  projectId Int
+
+  @@id([userId, projectId])
+}
+
+model TraitCategory {
+  id              Int     @id @unique @default(autoincrement())
+  project         Project @relation(fields: [projectId], references: [id])
+  traits          Trait[]
+  name            String
+  zIndex          Int
+  modifiable      Boolean @default(true)
+  defaultAchieved Boolean @default(false)
+
+  projectId       Int
+}
+
+model Trait {
+  id                              Int                  @id @unique @default(autoincrement())
+  traitCategory                   TraitCategory        @relation(fields: [traitCategoryId], references: [id])
+  name                            String
+  pngUrl                          String
+  defaultAchieved                 Boolean?
+  achievementsRequired            Achievement[]
+  achievementsRequiredDescription String
+//   levelLogic                      LevelLogic?
+  levelLogic                      String?
+  LevelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
+  levelRequired                   Int?
+  
+  traitCategoryId                 Int
+  achievementCategoryId           Int?
+}
+
+model AchievementCategory {
+  id           Int             @id @unique @default(autoincrement())
+  name         String
+  description  String?
+  project      Project         @relation(fields: [projectId], references: [id])
+  achievements Achievement[]
+//   type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
+  type         String          @default("SPECIFIC_ACHIEVEMENT")
+  Trait        Trait[]
+
+  projectId    Int
+}
+
+model Achievement {
+  id                    Int                  @id @unique @default(autoincrement())
+  achievementCategory   AchievementCategory  @relation(fields: [achievementCategoryId], references: [id])
+  name                  String
+  level                 Int?
+  members                 MemberAchievements[]
+  Trait                 Trait?               @relation(fields: [traitId], references: [id])
+
+  traitId               Int?
+  achievementCategoryId Int
+}
+
+model MemberAchievements {
+  member        User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  timestamp     DateTime    @default(now())
+  status        Boolean     @default(true)
+
+  achievementId Int
+  userId        String
+
+  @@id([userId, achievementId])
+}
+
+// enum ProjectRole {
+//   OWNER
+//   ADMIN
+//   MEMBER
+// }
+
+// enum LevelLogic {
+//   MORE_THAN_OR_EQUAL_TO
+//   LESS_THAN_OR_EQUAL_TO
+// }
+
+// enum AchievementType {
+//   SPECIFIC_ACHIEVEMENT
+//   LEVEL
+// }
+
+// enum OrganizationRole {
+//   ADMIN
+//   OWNER
+// }
