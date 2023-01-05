@@ -1,17 +1,14 @@
-import { CategoriesOnPosts } from '@prisma/client'
 import { type NextPage } from 'next'
 
-import { signIn, signOut, useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
 import Link from 'next/link'
 
 import { trpc } from 'utils/trpc'
 
-import Siwe from './siwe'
-
 const Home: NextPage = () => {
     // const hello = trpc.example.hello.useQuery({ text: 'from the homepage' })
-    const { data: sessionData } = useSession()
+    // const { data: sessionData } = useSession()
 
     const { data: user } = trpc.member.me.useQuery()
     // const { data: post } = trpc.member.test.useQuery()
