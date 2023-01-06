@@ -1,24 +1,14 @@
 import { type NextPage } from 'next'
 
-import { signOut, useSession } from 'next-auth/react'
+import { signOut } from 'next-auth/react'
 import Head from 'next/head'
 import Link from 'next/link'
 
 import { trpc } from 'utils/trpc'
 
 const Home: NextPage = () => {
-    // const hello = trpc.example.hello.useQuery({ text: 'from the homepage' })
-    // const { data: sessionData } = useSession()
-
     const { data: user } = trpc.member.me.useQuery()
-
-    // const { data: post } = trpc.member.test.useQuery()
     const mutation = trpc.member.acceptOrgInvitation.useMutation()
-    console.log('mutation', mutation)
-
-    // console.log('post', post?.categories[0]?.category)
-    console.log('user', user)
-    console.log('orgs', user?.organizations)
 
     const Invitations = () => {
         const invitations = user?.invitations || []

@@ -1,12 +1,12 @@
 // Prisma adapter for NextAuth, optional and can be removed
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
-import { User } from '@prisma/client'
+import type { User } from '@prisma/client'
 import NextAuth, { type NextAuthOptions } from 'next-auth'
-import { AdapterUser } from 'next-auth/adapters'
+import type { AdapterUser } from 'next-auth/adapters'
 import CredentialsProvider from 'next-auth/providers/credentials'
 // import DiscordProvider from 'next-auth/providers/discord'
 import { getCsrfToken } from 'next-auth/react'
-import { NextApiRequest, NextApiResponse } from 'next/types'
+import type { NextApiRequest, NextApiResponse } from 'next/types'
 import { SiweMessage } from 'siwe'
 
 // import { env } from 'env/server.mjs'
