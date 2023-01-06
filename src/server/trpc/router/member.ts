@@ -12,6 +12,7 @@ export const memberRouter = router({
                 organizations: { include: { organization: true } },
                 projects: { include: { project: true } },
                 achievements: { include: { achievement: true } },
+                invitations: { include: { organization: true } },
             },
         })
 
@@ -32,26 +33,54 @@ export const memberRouter = router({
             }),
         }
     }),
-    connectOrg: protectedProcedure.mutation(async ({ ctx }) => {
-        const orgIds = (await ctx.prisma.organization.findMany({
-            where: { adminAddress: ctx.address },
-            select: { id: true },
-        })) as [{ id: number }]
+    // activeOrgInvitations: protectedProcedure.query(async ({ ctx }) => {
+    //     return ctx.prisma.organizationInvitation.findMany({
+    //         where: { inviteeAddress: ctx.address, status: 'PENDING' },
+    //     })
+    // }),
+    acceptOrgInvitation: protectedProcedure
+        .input(z.object({ organizationId: z.number(), role: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            if (!ctx.address) return null
 
-        return ctx.prisma.user.update({
-            where: {
-                address: ctx.address,
-            },
-            data: {
-                organizations: {
-                    create: [
-                        ...orgIds.map(({ id }) => ({
-                            organizationId: id,
-                            role: 'OWNER',
-                        })),
-                    ],
-                },
-            },
-        })
-    }),
+            const orgInvite =
+                await ctx.prisma.organizationInvitation.findFirstOrThrow({
+                    where: {
+                        status: 'PENDING',
+                        inviteeAddress: ctx.address,
+                        organizationId: input.organizationId,
+                        role: input.role,
+                    },
+                })
+
+            const [user] = await ctx.prisma.$transaction([
+                ctx.prisma.user.update({
+                    where: {
+                        address: ctx.address,
+                    },
+                    data: {
+                        organizations: {
+                            create: [
+                                {
+                                    organizationId: orgInvite.organizationId,
+                                    role: orgInvite.role,
+                                },
+                            ],
+                        },
+                    },
+                }),
+                ctx.prisma.organizationInvitation.update({
+                    where: {
+                        organizationId_inviteeAddress_role: {
+                            organizationId: orgInvite.organizationId,
+                            inviteeAddress: ctx.address,
+                            role: orgInvite.role,
+                        },
+                    },
+                    data: { status: 'ACCEPTED' },
+                }),
+            ])
+
+            return user
+        }),
 })

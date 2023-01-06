@@ -1,19 +1,20 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
+
+const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
 async function main() {
     const brenner = await prisma.user.upsert({
-        where: { address: '0x9d8395a406fa264dea71671c772269e844264e8c' },
+        where: { address: metagameAddress },
         update: {},
         create: {
-            address: '0x9d8395a406fa264dea71671c772269e844264e8c',
-            email: 'blspear@gmail.com',
+            address: metagameAddress,
+            email: 'brenner@themetagame.xyz',
             accounts: {
                 create: [
                     {
                         type: 'evm',
                         provider: 'ethereum',
-                        providerAccountId:
-                            '0x9d8395a406fa264dea71671c772269e844264e8c',
+                        providerAccountId: metagameAddress,
                     },
                 ],
             },
@@ -29,8 +30,16 @@ async function main() {
             slug: 'brass-factory-blockchain-club',
         },
     })
+    const haabGoblins = await prisma.organization.upsert({
+        where: { slug: 'haab-goblins-crypto-club' },
+        update: {},
+        create: {
+            name: 'Haab Goblins Crypto Club',
+            slug: 'haab-goblins-crypto-club',
+        },
+    })
     const { organizations } = await prisma.user.update({
-        where: { address: '0x9d8395a406fa264dea71671c772269e844264e8c' },
+        where: { address: metagameAddress },
         data: {
             organizations: {
                 create: [
@@ -46,7 +55,25 @@ async function main() {
         },
     })
 
-    console.log({ brenner, brassFactory, organizations })
+    const invitation = await prisma.organizationInvitation.create({
+        data: {
+            organizationId: haabGoblins.id,
+            inviteeAddress: metagameAddress,
+            role: 'OWNER',
+            issuedById: brenner.id,
+        },
+    })
+    const acceptedInvitation = await prisma.organizationInvitation.create({
+        data: {
+            organizationId: brassFactory.id,
+            inviteeAddress: metagameAddress,
+            role: 'OWNER',
+            issuedById: brenner.id,
+            status: 'ACCEPTED',
+        },
+    })
+
+    console.log({ brenner, brassFactory, organizations, invitation })
 }
 main()
     .then(async () => {

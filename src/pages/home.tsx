@@ -11,13 +11,61 @@ const Home: NextPage = () => {
     // const { data: sessionData } = useSession()
 
     const { data: user } = trpc.member.me.useQuery()
+
     // const { data: post } = trpc.member.test.useQuery()
-    const mutation = trpc.member.connectOrg.useMutation()
+    const mutation = trpc.member.acceptOrgInvitation.useMutation()
     console.log('mutation', mutation)
 
     // console.log('post', post?.categories[0]?.category)
     console.log('user', user)
     console.log('orgs', user?.organizations)
+
+    const Invitations = () => {
+        const invitations = user?.invitations || []
+        return invitations.length > 0 ? (
+            <div className="flex flex-col items-center gap-2">
+                {invitations.map(
+                    ({ role, organization, organizationId, status }) => {
+                        return status === 'PENDING' ? (
+                            <div key={`${organizationId}_${role}`}>
+                                <div className="text-lg">
+                                    {organization.name}
+                                </div>
+                                <button
+                                    className="bg-white/10 text-white hover:bg-white/20 px-10 py-3 font-semibold no-underline transition"
+                                    onClick={() =>
+                                        mutation.mutate({
+                                            organizationId,
+                                            role,
+                                        })
+                                    }
+                                >
+                                    Accept Invitation
+                                </button>
+                            </div>
+                        ) : null
+                    },
+                )}
+            </div>
+        ) : (
+            <></>
+        )
+    }
+
+    const Organizations = () => {
+        const organizations = user?.organizations || []
+        return organizations.length > 0 ? (
+            <div>
+                {organizations.map(({ name, slug }) => (
+                    <div className="text-lg" key={slug}>
+                        <Link href={`/org/${slug}`}>{name}</Link>
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <></>
+        )
+    }
 
     return (
         <>
@@ -35,11 +83,7 @@ const Home: NextPage = () => {
                     </h1>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
                         <h3 className="text-2xl font-bold">Organizations</h3>
-                        <div className="text-lg">
-                            <Link href={`/org/${user?.organizations[0]?.name}`}>
-                                {user?.organizations[0]?.name}
-                            </Link>
-                        </div>
+                        <Organizations />
                         <h3 className="text-2xl font-bold">Projects</h3>
                         <div className="text-lg">{user?.projects[0]?.name}</div>
                     </div>
@@ -50,12 +94,7 @@ const Home: NextPage = () => {
                                 : 'Loading tRPC query...'} */}
                         </p>
                     </div>
-                    <button
-                        className="bg-white/10 text-white hover:bg-white/20 px-10 py-3 font-semibold no-underline transition"
-                        onClick={() => mutation.mutate()}
-                    >
-                        Accept Invitation
-                    </button>
+                    <Invitations />
                     <button
                         className="bg-white/10 text-white hover:bg-white/20 px-10 py-3 font-semibold no-underline transition"
                         onClick={() => signOut()}
