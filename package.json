@@ -6,7 +6,7 @@
         "build": "next build",
         "dev": "next dev",
         "postinstall": "prisma generate",
-        "format": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.cjs\"",
+        "format": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.cjs\" && prisma format",
         "type-check": "tsc",
         "lint": "next lint",
         "start": "next start",

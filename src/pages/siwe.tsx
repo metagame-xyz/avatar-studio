@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
-
-import { getCsrfToken, signIn, useSession } from 'next-auth/react'
+import { getCsrfToken, signIn } from 'next-auth/react'
 import { SiweMessage } from 'siwe'
 import { useAccount, useConnect, useNetwork, useSignMessage } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
@@ -14,7 +12,7 @@ function Siwe() {
     const { connect } = useConnect({
         connector: new InjectedConnector(),
     })
-    const { data: session, status } = useSession()
+    // const { data: session, status } = useSession()
 
     // console.log('session', session)
 

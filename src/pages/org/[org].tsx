@@ -10,13 +10,6 @@ import { trpc } from 'utils/trpc'
 const Org: NextPage = () => {
     const router = useRouter()
     const slug = router.query.org as string
-
-    // const hello = trpc.example.hello.useQuery({ text: 'from the homepage' })
-    // const { data: sessionData } = useSession()
-
-    const { data: user } = trpc.member.me.useQuery()
-
-    console.log('slug', slug)
     const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug)
 
     if (error) {
@@ -33,6 +26,21 @@ const Org: NextPage = () => {
 
     const { name } = org
 
+    const Projects = () => {
+        const projects = org.projects || []
+        return projects.length > 0 ? (
+            <div>
+                {projects.map(({ name, slug }) => (
+                    <div className="text-lg" key={slug}>
+                        <Link href={`/project/${slug}`}>{name}</Link>
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <></>
+        )
+    }
+
     return (
         <>
             <Head>
@@ -46,6 +54,7 @@ const Org: NextPage = () => {
                     <div className="text-white text-2xl font-bold">
                         Projects
                     </div>
+                    <Projects />
                 </div>
             </main>
         </>

@@ -73,7 +73,17 @@ async function main() {
         },
     })
 
-    console.log({ brenner, brassFactory, organizations, invitation })
+    const brassBuddies = await prisma.project.upsert({
+        where: { slug: 'brass-buddies' },
+        update: {},
+        create: {
+            name: 'Brass Buddies',
+            slug: 'brass-buddies',
+            organizationId: brassFactory.id,
+        },
+    })
+
+    // console.log({ brenner, brassFactory, organizations, invitation })
 }
 main()
     .then(async () => {

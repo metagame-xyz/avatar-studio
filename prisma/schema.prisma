@@ -48,57 +48,57 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String                   @id @default(cuid())
   firstName     String?
   lastName      String?
-  email         String?   @unique
+  email         String?                  @unique
   emailVerified DateTime?
   image         String?
-  address       String?   @unique
+  address       String?                  @unique
   accounts      Account[]
   sessions      Session[]
   projects      MembersOfProjects[]
   achievements  MemberAchievements[]
   organizations MembersOfOrganizations[]
   invitations   OrganizationInvitation[]
-//   role          UserRole?
+  //   role          UserRole?
   role          String?
 }
 
 model OrganizationInvitation {
-    // id             Int          @id @unique @default(autoincrement())
-    organization   Organization @relation(fields: [organizationId], references: [id])
-    organizationId Int
-    // email          String
-    inviteeAddress String
-    // role           OrganizationRole @default(ADMIN)
-    role           String
-    // status         InvitationStatus @default(PENDING)
-    status         String       @default("PENDING")
-    createdAt      DateTime     @default(now())
-    updatedAt      DateTime     @updatedAt
-    issuedBy       User         @relation(fields: [issuedById], references: [id])
-    issuedById     String
+  // id             Int          @id @unique @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  // email          String
+  inviteeAddress String
+  // role           OrganizationRole @default(ADMIN)
+  role           String
+  // status         InvitationStatus @default(PENDING)
+  status         String       @default("PENDING")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  issuedBy       User         @relation(fields: [issuedById], references: [id])
+  issuedById     String
 
-    @@id([organizationId, inviteeAddress, role])
+  @@id([organizationId, inviteeAddress, role])
 }
 
 model Organization {
-  id             Int                      @id @unique @default(autoincrement())
-  name           String                   @unique
-  slug           String                   @unique
-  projects       Project[]
-  admins         MembersOfOrganizations[]
-  invitations    OrganizationInvitation[]
+  id          Int                      @id @unique @default(autoincrement())
+  name        String                   @unique
+  slug        String                   @unique
+  projects    Project[]
+  admins      MembersOfOrganizations[]
+  invitations OrganizationInvitation[]
 }
 
 model MembersOfOrganizations {
-  member         User             @relation(fields: [userId], references: [id])
+  member         User         @relation(fields: [userId], references: [id])
   userId         String
-  organization   Organization     @relation(fields: [organizationId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId Int
-//   role           OrganizationRole @default(ADMIN)
-  role           String           @default("ADMIN")
+  //   role           OrganizationRole @default(ADMIN)
+  role           String       @default("ADMIN")
 
   @@id([organizationId, userId])
 }
@@ -117,10 +117,10 @@ model Project {
 }
 
 model MembersOfProjects {
-  member    User        @relation(fields: [userId], references: [id])
-  project   Project     @relation(fields: [projectId], references: [id])
-//   role      ProjectRole
-  role      String
+  member  User    @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+  //   role      ProjectRole
+  role    String
 
   userId    String
   projectId Int
@@ -137,7 +137,7 @@ model TraitCategory {
   modifiable      Boolean @default(true)
   defaultAchieved Boolean @default(false)
 
-  projectId       Int
+  projectId Int
 }
 
 model Trait {
@@ -148,45 +148,45 @@ model Trait {
   defaultAchieved                 Boolean?
   achievementsRequired            Achievement[]
   achievementsRequiredDescription String
-//   levelLogic                      LevelLogic?
+  //   levelLogic                      LevelLogic?
   levelLogic                      String?
   LevelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
   levelRequired                   Int?
-  
-  traitCategoryId                 Int
-  achievementCategoryId           Int?
+
+  traitCategoryId       Int
+  achievementCategoryId Int?
 }
 
 model AchievementCategory {
-  id           Int             @id @unique @default(autoincrement())
+  id           Int           @id @unique @default(autoincrement())
   name         String
   description  String?
-  project      Project         @relation(fields: [projectId], references: [id])
+  project      Project       @relation(fields: [projectId], references: [id])
   achievements Achievement[]
-//   type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
-  type         String          @default("SPECIFIC_ACHIEVEMENT")
+  //   type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
+  type         String        @default("SPECIFIC_ACHIEVEMENT")
   Trait        Trait[]
 
-  projectId    Int
+  projectId Int
 }
 
 model Achievement {
-  id                    Int                  @id @unique @default(autoincrement())
-  achievementCategory   AchievementCategory  @relation(fields: [achievementCategoryId], references: [id])
-  name                  String
-  level                 Int?
-  members                 MemberAchievements[]
-  Trait                 Trait?               @relation(fields: [traitId], references: [id])
+  id                  Int                  @id @unique @default(autoincrement())
+  achievementCategory AchievementCategory  @relation(fields: [achievementCategoryId], references: [id])
+  name                String
+  level               Int?
+  members             MemberAchievements[]
+  Trait               Trait?               @relation(fields: [traitId], references: [id])
 
   traitId               Int?
   achievementCategoryId Int
 }
 
 model MemberAchievements {
-  member        User        @relation(fields: [userId], references: [id])
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
-  timestamp     DateTime    @default(now())
-  status        Boolean     @default(true)
+  member      User        @relation(fields: [userId], references: [id])
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+  timestamp   DateTime    @default(now())
+  status      Boolean     @default(true)
 
   achievementId Int
   userId        String

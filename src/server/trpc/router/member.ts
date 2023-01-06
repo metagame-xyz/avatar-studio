@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { publicProcedure, protectedProcedure, router } from '../trpc'
+import { protectedProcedure, router } from '../trpc'
 
 export const memberRouter = router({
     me: protectedProcedure.query(async ({ ctx }) => {
@@ -33,11 +33,6 @@ export const memberRouter = router({
             }),
         }
     }),
-    // activeOrgInvitations: protectedProcedure.query(async ({ ctx }) => {
-    //     return ctx.prisma.organizationInvitation.findMany({
-    //         where: { inviteeAddress: ctx.address, status: 'PENDING' },
-    //     })
-    // }),
     acceptOrgInvitation: protectedProcedure
         .input(z.object({ organizationId: z.number(), role: z.string() }))
         .mutation(async ({ ctx, input }) => {
