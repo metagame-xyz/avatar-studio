@@ -50,8 +50,8 @@ const Org: NextPage = () => {
             </Head>
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#85C9C1] to-[#15162c]">
                 <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-                    <div className="text-white text-4xl font-bold">{name}</div>
-                    <div className="text-white text-2xl font-bold">
+                    <div className="text-4xl font-bold text-white">{name}</div>
+                    <div className="text-2xl font-bold text-white">
                         Projects
                     </div>
                     <Projects />
