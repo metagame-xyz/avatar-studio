@@ -91,7 +91,10 @@ const AuthShowcase: React.FC = () => {
             {sessionData ? (
                 <button
                     className="bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-                    onClick={() => signOut()}
+                    onClick={async () => {
+                        await signOut()
+                        router.push('/')
+                    }}
                 >
                     Sign Out
                 </button>

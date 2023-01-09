@@ -1,5 +1,6 @@
 import Button, { ButtonType } from 'components/Button'
 import { type NextPage } from 'next'
+import NextError from 'next/error'
 
 import { signOut } from 'next-auth/react'
 import Head from 'next/head'
@@ -8,8 +9,21 @@ import Link from 'next/link'
 import { trpc } from 'utils/trpc'
 
 const Home: NextPage = () => {
-    const { data: user } = trpc.member.me.useQuery()
+    const { data: user, error, status } = trpc.member.me.useQuery()
     const mutation = trpc.member.acceptOrgInvitation.useMutation()
+
+    if (error) {
+        return (
+            <NextError
+                title={error.message}
+                statusCode={error.data?.httpStatus ?? 500}
+            />
+        )
+    }
+
+    if (status !== 'success') {
+        return <div>Loading...</div>
+    }
 
     const Invitations = () => {
         const invitations = user?.invitations || []
@@ -85,7 +99,12 @@ const Home: NextPage = () => {
                     </div>
                     <Button
                         text="Sign Out"
-                        onClick={() => signOut()}
+                        onClick={async () => {
+                            await signOut({
+                                callbackUrl: '/',
+                            })
+                            // router.push('/')
+                        }}
                         type={ButtonType.Secondary}
                     />
                 </div>

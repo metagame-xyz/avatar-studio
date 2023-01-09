@@ -1,9 +1,10 @@
-import { httpBatchLink, loggerLink } from '@trpc/client'
+import { httpBatchLink, loggerLink, TRPCClientError } from '@trpc/client'
 import { createTRPCNext } from '@trpc/next'
 import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server'
 import superjson from 'superjson'
 
 import { type AppRouter } from 'server/trpc/router/_app'
+import Router from 'next/router'
 
 const getBaseUrl = () => {
     if (typeof window !== 'undefined') return '' // browser should use relative url
@@ -26,6 +27,25 @@ export const trpc = createTRPCNext<AppRouter>({
                     url: `${getBaseUrl()}/api/trpc`,
                 }),
             ],
+            queryClientConfig: {
+                defaultOptions: {
+                    queries: {
+                        retry: (failureCount, error) => {
+                            console.log('retry failureCount', failureCount)
+                            if (error instanceof TRPCClientError) {
+                                if (error.data.code === 'FORBIDDEN') {
+                                    Router.push('/')
+                                }
+
+                                if (error.data.code === 'UNAUTHORIZED') {
+                                    Router.push('/')
+                                }
+                            }
+                            return failureCount < 3
+                        },
+                    },
+                },
+            },
         }
     },
     ssr: false,
