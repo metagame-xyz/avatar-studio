@@ -11,6 +11,7 @@ import { ALCHEMY_PROJECT_ID } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
 import 'styles/globals.css'
+import Navbar from 'components/Navbar'
 
 export const { chains, provider } = configureChains(
     [mainnet, goerli, polygon, optimism],
@@ -30,6 +31,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
     return (
         <WagmiConfig client={wagmiClient}>
             <SessionProvider session={session}>
+                <Navbar />
                 <Component {...pageProps} />
             </SessionProvider>
         </WagmiConfig>

@@ -29,7 +29,7 @@ const Button = ({
     type,
 }: {
     text: string
-    onClick: () => any
+    onClick: () => unknown
     type: ButtonType
 }) => {
     return (
