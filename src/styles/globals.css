@@ -4,4 +4,10 @@
 
 html {
     @apply text-teal-50;
+    /* @apply h-full; */
+    @apply bg-black;
+}
+
+body {
+    /* @apply h-full; */
 }

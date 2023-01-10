@@ -9,6 +9,7 @@
 //         </button>
 //     )
 // }
+import { classNamesFn } from 'utils/frontend'
 
 export const enum ButtonType {
     Primary = 'primary',
@@ -27,15 +28,17 @@ const Button = ({
     text,
     onClick,
     type,
+    classNames,
 }: {
     text: string
     onClick: () => unknown
     type: ButtonType
+    classNames: string
 }) => {
     return (
         <button
             type="button"
-            className={ButtonTypeClass[type]}
+            className={classNamesFn(ButtonTypeClass[type], classNames)}
             onClick={onClick}
         >
             {text}
@@ -45,6 +48,7 @@ const Button = ({
 
 Button.defaultProps = {
     type: ButtonType.Primary,
+    classNames: '',
 }
 
 export default Button
