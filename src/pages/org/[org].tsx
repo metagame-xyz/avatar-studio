@@ -122,7 +122,6 @@ const Org: NextPage = () => {
                                             <div className="text-4xl font-bold">
                                                 Members
                                             </div>
-                                            
                                         </div>
                                     </div>
                                     {/* End main area */}
