@@ -11,12 +11,13 @@ import { useRouter } from 'next/router'
 const Home: NextPage = () => {
     const router = useRouter()
     const trpcUtils = trpc.useContext()
-    const { data: user, error, status, refetch } = trpc.member.me.useQuery()
+
+    const { data: user, error, status } = trpc.member.me.useQuery()
     const mutation = trpc.member.acceptOrgInvitation.useMutation({
         onSuccess: () => trpcUtils.member.me.invalidate(),
     })
 
-    const { logout: privyLogout, user: privyUser } = usePrivy()
+    const { logout: privyLogout } = usePrivy()
 
     console.log('user', user?.invitations)
 
