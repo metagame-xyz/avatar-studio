@@ -1,16 +1,30 @@
 import Button, { ButtonType } from 'components/Button'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
-
-import { signOut } from 'next-auth/react'
 import Head from 'next/head'
 import Link from 'next/link'
 
 import { trpc } from 'utils/trpc'
+import { usePrivy } from '@privy-io/react-auth'
+import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
+    const router = useRouter()
+    const trpcUtils = trpc.useContext()
+
     const { data: user, error, status } = trpc.member.me.useQuery()
-    const mutation = trpc.member.acceptOrgInvitation.useMutation()
+    const mutation = trpc.member.acceptOrgInvitation.useMutation({
+        onSuccess: () => trpcUtils.member.me.invalidate(),
+    })
+
+    const { logout: privyLogout } = usePrivy()
+
+    console.log('user', user?.invitations)
+
+    const logout = async () => {
+        await privyLogout()
+        router.push('/')
+    }
 
     if (error) {
         return (
@@ -87,9 +101,7 @@ const Home: NextPage = () => {
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-black to-black">
                 <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
                     <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-                        Avat
-                        <span className="text-[hsl(280,100%,70%)]">a</span>r
-                        Stud<span className="text-[hsl(280,100%,70%)]">i</span>o
+                        Home
                     </h1>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
                         <h3 className="text-2xl font-bold">Organizations</h3>
@@ -98,13 +110,8 @@ const Home: NextPage = () => {
                         <Invitations />
                     </div>
                     <Button
-                        text="Sign Out"
-                        onClick={async () => {
-                            await signOut({
-                                callbackUrl: '/',
-                            })
-                            // router.push('/')
-                        }}
+                        text="Log Out"
+                        onClick={logout}
                         type={ButtonType.Secondary}
                     />
                 </div>

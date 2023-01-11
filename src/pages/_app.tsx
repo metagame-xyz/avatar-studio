@@ -1,17 +1,18 @@
-import { type Session } from 'next-auth'
-import { SessionProvider } from 'next-auth/react'
 import { type AppType } from 'next/app'
 import { configureChains, createClient, WagmiConfig } from 'wagmi'
 import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
+import { PrivyProvider } from '@privy-io/react-auth'
+import { useRouter } from 'next/router'
 
 import { ALCHEMY_PROJECT_ID } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
 import 'styles/globals.css'
 import Navbar from 'components/Navbar'
+import { env } from 'env/client.mjs'
 
 export const { chains, provider } = configureChains(
     [mainnet, goerli, polygon, optimism],
@@ -24,17 +25,23 @@ const wagmiClient = createClient({
     provider,
 })
 
-const MyApp: AppType<{ session: Session | null }> = ({
-    Component,
-    pageProps: { session, ...pageProps },
-}) => {
+const MyApp: AppType = ({ Component, pageProps }) => {
+    const router = useRouter()
+
+    const onLoginSuccess = async () => {
+        router.push('/home')
+    }
+
     return (
-        <WagmiConfig client={wagmiClient}>
-            <SessionProvider session={session}>
+        <PrivyProvider
+            appId={env.NEXT_PUBLIC_PRIVY_APP_ID}
+            onSuccess={onLoginSuccess}
+        >
+            <WagmiConfig client={wagmiClient}>
                 <Navbar />
                 <Component {...pageProps} />
-            </SessionProvider>
-        </WagmiConfig>
+            </WagmiConfig>
+        </PrivyProvider>
     )
 }
 

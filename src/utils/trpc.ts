@@ -5,6 +5,7 @@ import superjson from 'superjson'
 
 import { type AppRouter } from 'server/trpc/router/_app'
 import Router from 'next/router'
+import { getAccessToken } from '@privy-io/react-auth'
 
 const getBaseUrl = () => {
     if (typeof window !== 'undefined') return '' // browser should use relative url
@@ -25,6 +26,12 @@ export const trpc = createTRPCNext<AppRouter>({
                 }),
                 httpBatchLink({
                     url: `${getBaseUrl()}/api/trpc`,
+                    async headers() {
+                        const accessToken = await getAccessToken()
+                        return {
+                            Authorization: `Bearer ${accessToken}`,
+                        }
+                    },
                 }),
             ],
             queryClientConfig: {

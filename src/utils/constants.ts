@@ -57,8 +57,7 @@ export const NOMAD_WHITEHAT_CONTRACT_ADDRESS =
 export const LOGBOOK_CONTRACT_ADDRESS = process.env.LOGBOOK_CONTRACT_ADDRESS
 export const LLAMA_PFP_CONTRACT_ADDRESS = process.env.LLAMA_PFP_CONTRACT_ADDRESS
 
-export const NEXTAUTH_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
+export const PRIVY_APP_ID = process.env.PRIVY_APP_ID
 
 /* Frontend Constants */
 // export const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;

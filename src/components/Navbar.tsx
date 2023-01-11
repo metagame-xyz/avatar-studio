@@ -7,6 +7,7 @@ import makeBlockie from 'ethereum-blockies-base64'
 import { useAccount, useEnsAvatar } from 'wagmi'
 
 import Spinner from './Spinner'
+import { usePrivy } from '@privy-io/react-auth'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },
@@ -22,26 +23,23 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-    const { address, isConnected } = useAccount()
+    const { address, isConnected, isConnecting } = useAccount()
+    const { user } = usePrivy()
     const { data: ensAvatarUrl } = useEnsAvatar({ address })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
-
-    console.log('mounted', mounted)
+    console.log('user', user)
+    console.log('address', address)
+    console.log('isConnected', isConnected)
+    console.log('isConnecting', isConnecting)
 
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
     }, [])
 
-    // if (!mounted) {
-    //     return null
-    // }
-
-    console.log('address', address)
-    console.log('isConnected', isConnected)
-
+    console.log('address2', address)
     return (
         <Disclosure as="nav" className="bg-black">
             {({ open }) => (

@@ -22,17 +22,13 @@ export const publicProcedure = t.procedure
  * users are logged in
  */
 const isAuthed = t.middleware(({ ctx, next }) => {
-    if (!ctx.session || !ctx.session.user) {
+    if (!ctx.session || !ctx.session.userId) {
         throw new TRPCError({ code: 'UNAUTHORIZED' })
     }
-    return next({
-        // ctx,
-        ctx: {
-            address: ctx.session.address,
-            // infers the `session` as non-nullable
-            session: { ...ctx.session, user: ctx.session.user },
-        },
-    })
+    // for some reason, prevents the session type from being null
+    // and for some reason, we don't need to pass the prisma client? but I am anyways?
+    // return next({ ctx })
+    return next({ ctx: { session: { ...ctx.session }, prisma: ctx.prisma } })
 })
 
 /**

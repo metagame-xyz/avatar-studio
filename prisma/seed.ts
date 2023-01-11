@@ -2,19 +2,25 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
+const privyDID_1 = 'did:privy:clcqu9l350001m908u2ojo5gc'
+const brennerEmail = 'brenner@themetagame.xyz'
 async function main() {
-    const brenner = await prisma.user.upsert({
-        where: { address: metagameAddress },
-        update: {},
-        create: {
+    const brenner = await prisma.user.create({
+        data: {
             address: metagameAddress,
-            email: 'brenner@themetagame.xyz',
+            email: brennerEmail,
+            privyDID: privyDID_1,
+            // id: privyDID_1,
             accounts: {
                 create: [
                     {
-                        type: 'evm',
-                        provider: 'ethereum',
-                        providerAccountId: metagameAddress,
+                        type: 'wallet',
+                        address: metagameAddress,
+                        chainType: 'ethereum',
+                    },
+                    {
+                        type: 'email',
+                        address: brennerEmail,
                     },
                 ],
             },
