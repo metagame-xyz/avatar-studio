@@ -140,49 +140,56 @@ export const memberRouter = router({
             }),
         }
     }),
-    // acceptOrgInvitation: protectedProcedure
-    //     .input(z.object({ organizationId: z.number(), role: z.string() }))
-    //     .mutation(async ({ ctx, input }) => {
-    //         if (!ctx.address) return null
+    acceptOrgInvitation: protectedProcedure
+        .input(z.object({ organizationId: z.number(), role: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            if (!ctx.session) return null
 
-    //         const orgInvite =
-    //             await ctx.prisma.organizationInvitation.findFirstOrThrow({
-    //                 where: {
-    //                     status: 'PENDING',
-    //                     inviteeAddress: ctx.address,
-    //                     organizationId: input.organizationId,
-    //                     role: input.role,
-    //                 },
-    //             })
+            const { address } = await ctx.prisma.user.findUniqueOrThrow({
+                where: { id: ctx.session.userId },
+                select: { address: true },
+            })
 
-    //         const [user] = await ctx.prisma.$transaction([
-    //             ctx.prisma.user.update({
-    //                 where: {
-    //                     address: ctx.address,
-    //                 },
-    //                 data: {
-    //                     organizations: {
-    //                         create: [
-    //                             {
-    //                                 organizationId: orgInvite.organizationId,
-    //                                 role: orgInvite.role,
-    //                             },
-    //                         ],
-    //                     },
-    //                 },
-    //             }),
-    //             ctx.prisma.organizationInvitation.update({
-    //                 where: {
-    //                     organizationId_inviteeAddress_role: {
-    //                         organizationId: orgInvite.organizationId,
-    //                         inviteeAddress: ctx.address,
-    //                         role: orgInvite.role,
-    //                     },
-    //                 },
-    //                 data: { status: 'ACCEPTED' },
-    //             }),
-    //         ])
+            if (!address) return null
 
-    //         return user
-    //     }),
+            const orgInvite =
+                await ctx.prisma.organizationInvitation.findFirstOrThrow({
+                    where: {
+                        status: 'PENDING',
+                        inviteeAddress: address,
+                        organizationId: input.organizationId,
+                        role: input.role,
+                    },
+                })
+
+            const [user] = await ctx.prisma.$transaction([
+                ctx.prisma.user.update({
+                    where: {
+                        address,
+                    },
+                    data: {
+                        organizations: {
+                            create: [
+                                {
+                                    organizationId: orgInvite.organizationId,
+                                    role: orgInvite.role,
+                                },
+                            ],
+                        },
+                    },
+                }),
+                ctx.prisma.organizationInvitation.update({
+                    where: {
+                        organizationId_inviteeAddress_role: {
+                            organizationId: orgInvite.organizationId,
+                            inviteeAddress: address,
+                            role: orgInvite.role,
+                        },
+                    },
+                    data: { status: 'ACCEPTED' },
+                }),
+            ])
+
+            return user
+        }),
 })
