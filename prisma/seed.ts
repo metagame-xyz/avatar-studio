@@ -6,8 +6,6 @@ const privyDID_1 = 'did:privy:clcqu9l350001m908u2ojo5gc'
 const brennerEmail = 'brenner@themetagame.xyz'
 async function main() {
     const brenner = await prisma.user.create({
-        // where: { address: metagameAddress },
-        // update: {},
         data: {
             address: metagameAddress,
             email: brennerEmail,
