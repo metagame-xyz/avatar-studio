@@ -9,7 +9,8 @@ async function main() {
         data: {
             address: metagameAddress,
             email: brennerEmail,
-            id: privyDID_1,
+            privyDID: privyDID_1,
+            // id: privyDID_1,
             accounts: {
                 create: [
                     {

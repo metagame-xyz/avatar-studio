@@ -19,7 +19,7 @@ export const memberRouter = router({
         .query(async ({ ctx, input }) => {
             return ctx.prisma.user.findUnique({
                 where: {
-                    id: input.id,
+                    privyDID: input.id,
                 },
             })
         }),
@@ -56,18 +56,19 @@ export const memberRouter = router({
 
             const user = await ctx.prisma.user.upsert({
                 create: {
-                    id: privyUser.id,
                     email: privyUser.email?.address,
                     address: privyUser.wallet?.address.toLowerCase(),
+                    privyDID: privyUser.id,
                     accounts: {
                         create: [...linkedAccountsClean],
                     },
                 },
                 update: {
-                    address: privyUser.wallet?.address,
+                    address: privyUser.wallet?.address.toLowerCase(),
+                    email: privyUser.email?.address,
                 },
                 where: {
-                    id: privyUser.id,
+                    privyDID: privyUser.id,
                 },
                 include: {
                     accounts: true,
@@ -112,7 +113,7 @@ export const memberRouter = router({
     me: protectedProcedure.query(async ({ ctx }) => {
         const member = await ctx.prisma.user.findUniqueOrThrow({
             where: {
-                id: ctx.session.userId,
+                privyDID: ctx.session.userId,
             },
             include: {
                 organizations: { include: { organization: true } },
@@ -146,7 +147,7 @@ export const memberRouter = router({
             if (!ctx.session) return null
 
             const { address } = await ctx.prisma.user.findUniqueOrThrow({
-                where: { id: ctx.session.userId },
+                where: { privyDID: ctx.session.userId },
                 select: { address: true },
             })
 
