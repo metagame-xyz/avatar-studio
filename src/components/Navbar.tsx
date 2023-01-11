@@ -22,25 +22,16 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-    const { address, isConnected } = useAccount()
+    const { address } = useAccount()
     const { data: ensAvatarUrl } = useEnsAvatar({ address })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
 
-    console.log('mounted', mounted)
-
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
     }, [])
-
-    // if (!mounted) {
-    //     return null
-    // }
-
-    console.log('address', address)
-    console.log('isConnected', isConnected)
 
     return (
         <Disclosure as="nav" className="bg-black">

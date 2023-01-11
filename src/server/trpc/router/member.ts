@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { protectedProcedure, publicProcedure, router } from '../trpc'
-import type { AuthTokenClaims, User as PrivyUser } from '@privy-io/server-auth'
+import type { AuthTokenClaims } from '@privy-io/server-auth'
 import { PrivyClient } from '@privy-io/server-auth'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
