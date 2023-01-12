@@ -1,9 +1,9 @@
-import { type NextPage } from 'next'
-import { useRouter } from 'next/router'
-import Head from 'next/head'
-import Link from 'next/link'
 import { usePrivy } from '@privy-io/react-auth'
 import Button from 'components/Button'
+import { type NextPage } from 'next'
+import Head from 'next/head'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
     const router = useRouter()

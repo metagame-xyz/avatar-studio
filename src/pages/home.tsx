@@ -1,12 +1,11 @@
+import { usePrivy } from '@privy-io/react-auth'
 import Button, { ButtonType } from 'components/Button'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
 import Head from 'next/head'
 import Link from 'next/link'
-
-import { trpc } from 'utils/trpc'
-import { usePrivy } from '@privy-io/react-auth'
 import { useRouter } from 'next/router'
+import { trpc } from 'utils/trpc'
 
 const Home: NextPage = () => {
     const router = useRouter()

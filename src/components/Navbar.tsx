@@ -1,13 +1,12 @@
 import { Fragment, useEffect, useState } from 'react'
+
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
-import Image from 'next/image'
-import makeBlockie from 'ethereum-blockies-base64'
-import { useAccount, useEnsAvatar } from 'wagmi'
-
-import Spinner from './Spinner'
 import { usePrivy } from '@privy-io/react-auth'
+import makeBlockie from 'ethereum-blockies-base64'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useAccount, useEnsAvatar } from 'wagmi'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },

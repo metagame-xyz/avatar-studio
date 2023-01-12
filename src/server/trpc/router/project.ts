@@ -1,7 +1,7 @@
-import { z } from 'zod'
-import { slugify } from 'utils/frontend'
-import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 import { TRPCError } from '@trpc/server'
+import { slugify } from 'utils/frontend'
+import { z } from 'zod'
+import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
 export const projectRouter = router({
     getBySlug: publicProcedure

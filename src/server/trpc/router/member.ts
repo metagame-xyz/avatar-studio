@@ -1,8 +1,7 @@
-import { z } from 'zod'
-
-import { protectedProcedure, publicProcedure, router } from '../trpc'
 import type { Account } from '@prisma/client'
 import { privyUserZ } from 'utils/privyZod'
+import { z } from 'zod'
+import { protectedProcedure, publicProcedure, router } from '../trpc'
 
 export const memberRouter = router({
     getByDID: publicProcedure

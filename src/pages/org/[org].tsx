@@ -1,16 +1,16 @@
 import { type NextPage } from 'next'
 import NextError from 'next/error'
 
-import { useState } from 'react'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 
-import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 
-import { trpc } from 'utils/trpc'
 import Button from 'components/Button'
 import NewProjectModal from 'components/NewProjectModal'
+import { trpc } from 'utils/trpc'
 
 const Org: NextPage = () => {
     const router = useRouter()

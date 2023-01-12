@@ -1,18 +1,18 @@
+import { PrivyProvider, type User as PrivyUser } from '@privy-io/react-auth'
 import { type AppType } from 'next/app'
+import { useRouter } from 'next/router'
 import { configureChains, createClient, WagmiConfig } from 'wagmi'
 import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
-import { PrivyProvider, type User as PrivyUser } from '@privy-io/react-auth'
-import { useRouter } from 'next/router'
 
 import { ALCHEMY_PROJECT_ID } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
-import 'styles/globals.css'
 import Navbar from 'components/Navbar'
 import { env } from 'env/client.mjs'
+import 'styles/globals.css'
 
 export const { chains, provider } = configureChains(
     [mainnet, goerli, polygon, optimism],

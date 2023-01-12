@@ -1,7 +1,5 @@
-import { Dispatch, Fragment, SetStateAction, useRef, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { CheckIcon } from '@heroicons/react/24/outline'
-import Button from './Button'
+import { Dispatch, Fragment, SetStateAction, useRef, useState } from 'react'
 import { trpc } from 'utils/trpc'
 
 export default function NewProjectModal({
