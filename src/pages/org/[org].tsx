@@ -21,7 +21,12 @@ const Org: NextPage = () => {
         error,
         status,
     } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
+
+    const { data: user } = trpc.member.me.useQuery()
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
+
+    // check is user is an org admin
+    const isOrgAdmin = user?.organizations?.find((org) => (org.id = org.id))
 
     if (error) {
         return (
@@ -88,14 +93,20 @@ const Org: NextPage = () => {
                                                 Avatars
                                             </div>
                                             <Projects />
-                                            <Button
-                                                text="Create Avatar"
-                                                classNames="mt-4 text-center self-start"
-                                                onClick={() => {
-                                                    setOpenNewProjectModal(true)
-                                                    console.log('create avatar')
-                                                }}
-                                            />
+                                            {isOrgAdmin && (
+                                                <Button
+                                                    text="Create Avatar"
+                                                    classNames="mt-4 text-center self-start"
+                                                    onClick={() => {
+                                                        setOpenNewProjectModal(
+                                                            true,
+                                                        )
+                                                        console.log(
+                                                            'create avatar',
+                                                        )
+                                                    }}
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                     {/* End left column area */}
