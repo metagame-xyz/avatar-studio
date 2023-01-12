@@ -21,6 +21,7 @@
         "@prisma/client": "^4.5.0",
         "@privy-io/react-auth": "^1.9.0",
         "@privy-io/server-auth": "^1.1.0",
+        "@tailwindcss/forms": "^0.5.3",
         "@tanstack/react-query": "^4.16.0",
         "@trpc/client": "^10.0.0",
         "@trpc/next": "^10.0.0",

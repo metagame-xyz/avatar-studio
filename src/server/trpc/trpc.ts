@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
+import { z } from 'zod'
 
 import { type Context } from './context'
 
@@ -31,7 +32,31 @@ const isAuthed = t.middleware(({ ctx, next }) => {
     return next({ ctx: { session: { ...ctx.session }, prisma: ctx.prisma } })
 })
 
+const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
+    const isOrgAdminInput = z.object({ organizationId: z.number() })
+    const input = isOrgAdminInput.parse(rawInput)
+
+    const organization = await ctx.prisma.organization.findUniqueOrThrow({
+        where: {
+            id: input.organizationId,
+        },
+        include: {
+            admins: { include: { member: true } },
+            projects: true,
+        },
+    })
+
+    const admins = organization.admins.map((admin) => admin.member)
+
+    if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    return next({ ctx })
+})
+
 /**
  * Protected procedure
  **/
 export const protectedProcedure = t.procedure.use(isAuthed)
+export const protectedOrgProcedure = t.procedure.use(isAuthed).use(isOrgAdmin)

@@ -1,14 +1,8 @@
 import { type NextPage } from 'next'
 import NextError from 'next/error'
 
-import { Fragment } from 'react'
-import { Disclosure, Menu, Transition } from '@headlessui/react'
-import { CircleStackIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
-import {
-    Bars3CenterLeftIcon,
-    UserCircleIcon,
-    XMarkIcon,
-} from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import { UserCircleIcon } from '@heroicons/react/24/outline'
 
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -16,11 +10,18 @@ import Link from 'next/link'
 
 import { trpc } from 'utils/trpc'
 import Button from 'components/Button'
+import NewProjectModal from 'components/NewProjectModal'
 
 const Org: NextPage = () => {
     const router = useRouter()
     const slug = router.query.org as string
-    const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug)
+
+    const {
+        data: org,
+        error,
+        status,
+    } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
+    const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
 
     if (error) {
         return (
@@ -34,7 +35,7 @@ const Org: NextPage = () => {
         return <div>Loading...</div>
     }
 
-    const { name } = org
+    const { name, id } = org
 
     const Projects = () => {
         const projects = org.projects || []
@@ -65,16 +66,12 @@ const Org: NextPage = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <>
-                {/* Background color split screen for large screens */}
-                {/* <div
-                    className="fixed top-0 left-0 h-full w-1/2 bg-white"
-                    aria-hidden="true"
-                />
-                <div
-                    className="fixed top-0 right-0 h-full w-1/2 bg-gray-50"
-                    aria-hidden="true"
-                /> */}
                 <div className="relative flex min-h-screen flex-col">
+                    <NewProjectModal
+                        open={openNewProjectModal}
+                        setOpen={setOpenNewProjectModal}
+                        organizationId={id}
+                    />
                     {/* 3 column wrapper */}
                     <div className="mx-auto w-full max-w-7xl flex-grow lg:flex xl:px-8">
                         {/* Left sidebar & main wrapper */}
@@ -82,29 +79,23 @@ const Org: NextPage = () => {
                             <div className="border-b border-gray-200 xl:w-64 xl:flex-shrink-0 xl:border-b-0 xl:border-r xl:border-gray-200">
                                 <div className="h-full py-6 pl-4 pr-6 sm:pl-6 lg:pl-8 xl:pl-0">
                                     {/* Start left column area */}
-                                    <div
-                                        className="relative h-full"
-                                        style={{ minHeight: '12rem' }}
-                                    >
-                                        <div className="absolute inset-0">
-                                            <div className="flex flex-col">
-                                                <div className="text-4xl font-bold">
-                                                    {name}
-                                                </div>
-                                                <div className="mt-4 mb-2 text-3xl font-bold">
-                                                    Avatars
-                                                </div>
-                                                <Projects />
-                                                <Button
-                                                    text="Create Avatar"
-                                                    classNames="mt-4 text-center self-start"
-                                                    onClick={() => {
-                                                        console.log(
-                                                            'create avatar',
-                                                        )
-                                                    }}
-                                                />
+                                    <div className="relative h-full">
+                                        <div className="flex flex-col">
+                                            <div className="text-4xl font-bold">
+                                                {name}
                                             </div>
+                                            <div className="mt-4 mb-2 text-3xl font-bold">
+                                                Avatars
+                                            </div>
+                                            <Projects />
+                                            <Button
+                                                text="Create Avatar"
+                                                classNames="mt-4 text-center self-start"
+                                                onClick={() => {
+                                                    setOpenNewProjectModal(true)
+                                                    console.log('create avatar')
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                     {/* End left column area */}
@@ -131,14 +122,6 @@ const Org: NextPage = () => {
                     </div>
                 </div>
             </>
-            {/* <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#85C9C1] to-[#15162c]">
-                <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-                    <div className="text-4xl font-bold">{name}</div>
-                    <div className="text-2xl font-bold">
-                        Projects
-                    </div>
-                </div>
-            </main> */}
         </>
     )
 }

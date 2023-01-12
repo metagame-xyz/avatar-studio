@@ -38,15 +38,15 @@ export const trpc = createTRPCNext<AppRouter>({
                 defaultOptions: {
                     queries: {
                         retry: (failureCount, error) => {
-                            console.log('retry failureCount', failureCount)
-                            if (error instanceof TRPCClientError) {
-                                if (error.data.code === 'FORBIDDEN') {
-                                    Router.push('/')
-                                }
+                            const rerouteCodes = [
+                                'UNAUTHORIZED',
+                                'NOT_FOUND',
+                                'FORBIDDEN',
+                            ]
 
-                                if (error.data.code === 'UNAUTHORIZED') {
+                            if (error instanceof TRPCClientError) {
+                                if (rerouteCodes.includes(error.data.code))
                                     Router.push('/')
-                                }
                             }
                             return failureCount < 3
                         },

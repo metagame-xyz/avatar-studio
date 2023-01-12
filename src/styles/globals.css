@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .btn-primary {
+        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-teal-300 px-4 py-2 text-base font-medium  text-black shadow-sm hover:bg-teal-400 focus:outline-none focus:ring-1 focus:ring-black focus:ring-offset-1;
+    }
+    .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-[#2D3836] px-4 py-2 text-base font-medium text-teal-50 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
+    }
+    .btn-ghost {
+        @apply inline-flex items-center justify-center rounded-md border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-400 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
+    }
+}
+
 html {
     @apply text-teal-50;
     /* @apply h-full; */

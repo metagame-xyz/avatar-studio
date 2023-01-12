@@ -29,17 +29,16 @@ export default function Navbar() {
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
-    console.log('user', user)
-    console.log('address', address)
-    console.log('isConnected', isConnected)
-    console.log('isConnecting', isConnecting)
+    // console.log('user', user)
+    // console.log('address', address)
+    // console.log('isConnected', isConnected)
+    // console.log('isConnecting', isConnecting)
 
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
     }, [])
 
-    console.log('address2', address)
     return (
         <Disclosure as="nav" className="bg-black">
             {({ open }) => (
