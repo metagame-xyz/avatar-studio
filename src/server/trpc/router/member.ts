@@ -1,17 +1,8 @@
 import { z } from 'zod'
 
 import { protectedProcedure, publicProcedure, router } from '../trpc'
-import type { AuthTokenClaims } from '@privy-io/server-auth'
-import { PrivyClient } from '@privy-io/server-auth'
-import { env as clientEnv } from 'env/client.mjs'
-import { env as serverEnv } from 'env/server.mjs'
-import { Account } from '@prisma/client'
+import type { Account } from '@prisma/client'
 import { privyUserZ } from 'utils/privyZod'
-
-const privy = new PrivyClient(
-    clientEnv.NEXT_PUBLIC_PRIVY_APP_ID,
-    serverEnv.PRIVY_APP_SECRET,
-)
 
 export const memberRouter = router({
     getByDID: publicProcedure
@@ -23,10 +14,10 @@ export const memberRouter = router({
                 },
             })
         }),
-    create: publicProcedure
-        .input(z.object({ privyUser: privyUserZ, authToken: z.string() }))
+    createOrUpdate: protectedProcedure
+        .input(z.object({ privyUser: privyUserZ }))
         .mutation(async ({ ctx, input }) => {
-            const { privyUser, authToken } = input
+            const { privyUser } = input
 
             // remove chainId and walletType keys if they exist, lowercase address
             const linkedAccountsClean = privyUser.linkedAccounts.map(
@@ -42,16 +33,8 @@ export const memberRouter = router({
                 },
             )
 
-            let verifiedClaims: AuthTokenClaims
-
-            try {
-                verifiedClaims = await privy.verifyAuthToken(authToken || '')
-                if (verifiedClaims.userId !== privyUser.id) {
-                    throw new Error('User ID does not match')
-                }
-            } catch (error) {
-                console.log(`Token verification failed with error ${error}.`)
-                throw new Error('Token verification failed')
+            if (ctx.session.userId !== privyUser.id) {
+                throw new Error('User ID does not match')
             }
 
             const user = await ctx.prisma.user.upsert({

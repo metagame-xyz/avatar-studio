@@ -136,14 +136,11 @@ export default function Navbar() {
                                                 <span className="sr-only">
                                                     Open user menu
                                                 </span>
-                                                <div className="h-8 w-8">
-                                                    <Image
-                                                        className="rounded-full"
-                                                        src={avatarUrl}
-                                                        alt=""
-                                                        fill
-                                                    />
-                                                </div>
+                                                <img
+                                                    className="h-8 w-8 rounded-full"
+                                                    src={avatarUrl}
+                                                    alt=""
+                                                />
                                             </Menu.Button>
                                         </div>
 
@@ -206,7 +203,7 @@ export default function Navbar() {
                                         </Transition>
                                     </Menu>
                                 ) : (
-                                    <Spinner />
+                                    <div className="h-8 w-8 "></div>
                                 )}
                             </div>
                         </div>

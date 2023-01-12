@@ -16,10 +16,12 @@ async function main() {
                         type: 'wallet',
                         address: metagameAddress,
                         chainType: 'ethereum',
+                        verifiedAt: '2023-01-11T20:23:17.000Z',
                     },
                     {
                         type: 'email',
                         address: brennerEmail,
+                        verifiedAt: '2023-01-12T20:23:17.000Z',
                     },
                 ],
             },

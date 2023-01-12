@@ -4,7 +4,7 @@ import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
-import { PrivyProvider } from '@privy-io/react-auth'
+import { PrivyProvider, type User as PrivyUser } from '@privy-io/react-auth'
 import { useRouter } from 'next/router'
 
 import { ALCHEMY_PROJECT_ID } from 'utils/constants'
@@ -28,8 +28,14 @@ const wagmiClient = createClient({
 const MyApp: AppType = ({ Component, pageProps }) => {
     const router = useRouter()
 
-    const onLoginSuccess = async () => {
-        router.push('/home')
+    const createOrUpdateUser = trpc.member.createOrUpdate.useMutation({
+        onSuccess: () => router.push('/home'),
+    })
+
+    const onLoginSuccess = async (privyUser: PrivyUser) => {
+        await createOrUpdateUser.mutateAsync({
+            privyUser,
+        })
     }
 
     return (
