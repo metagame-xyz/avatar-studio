@@ -21,5 +21,6 @@ html {
 }
 
 body {
+    @apply bg-black;
     /* @apply h-full; */
 }

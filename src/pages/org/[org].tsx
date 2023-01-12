@@ -78,7 +78,7 @@ const Org: NextPage = () => {
                         organizationId={id}
                     />
                     {/* 3 column wrapper */}
-                    <div className="mx-auto w-full max-w-7xl flex-grow lg:flex xl:px-8">
+                    <div className="mx-auto w-full max-w-7xl flex-grow  lg:flex xl:px-8">
                         {/* Left sidebar & main wrapper */}
                         <div className="min-w-0 flex-1  xl:flex">
                             <div className="border-b border-gray-200 xl:w-64 xl:flex-shrink-0 xl:border-b-0 xl:border-r xl:border-gray-200">
@@ -116,14 +116,9 @@ const Org: NextPage = () => {
                             <div className="lg:min-w-0 lg:flex-1">
                                 <div className="h-full py-6 px-4 sm:px-6 lg:px-8">
                                     {/* Start main area*/}
-                                    <div
-                                        className="relative h-full"
-                                        style={{ minHeight: '36rem' }}
-                                    >
-                                        <div className="absolute inset-0 ">
-                                            <div className="text-4xl font-bold">
-                                                Members
-                                            </div>
+                                    <div className="relative h-full">
+                                        <div className="text-4xl font-bold">
+                                            Members
                                         </div>
                                     </div>
                                     {/* End main area */}
