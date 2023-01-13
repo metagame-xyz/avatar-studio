@@ -1,5 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { Dispatch, Fragment, SetStateAction, useRef, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { trpc } from 'utils/trpc'
 
 export default function NewProjectModal({

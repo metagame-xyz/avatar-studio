@@ -110,7 +110,6 @@ model MembersOfProjects {
 }
 
 model TraitCategory {
-  id              Int     @id @unique @default(autoincrement())
   project         Project @relation(fields: [projectId], references: [id])
   traits          Trait[]
   name            String
@@ -119,23 +118,28 @@ model TraitCategory {
   defaultAchieved Boolean @default(false)
 
   projectId Int
+
+  @@id([projectId, name])
 }
 
 model Trait {
-  id                              Int                  @id @unique @default(autoincrement())
-  traitCategory                   TraitCategory        @relation(fields: [traitCategoryId], references: [id])
+  //   id                              Int                  @id @unique @default(autoincrement())
+  traitCategory                   TraitCategory        @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
   name                            String
   pngUrl                          String
   defaultAchieved                 Boolean?
-  achievementsRequired            Achievement[]
-  achievementsRequiredDescription String
+  achievementsRequired            AchievementTrait[]
+  achievementsRequiredDescription String?
   //   levelLogic                      LevelLogic?
   levelLogic                      String?
   LevelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
   levelRequired                   Int?
 
-  traitCategoryId       Int
+  projectId             Int
+  traitCategoryName     String
   achievementCategoryId Int?
+
+  @@id([projectId, traitCategoryName, name])
 }
 
 model AchievementCategory {
@@ -157,10 +161,22 @@ model Achievement {
   name                String
   level               Int?
   members             MemberAchievements[]
-  Trait               Trait?               @relation(fields: [traitId], references: [id])
+  Trait               AchievementTrait[]
 
-  traitId               Int?
   achievementCategoryId Int
+}
+
+model AchievementTrait {
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  trait         Trait       @relation(fields: [projectId, traitCategoryName, traitName], references: [projectId, traitCategoryName, name])
+  achievementId Int
+  traitId       Int
+
+  projectId         Int
+  traitCategoryName String
+  traitName         String
+
+  @@id([achievementId, traitId])
 }
 
 model MemberAchievements {

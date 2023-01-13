@@ -89,6 +89,15 @@ async function main() {
             organizationId: brassFactory.id,
         },
     })
+    const llamaPfp = await prisma.project.upsert({
+        where: { slug: 'llama-pfp' },
+        update: {},
+        create: {
+            name: 'Llama Pfp',
+            slug: 'llama-pfp',
+            organizationId: brassFactory.id,
+        },
+    })
 
     // console.log({ brenner, brassFactory, organizations, invitation })
 }

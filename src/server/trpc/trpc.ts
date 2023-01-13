@@ -55,8 +55,38 @@ const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     return next({ ctx })
 })
 
+// check if the user is an admin of the org that the project belongs to
+const isProjectOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
+    const isProjectOrgAdminInput = z.object({
+        projectSlug: z.string(),
+    })
+    const input = isProjectOrgAdminInput.parse(rawInput)
+
+    const project = await ctx.prisma.project.findUniqueOrThrow({
+        where: {
+            slug: input.projectSlug,
+        },
+        include: {
+            organization: {
+                include: { admins: { include: { member: true } } },
+            },
+        },
+    })
+
+    const admins = project.organization.admins.map((admin) => admin.member)
+
+    if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    return next({ ctx })
+})
+
 /**
  * Protected procedure
  **/
 export const protectedProcedure = t.procedure.use(isAuthed)
 export const protectedOrgProcedure = t.procedure.use(isAuthed).use(isOrgAdmin)
+export const protectedProjectProcedure = t.procedure
+    .use(isAuthed)
+    .use(isProjectOrgAdmin)

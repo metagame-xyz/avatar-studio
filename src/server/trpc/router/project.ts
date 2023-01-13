@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server'
-import { slugify } from 'utils/frontend'
+import { slugify } from 'utils'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 

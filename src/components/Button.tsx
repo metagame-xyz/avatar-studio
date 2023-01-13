@@ -1,4 +1,4 @@
-import { classNamesFn } from 'utils/frontend'
+import { classNamesFn } from 'utils'
 
 export const enum ButtonType {
     Primary = 'primary',
