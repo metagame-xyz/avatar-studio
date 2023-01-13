@@ -15,6 +15,7 @@ export const projectRouter = router({
                     include: {
                         members: { include: { member: true } },
                         organization: true,
+                        traitCategories: { include: { traits: true } },
                     },
                 })
                 return data

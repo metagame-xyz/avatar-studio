@@ -26,7 +26,7 @@ const Org: NextPage = () => {
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
 
     // check is user is an org admin
-    const isOrgAdmin = user?.organizations?.find((org) => (org.id = org.id))
+    const isOrgAdmin = user?.organizations?.find((o) => o.id == org?.id)
 
     if (error) {
         return (

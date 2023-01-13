@@ -24,3 +24,7 @@ body {
     @apply bg-black;
     /* @apply h-full; */
 }
+
+div {
+    outline: 1px solid red;
+}
