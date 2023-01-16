@@ -12,11 +12,11 @@ export const slugify = (name: string) => {
     })
 }
 
-export const getKeys = <T>(obj: Record<string, T>) =>
-    Object.keys(obj) as Array<keyof T>
+// export const getKeys = <T>(obj: Record<string, T>) =>
+//     Object.keys(obj) as Array<keyof T>
 
-export const getEntries = <T>(obj: Record<string, T>) =>
-    Object.entries(obj) as Array<[string, T]>
+// export const getEntries = <T>(obj: Record<string, T>) =>
+//     Object.entries(obj) as Array<[string, T]>
 
-export const getValues = <T>(obj: Record<string, T>) =>
-    Object.values(obj) as Array<T>
+// export const getValues = <T>(obj: Record<string, T>) =>
+//     Object.values(obj) as Array<T>

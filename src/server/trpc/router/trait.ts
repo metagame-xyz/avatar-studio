@@ -1,5 +1,4 @@
 import { TRPCError } from '@trpc/server'
-import { getEntries } from 'utils'
 import { getS3LayersFolderUrl } from 'utils/constants'
 import { getTraitCategoriesAndNames } from 'utils/s3'
 import { z } from 'zod'
@@ -41,7 +40,7 @@ export const traitRouter = router({
 
             const s3FolderUrl = getS3LayersFolderUrl(projectSlug)
 
-            for (const [traitCategory, traitNameList] of getEntries(
+            for (const [traitCategory, traitNameList] of Object.entries(
                 traitCategories,
             )) {
                 // create trait category

@@ -2,6 +2,7 @@ import { type NextPage } from 'next'
 import NextError from 'next/error'
 
 import Head from 'next/head'
+import Image from 'next/image'
 import { useRouter } from 'next/router'
 
 import { trpc } from 'utils/trpc'
@@ -44,19 +45,37 @@ const Project: NextPage = () => {
                 {project.traitCategories.map((category) => {
                     return (
                         <div key={category.name}>
-                            <h2>{category.name}</h2>
-                            <h3>{category.zIndex}</h3>
-                            <ul>
-                                {category.traits.map((trait) => (
-                                    <li key={trait.name}>{trait.name}</li>
-                                ))}
-                            </ul>
+                            <div>{category.name}</div>
+                            <div>{category.zIndex}</div>
+                            <div>
+                                Modifiable: {category.modifiable.toString()}
+                            </div>
+                            <div className="grid grid-cols-3 content-evenly  gap-3">
+                                {category.traits.map(
+                                    ({ name, pngUrl, defaultAchieved }) => (
+                                        <div
+                                            key={name}
+                                            className="flex flex-col items-center"
+                                        >
+                                            <img
+                                                src={pngUrl}
+                                                width={100}
+                                                height={100}
+                                                alt={name}
+                                            />
+                                            <div>{name}</div>
+                                        </div>
+                                    ),
+                                )}
+                            </div>
                         </div>
                     )
                 })}
             </>
         )
     }
+
+    const data = Object.entries({ 1: project.members, b: project.members })
 
     return (
         <>
@@ -67,11 +86,11 @@ const Project: NextPage = () => {
             </Head>
             <>
                 <div className="relative flex min-h-screen flex-col ">
-                    <div className="mx-auto grid w-full max-w-7xl grid-cols-1 lg:grid-cols-2 xl:px-8">
+                    <div className="mx-auto grid w-full max-w-7xl grid-cols-1 lg:grid-cols-2 xl:px-0">
                         {/* Left sidebar & main wrapper */}
                         {/* Start right half */}
                         <div className="col-span-1">
-                            <div className=" h-full py-6 pl-4 pr-6 sm:pl-6 lg:pl-8 xl:pl-0">
+                            <div className=" h-full py-6 pl-4 pr-6 sm:pl-6 xl:pl-0">
                                 <div className="relative h-full">
                                     <div className="flex flex-col">
                                         <div className="text-center text-4xl font-bold">
@@ -85,7 +104,7 @@ const Project: NextPage = () => {
 
                         {/* Right half */}
                         <div className="col-span-1">
-                            <div className="h-full  py-6 px-4 sm:px-6 lg:px-8">
+                            <div className="h-full py-6 px-4 sm:px-6 xl:pr-0">
                                 <div className="relative h-full">
                                     <div className="text-center text-4xl font-bold">
                                         Traits
