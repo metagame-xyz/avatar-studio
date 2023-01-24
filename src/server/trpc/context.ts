@@ -7,10 +7,7 @@ import { PrivyClient } from '@privy-io/server-auth'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 
-const privy = new PrivyClient(
-    clientEnv.NEXT_PUBLIC_PRIVY_APP_ID,
-    serverEnv.PRIVY_APP_SECRET,
-)
+const privy = new PrivyClient(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET)
 
 type CreateContextOptions = {
     verifiedClaims: AuthTokenClaims | null

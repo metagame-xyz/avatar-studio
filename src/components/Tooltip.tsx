@@ -9,11 +9,7 @@ type TooltipProps = {
     withLockIcon?: boolean
 }
 
-const Tooltip = ({
-    text,
-    withInfoIcon = false,
-    withLockIcon = false,
-}: TooltipProps) => {
+const Tooltip = ({ text, withInfoIcon = false, withLockIcon = false }: TooltipProps) => {
     const [open, setOpen] = React.useState(false)
     return (
         <TooltipPrimitive.Provider delayDuration={50}>
@@ -35,9 +31,7 @@ const Tooltip = ({
                         {withInfoIcon && (
                             <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 text-ui-purple-navy" />
                         )}
-                        {withLockIcon && (
-                            <LockClosedIcon className="h-5 w-5 flex-shrink-0 text-ui-purple-navy" />
-                        )}
+                        {withLockIcon && <LockClosedIcon className="h-5 w-5 flex-shrink-0 text-ui-purple-navy" />}
                         {text}
                         <TooltipPrimitive.Arrow asChild>
                             {/* <Icon

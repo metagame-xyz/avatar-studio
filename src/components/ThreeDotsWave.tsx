@@ -30,28 +30,14 @@ const loadingCircleTransition = {
 
 const ThreeDotsWave = () => {
     return (
-        <motion.div
-            className="flex"
-            variants={loadingContainerVariants}
-            initial="start"
-            animate="end"
-        >
-            <motion.span
-                variants={loadingCircleVariants}
-                transition={loadingCircleTransition}
-            >
+        <motion.div className="flex" variants={loadingContainerVariants} initial="start" animate="end">
+            <motion.span variants={loadingCircleVariants} transition={loadingCircleTransition}>
                 .
             </motion.span>
-            <motion.span
-                variants={loadingCircleVariants}
-                transition={loadingCircleTransition}
-            >
+            <motion.span variants={loadingCircleVariants} transition={loadingCircleTransition}>
                 .
             </motion.span>
-            <motion.span
-                variants={loadingCircleVariants}
-                transition={loadingCircleTransition}
-            >
+            <motion.span variants={loadingCircleVariants} transition={loadingCircleTransition}>
                 .
             </motion.span>
         </motion.div>

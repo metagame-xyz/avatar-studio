@@ -1,9 +1,6 @@
 import type { PrismaClient, Trait } from '@prisma/client'
 import { env } from 'env/server.mjs'
-import type {
-    MemberWithAProject,
-    TraitCategoryWithTraitsWithEarned,
-} from './types'
+import type { MemberWithAProject, TraitCategoryWithTraitsWithEarned } from './types'
 
 export const getMemberWithProject = (
     prisma: PrismaClient,
@@ -56,12 +53,9 @@ export const getMemberWithProject = (
     }) as Promise<MemberWithAProject>
 }
 
-export const getNetworkName = (chainName: string) =>
-    env.NODE_ENV === 'production' ? chainName : 'goerli'
+export const getNetworkName = (chainName: string) => (env.NODE_ENV === 'production' ? chainName : 'goerli')
 
-export const getEarnedTraits = (
-    member: MemberWithAProject,
-): TraitCategoryWithTraitsWithEarned[] => {
+export const getEarnedTraits = (member: MemberWithAProject): TraitCategoryWithTraitsWithEarned[] => {
     const project = member.projects[0]?.project
     if (!project) throw new Error('Project not found')
     // get all traits from the specific project that have been earned by this member
@@ -75,24 +69,20 @@ export const getEarnedTraits = (
 
     // go through all the traits in each of the TraitCategories and add an earned boolean property if the trait has been earned
 
-    const traitsWithEarnedProperty: TraitCategoryWithTraitsWithEarned[] =
-        project.traitCategories.map((tc) => {
-            return {
-                ...tc,
-                traits: tc.traits.map((t) => {
-                    return {
-                        ...t,
-                        category: tc.name,
-                        zIndex: tc.zIndex,
-                        earned:
-                            tc.isDefaultAchieved ||
-                            t.isDefaultAchieved ||
-                            earnedTraitIdSet.has(t.id),
-                        isModifiable: tc.isModifiable,
-                    }
-                }),
-            }
-        })
+    const traitsWithEarnedProperty: TraitCategoryWithTraitsWithEarned[] = project.traitCategories.map((tc) => {
+        return {
+            ...tc,
+            traits: tc.traits.map((t) => {
+                return {
+                    ...t,
+                    category: tc.name,
+                    zIndex: tc.zIndex,
+                    earned: tc.isDefaultAchieved || t.isDefaultAchieved || earnedTraitIdSet.has(t.id),
+                    isModifiable: tc.isModifiable,
+                }
+            }),
+        }
+    })
 
     if (!traitsWithEarnedProperty) throw new Error('No traits found')
     return traitsWithEarnedProperty

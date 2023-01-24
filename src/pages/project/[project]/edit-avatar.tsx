@@ -10,26 +10,15 @@ const Project: NextPage = () => {
     const router = useRouter()
     const slug = router.query.project as string
 
-    const {
-        data: project,
-        error,
-        status,
-    } = trpc.project.getBySlug.useQuery(slug, { enabled: !!slug })
+    const { data: project, error, status } = trpc.project.getBySlug.useQuery(slug, { enabled: !!slug })
 
     const { data: user } = trpc.member.me.useQuery()
 
     // check is user is an org admin
-    const isOrgAdmin = user?.organizations?.find(
-        (org) => project?.organizationId === org.id,
-    )
+    const isOrgAdmin = user?.organizations?.find((org) => project?.organizationId === org.id)
 
     if (error) {
-        return (
-            <NextError
-                title={error.message}
-                statusCode={error.data?.httpStatus ?? 500}
-            />
-        )
+        return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
     if (status !== 'success') {
         return <div>Loading...</div>
@@ -46,26 +35,14 @@ const Project: NextPage = () => {
                         <div key={category.name}>
                             <div>{category.name}</div>
                             <div>{category.zIndex}</div>
-                            <div>
-                                Modifiable: {category.isModifiable.toString()}
-                            </div>
+                            <div>Modifiable: {category.isModifiable.toString()}</div>
                             <div className="grid grid-cols-3 content-evenly  gap-3">
-                                {category.traits.map(
-                                    ({ name, pngUrl, isDefaultAchieved }) => (
-                                        <div
-                                            key={name}
-                                            className="flex flex-col items-center"
-                                        >
-                                            <img
-                                                src={pngUrl}
-                                                width={100}
-                                                height={100}
-                                                alt={name}
-                                            />
-                                            <div>{name}</div>
-                                        </div>
-                                    ),
-                                )}
+                                {category.traits.map(({ name, pngUrl, isDefaultAchieved }) => (
+                                    <div key={name} className="flex flex-col items-center">
+                                        <img src={pngUrl} width={100} height={100} alt={name} />
+                                        <div>{name}</div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )
@@ -92,9 +69,7 @@ const Project: NextPage = () => {
                             <div className=" h-full py-6 pl-4 pr-6 sm:pl-6 xl:pl-0">
                                 <div className="relative h-full">
                                     <div className="flex flex-col">
-                                        <div className="text-center text-4xl font-bold">
-                                            {name}
-                                        </div>
+                                        <div className="text-center text-4xl font-bold">{name}</div>
                                     </div>
                                 </div>
                             </div>
@@ -105,9 +80,7 @@ const Project: NextPage = () => {
                         <div className="col-span-1">
                             <div className="h-full py-6 px-4 sm:px-6 xl:pr-0">
                                 <div className="relative h-full">
-                                    <div className="text-center text-4xl font-bold">
-                                        Traits
-                                    </div>
+                                    <div className="text-center text-4xl font-bold">Traits</div>
                                     <Traits />
                                 </div>
                             </div>

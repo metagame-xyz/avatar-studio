@@ -9,11 +9,7 @@ import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
 import sparkles from 'public/icons/sparkles.svg'
 import { pfpStateToRequestedTraits, springAnimation } from 'utils/index'
-import type {
-    MintStatus,
-    TraitCategoryWithTraitsWithEarned,
-    TraitWithEarnedBool,
-} from 'utils/types'
+import type { MintStatus, TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
 
 type TraitSelectionPanelProps = {
     actionType: 'Mint' | 'Update'
@@ -65,22 +61,15 @@ const TraitSelectionPanel = ({
             <div className="grid gap-y-4 overflow-y-scroll p-6">
                 <div className="grid gap-y-4 text-center">
                     <Title level={3} className="font-title font-bold">
-                        {actionType === 'Mint'
-                            ? 'Build your Avatar'
-                            : 'Update your Avatar'}
+                        {actionType === 'Mint' ? 'Build your Avatar' : 'Update your Avatar'}
                     </Title>
-                    <p className="text-md text-teal-50/75">
-                        Unlock more traits over time
-                    </p>
+                    <p className="text-md text-teal-50/75">Unlock more traits over time</p>
                 </div>
                 {assetData?.map((tc) => (
                     <AttributeSelector
                         key={tc.name}
                         traitCategory={tc}
-                        backgroundTrait={
-                            assetData.find((t) => t.name === 'Body')
-                                ?.traits[0] as TraitWithEarnedBool
-                        } // TODO no hardcode
+                        backgroundTrait={assetData.find((t) => t.name === 'Body')?.traits[0] as TraitWithEarnedBool} // TODO no hardcode
                         pfpState={pfpState}
                         updatePfpState={updatePfpState}
                     />
@@ -139,15 +128,12 @@ const TraitSelectionPanel = ({
                                 className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
                                 onClick={() =>
                                     signMessage({
-                                        message: JSON.stringify(
-                                            pfpStateToRequestedTraits(pfpState),
-                                        ),
+                                        message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
                                     })
                                 }
                                 disabled={pfpState.length !== 4}
                             >
-                                {userIsSigning ||
-                                createNftMetadataStatus === 'loading' ? (
+                                {userIsSigning || createNftMetadataStatus === 'loading' ? (
                                     <>
                                         {' '}
                                         <Loader size="sm" />
@@ -158,10 +144,7 @@ const TraitSelectionPanel = ({
                                         <PencilSquareIcon className="w-5" />
                                         <span>Sign</span>
                                         <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
-                                        <Tooltip
-                                            text="We need your signature before you can mint."
-                                            withInfoIcon
-                                        />
+                                        <Tooltip text="We need your signature before you can mint." withInfoIcon />
                                     </>
                                 )}
                             </button>{' '}
@@ -172,18 +155,12 @@ const TraitSelectionPanel = ({
                         className="flex items-center gap-x-2 rounded"
                         onClick={() =>
                             signMessage({
-                                message: JSON.stringify(
-                                    pfpStateToRequestedTraits(pfpState),
-                                ),
+                                message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
                             })
                         }
                         disabled={false} // TODO
                     >
-                        {userIsSigning ? (
-                            <Loader size="sm" />
-                        ) : (
-                            <Icon size={2} image={sparkles} />
-                        )}
+                        {userIsSigning ? <Loader size="sm" /> : <Icon size={2} image={sparkles} />}
                         Update NFT
                     </button>
                 )}

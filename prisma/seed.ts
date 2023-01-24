@@ -194,9 +194,7 @@ async function main() {
 
     const { traitCategories } = await getFromS3(AWS, prisma, llamaPfp.slug)
 
-    const backgroundCategory = traitCategories.find(
-        (tc) => tc.name === 'Background',
-    ) as TraitCategory
+    const backgroundCategory = traitCategories.find((tc) => tc.name === 'Background') as TraitCategory
 
     await prisma.traitCategory.update({
         where: {
@@ -240,9 +238,7 @@ async function main() {
         include: { traits: { include: { traitCategory: true } } },
     })
 
-    const backgroundTraits = TraitCategoriesWithTraits.find(
-        (tc) => tc.name === 'Background',
-    )?.traits
+    const backgroundTraits = TraitCategoriesWithTraits.find((tc) => tc.name === 'Background')?.traits
 
     if (!backgroundTraits) throw Error('No background traits found')
 
@@ -283,31 +279,17 @@ async function main() {
         include: { traits: { include: { traitCategory: true } } },
     })
 
-    const bgTraits = TraitCategoriesWithTraits.find(
-        (tc) => tc.name === 'Background',
-    )?.traits
+    const bgTraits = TraitCategoriesWithTraits.find((tc) => tc.name === 'Background')?.traits
 
-    const eyeTraits = TraitCategoriesWithTraits.find(
-        (tc) => tc.name === 'Eyes',
-    )?.traits
+    const eyeTraits = TraitCategoriesWithTraits.find((tc) => tc.name === 'Eyes')?.traits
 
-    const earTraits = TraitCategoriesWithTraits.find(
-        (tc) => tc.name === 'Ears',
-    )?.traits
+    const earTraits = TraitCategoriesWithTraits.find((tc) => tc.name === 'Ears')?.traits
 
-    const bodyTraits = TraitCategoriesWithTraits.find(
-        (tc) => tc.name === 'Body',
-    )?.traits
+    const bodyTraits = TraitCategoriesWithTraits.find((tc) => tc.name === 'Body')?.traits
 
-    if (!bgTraits || !eyeTraits || !earTraits || !bodyTraits)
-        throw Error('No traits found')
+    if (!bgTraits || !eyeTraits || !earTraits || !bodyTraits) throw Error('No traits found')
 
-    const traitsToConnect = [
-        bgTraits[0],
-        bodyTraits[0],
-        eyeTraits[0],
-        earTraits[0],
-    ]
+    const traitsToConnect = [bgTraits[0], bodyTraits[0], eyeTraits[0], earTraits[0]]
     const traitsToConnect2 = [
         bgTraits[1],
         bodyTraits[1],
@@ -327,12 +309,7 @@ async function main() {
         earTraits[0], // ears
     ]
 
-    const traitsToConnectArr = [
-        traitsToConnect,
-        traitsToConnect2,
-        traitsToConnect3,
-        traitsToConnect4,
-    ]
+    const traitsToConnectArr = [traitsToConnect, traitsToConnect2, traitsToConnect3, traitsToConnect4]
 
     for (const [i, traits] of traitsToConnectArr.entries()) {
         const member = i % 2 === 0 ? brenner : nir

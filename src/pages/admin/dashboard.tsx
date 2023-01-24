@@ -52,18 +52,13 @@ const Org: NextPage = () => {
                                     {/* Start left column area */}
                                     <div className="relative h-full">
                                         <div className="flex flex-col">
-                                            <div className="text-4xl font-bold">
-                                                Admin
-                                            </div>
-                                            <div className="mt-4 mb-2 text-3xl font-bold">
-                                                things
-                                            </div>
+                                            <div className="text-4xl font-bold">Admin</div>
+                                            <div className="mt-4 mb-2 text-3xl font-bold">things</div>
                                             {/* <Projects /> */}
                                             <button
                                                 onClick={() =>
                                                     copyS3Files.mutateAsync({
-                                                        projectSlug:
-                                                            'llama-pfp',
+                                                        projectSlug: 'llama-pfp',
                                                     })
                                                 }
                                                 className="btn-primary"
@@ -80,9 +75,7 @@ const Org: NextPage = () => {
                                 <div className="h-full py-6 px-4 sm:px-6 lg:px-8">
                                     {/* Start main area*/}
                                     <div className="relative h-full">
-                                        <div className="text-4xl font-bold">
-                                            Members
-                                        </div>
+                                        <div className="text-4xl font-bold">Members</div>
                                     </div>
                                     {/* End main area */}
                                 </div>

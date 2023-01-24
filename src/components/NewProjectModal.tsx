@@ -28,12 +28,7 @@ export default function NewProjectModal({
 
     return (
         <Transition.Root show={open} as={Fragment}>
-            <Dialog
-                as="div"
-                className="relative z-10"
-                initialFocus={cancelButtonRef}
-                onClose={setOpen}
-            >
+            <Dialog as="div" className="relative z-10" initialFocus={cancelButtonRef} onClose={setOpen}>
                 <Transition.Child
                     as={Fragment}
                     enter="ease-out duration-300"
@@ -60,10 +55,7 @@ export default function NewProjectModal({
                             <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-black px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                                 <div>
                                     <div className="mt-3 text-center">
-                                        <Dialog.Title
-                                            as="h3"
-                                            className="text-lg font-medium leading-6"
-                                        >
+                                        <Dialog.Title as="h3" className="text-lg font-medium leading-6">
                                             Create New Project
                                         </Dialog.Title>
                                         <div className="mt-2">

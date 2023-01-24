@@ -21,8 +21,7 @@ export const trpc = createTRPCNext<AppRouter>({
                 loggerLink({
                     enabled: (opts) =>
                         process.env.NODE_ENV === 'development' ||
-                        (opts.direction === 'down' &&
-                            opts.result instanceof Error),
+                        (opts.direction === 'down' && opts.result instanceof Error),
                 }),
                 httpBatchLink({
                     url: `${getBaseUrl()}/api/trpc`,
@@ -38,15 +37,10 @@ export const trpc = createTRPCNext<AppRouter>({
                 defaultOptions: {
                     queries: {
                         retry: (failureCount, error) => {
-                            const rerouteCodes = [
-                                'UNAUTHORIZED',
-                                'NOT_FOUND',
-                                'FORBIDDEN',
-                            ]
+                            const rerouteCodes = ['UNAUTHORIZED', 'NOT_FOUND', 'FORBIDDEN']
 
                             if (error instanceof TRPCClientError) {
-                                if (rerouteCodes.includes(error.data.code))
-                                    Router.push('/')
+                                if (rerouteCodes.includes(error.data.code)) Router.push('/')
                             }
                             return failureCount < 3
                         },

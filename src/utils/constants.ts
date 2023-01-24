@@ -3,8 +3,7 @@ export const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 export const POCKET_NETWORK_API_KEY = process.env.POCKET_NETWORK_API_KEY
 export const POCKET_NETWORK_ID = process.env.POCKET_NETWORK_ID
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID
-export const ALCHEMY_PROJECT_ID =
-    process.env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID || ''
+export const ALCHEMY_PROJECT_ID = process.env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID || ''
 
 // Other API Keys
 export const ALCHEMY_NOTIFY_TOKEN = process.env.ALCHEMY_NOTIFY_TOKEN
@@ -16,14 +15,11 @@ export const EVENT_FORWARDER_AUTH_TOKEN_HEADER = 'x-event-forwarder-auth-token'
 export const METABOT_BASE_API_URL = process.env.METABOT_BASE_API_URL
 export const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL
 export const VALIDATOR_PRIVATE_KEY = process.env.VALIDATOR_PRIVATE_KEY
-export const THE_METAGAME_ETH_ADDRESS =
-    '0x902A37155438982884ca26A5DBccf73f5ae8194b'
+export const THE_METAGAME_ETH_ADDRESS = '0x902A37155438982884ca26A5DBccf73f5ae8194b'
 
 // Datastore constants
-export const METABOT_DB_CONNECTION_STRING =
-    process.env.METABOT_DB_CONNECTION_STRING
-export const EVM_TRANSLATOR_CONNECTION_STRING =
-    process.env.EVM_TRANSLATOR_CONNECTION_STRING
+export const METABOT_DB_CONNECTION_STRING = process.env.METABOT_DB_CONNECTION_STRING
+export const EVM_TRANSLATOR_CONNECTION_STRING = process.env.EVM_TRANSLATOR_CONNECTION_STRING
 
 export const INFURA_IPFS_PROJECT_ID = process.env.INFURA_IPFS_PROJECT_ID
 export const INFURA_IPFS_SECRET = process.env.INFURA_IPFS_SECRET
@@ -32,16 +28,13 @@ export const INFURA_IPFS_SECRET_HEADER = `x-ipfs-project-secret`
 
 // Logging
 export const DATADOG_API_KEY = process.env.DATADOG_API_KEY
-export const DATADOG_RUM_APPLICATION_ID =
-    process.env.NEXT_PUBLIC_DATADOG_RUM_APPLICATION_ID
-export const DATADOG_RUM_CLIENT_TOKEN =
-    process.env.NEXT_PUBLIC_DATADOG_RUM_CLIENT_TOKEN
+export const DATADOG_RUM_APPLICATION_ID = process.env.NEXT_PUBLIC_DATADOG_RUM_APPLICATION_ID
+export const DATADOG_RUM_CLIENT_TOKEN = process.env.NEXT_PUBLIC_DATADOG_RUM_CLIENT_TOKEN
 export const DATADOG_RUM_ENV = process.env.NEXT_PUBLIC_DATADOG_RUM_ENV
 
 // Prod vs Dev constants
 export const isProdEnv = process.env.NODE_ENV === 'production'
-export const NETWORK =
-    process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() || 'goerli'
+export const NETWORK = process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() || 'goerli'
 export const networkStrings = getNetworkString(NETWORK)
 
 export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID
@@ -49,11 +42,9 @@ export const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET
 export const DB_REQUEST_TOKEN = process.env.DB_REQUEST_TOKEN
 
 export const MONGOOSE_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING
-export const NFT_METADATA_CONNECTION_STRING =
-    process.env.NFT_METADATA_CONNECTION_STRING
+export const NFT_METADATA_CONNECTION_STRING = process.env.NFT_METADATA_CONNECTION_STRING
 
-export const NOMAD_WHITEHAT_CONTRACT_ADDRESS =
-    process.env.NOMAD_WHITEHAT_CONTRACT_ADDRESS
+export const NOMAD_WHITEHAT_CONTRACT_ADDRESS = process.env.NOMAD_WHITEHAT_CONTRACT_ADDRESS
 export const LOGBOOK_CONTRACT_ADDRESS = process.env.LOGBOOK_CONTRACT_ADDRESS
 export const LLAMA_PFP_CONTRACT_ADDRESS = process.env.LLAMA_PFP_CONTRACT_ADDRESS
 

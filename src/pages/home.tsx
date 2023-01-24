@@ -26,12 +26,7 @@ const Home: NextPage = () => {
     }
 
     if (error) {
-        return (
-            <NextError
-                title={error.message}
-                statusCode={error.data?.httpStatus ?? 500}
-            />
-        )
+        return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
 
     if (status !== 'success') {
@@ -42,29 +37,22 @@ const Home: NextPage = () => {
         const invitations = user?.invitations || []
         return invitations.length > 0 ? (
             <div className="flex flex-col items-center gap-2">
-                {invitations.map(
-                    ({ role, organization, organizationId, status }) => {
-                        return status === 'PENDING' ? (
-                            <div
-                                key={`${organizationId}_${role}`}
-                                className="flex items-center gap-2"
-                            >
-                                <div className="text-lg">
-                                    {organization.name}
-                                </div>
-                                <OldButton
-                                    text="Accept Invitation"
-                                    onClick={() =>
-                                        mutation.mutate({
-                                            organizationId,
-                                            role,
-                                        })
-                                    }
-                                />
-                            </div>
-                        ) : null
-                    },
-                )}
+                {invitations.map(({ role, organization, organizationId, status }) => {
+                    return status === 'PENDING' ? (
+                        <div key={`${organizationId}_${role}`} className="flex items-center gap-2">
+                            <div className="text-lg">{organization.name}</div>
+                            <OldButton
+                                text="Accept Invitation"
+                                onClick={() =>
+                                    mutation.mutate({
+                                        organizationId,
+                                        role,
+                                    })
+                                }
+                            />
+                        </div>
+                    ) : null
+                })}
             </div>
         ) : (
             <></>
@@ -76,11 +64,7 @@ const Home: NextPage = () => {
         return organizations.length > 0 ? (
             <div>
                 {organizations.map(({ name, slug }) => (
-                    <Link
-                        className="block text-lg hover:text-teal-200"
-                        key={slug}
-                        href={`/org/${slug}`}
-                    >
+                    <Link className="block text-lg hover:text-teal-200" key={slug} href={`/org/${slug}`}>
                         {name}
                     </Link>
                 ))}
@@ -99,20 +83,14 @@ const Home: NextPage = () => {
             </Head>
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-black to-black">
                 <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-                    <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-                        Home
-                    </h1>
+                    <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">Home</h1>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
                         <h3 className="text-2xl font-bold">Organizations</h3>
                         <Organizations />
                         <h3 className="text-2xl font-bold"></h3>
                         <Invitations />
                     </div>
-                    <OldButton
-                        text="Log Out"
-                        onClick={logout}
-                        type={ButtonType.Secondary}
-                    />
+                    <OldButton text="Log Out" onClick={logout} type={ButtonType.Secondary} />
                 </div>
             </main>
         </>

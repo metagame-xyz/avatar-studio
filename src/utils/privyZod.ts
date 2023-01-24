@@ -51,41 +51,29 @@ export const discordSchema = z.object({
     email: z.string().nullable(),
 })
 
-export const emailWithMetadataSchema = linkMetadataSchema
-    .extend(emailSchema.shape)
-    .extend({
-        type: z.literal('email'),
-    })
+export const emailWithMetadataSchema = linkMetadataSchema.extend(emailSchema.shape).extend({
+    type: z.literal('email'),
+})
 
-export const phoneWithMetadataSchema = linkMetadataSchema
-    .extend(phoneSchema.shape)
-    .extend({
-        type: z.literal('phone'),
-    })
+export const phoneWithMetadataSchema = linkMetadataSchema.extend(phoneSchema.shape).extend({
+    type: z.literal('phone'),
+})
 
-export const walletWithMetadataSchema = linkMetadataSchema
-    .extend(walletSchema.shape)
-    .extend({
-        type: z.literal('wallet'),
-    })
+export const walletWithMetadataSchema = linkMetadataSchema.extend(walletSchema.shape).extend({
+    type: z.literal('wallet'),
+})
 
-export const googleOAuthWithMetadataSchema = linkMetadataSchema
-    .extend(googleSchema.shape)
-    .extend({
-        type: z.literal('google_oauth'),
-    })
+export const googleOAuthWithMetadataSchema = linkMetadataSchema.extend(googleSchema.shape).extend({
+    type: z.literal('google_oauth'),
+})
 
-export const twitterOAuthWithMetadataSchema = linkMetadataSchema
-    .extend(twitterSchema.shape)
-    .extend({
-        type: z.literal('twitter_oauth'),
-    })
+export const twitterOAuthWithMetadataSchema = linkMetadataSchema.extend(twitterSchema.shape).extend({
+    type: z.literal('twitter_oauth'),
+})
 
-export const discordOAuthWithMetadataSchema = linkMetadataSchema
-    .extend(discordSchema.shape)
-    .extend({
-        type: z.literal('discord_oauth'),
-    })
+export const discordOAuthWithMetadataSchema = linkMetadataSchema.extend(discordSchema.shape).extend({
+    type: z.literal('discord_oauth'),
+})
 
 export const privyUserZ = z.object({
     id: z.string(),

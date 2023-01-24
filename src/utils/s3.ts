@@ -8,10 +8,7 @@ import type { TraitWithCategory } from './types'
 const S3FoldersSchema = z.record(z.array(z.string()))
 type S3Folders = z.infer<typeof S3FoldersSchema>
 
-export async function getTraitCategoriesAndNames(
-    aws: typeof AWS,
-    projectSlug: string,
-): Promise<S3Folders> {
+export async function getTraitCategoriesAndNames(aws: typeof AWS, projectSlug: string): Promise<S3Folders> {
     const s3 = new aws.S3()
     const result: S3Folders = {}
 
@@ -62,10 +59,7 @@ export const getFromS3 = async (
         })
     }
 
-    const traitCategoriesData = await getTraitCategoriesAndNames(
-        aws,
-        projectSlug,
-    )
+    const traitCategoriesData = await getTraitCategoriesAndNames(aws, projectSlug)
 
     const fileNameToName = (fileName: string): string => {
         return fileName.replace(/_/g, ' ')
@@ -76,9 +70,7 @@ export const getFromS3 = async (
     const traitCategories: TraitCategory[] = []
     const traits: TraitWithCategory[] = []
 
-    for (const [traitCategoryData, traitNameList] of Object.entries(
-        traitCategoriesData,
-    )) {
+    for (const [traitCategoryData, traitNameList] of Object.entries(traitCategoriesData)) {
         // create trait category
         const traitCategory = await prisma.traitCategory.upsert({
             create: {
@@ -105,8 +97,7 @@ export const getFromS3 = async (
 
         // create traits
         for (const traitName of traitNameList) {
-            const pngUrl =
-                s3FolderUrl + traitCategory.name + '/' + traitName + '.png'
+            const pngUrl = s3FolderUrl + traitCategory.name + '/' + traitName + '.png'
 
             const trait = await prisma.trait.upsert({
                 create: {

@@ -3,28 +3,26 @@ import { z } from 'zod'
 import { publicProcedure, router } from '../trpc'
 
 export const organizationRouter = router({
-    getBySlug: publicProcedure
-        .input(z.string())
-        .query(async ({ ctx, input }) => {
-            try {
-                const data = await ctx.prisma.organization.findUniqueOrThrow({
-                    where: {
-                        slug: input,
-                    },
-                    include: {
-                        admins: { include: { member: true } },
-                        projects: true,
-                    },
-                })
-                return data
-            } catch (error) {
-                console.log('error', error)
-                throw new TRPCError({
-                    code: 'NOT_FOUND',
-                    message: 'Organization not found',
-                })
-            }
-        }),
+    getBySlug: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
+        try {
+            const data = await ctx.prisma.organization.findUniqueOrThrow({
+                where: {
+                    slug: input,
+                },
+                include: {
+                    admins: { include: { member: true } },
+                    projects: true,
+                },
+            })
+            return data
+        } catch (error) {
+            console.log('error', error)
+            throw new TRPCError({
+                code: 'NOT_FOUND',
+                message: 'Organization not found',
+            })
+        }
+    }),
 })
 
 // export const organizationRouter = router({

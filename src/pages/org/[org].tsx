@@ -16,11 +16,7 @@ const Org: NextPage = () => {
     const router = useRouter()
     const slug = router.query.org as string
 
-    const {
-        data: org,
-        error,
-        status,
-    } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
+    const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
 
     const { data: user } = trpc.member.me.useQuery()
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
@@ -29,12 +25,7 @@ const Org: NextPage = () => {
     const isOrgAdmin = user?.organizations?.find((o) => o.id == org?.id)
 
     if (error) {
-        return (
-            <NextError
-                title={error.message}
-                statusCode={error.data?.httpStatus ?? 500}
-            />
-        )
+        return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
     if (status !== 'success') {
         return <div>Loading...</div>
@@ -48,10 +39,7 @@ const Org: NextPage = () => {
             <div>
                 {projects.map(({ name, slug }) => (
                     <div className="mt-2 flex items-center" key={slug}>
-                        <Link
-                            className="text-lg hover:text-teal-200"
-                            href={`/project/${slug}`}
-                        >
+                        <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}>
                             <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
                             {name}
                         </Link>
@@ -72,11 +60,7 @@ const Org: NextPage = () => {
             </Head>
             <>
                 <div className="relative flex min-h-screen flex-col">
-                    <NewProjectModal
-                        open={openNewProjectModal}
-                        setOpen={setOpenNewProjectModal}
-                        organizationId={id}
-                    />
+                    <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationId={id} />
                     {/* 3 column wrapper */}
                     <div className="mx-auto w-full max-w-7xl flex-grow  lg:flex xl:px-8">
                         {/* Left sidebar & main wrapper */}
@@ -86,24 +70,16 @@ const Org: NextPage = () => {
                                     {/* Start left column area */}
                                     <div className="relative h-full">
                                         <div className="flex flex-col">
-                                            <div className="text-4xl font-bold">
-                                                {name}
-                                            </div>
-                                            <div className="mt-4 mb-2 text-3xl font-bold">
-                                                Avatars
-                                            </div>
+                                            <div className="text-4xl font-bold">{name}</div>
+                                            <div className="mt-4 mb-2 text-3xl font-bold">Avatars</div>
                                             <Projects />
                                             {isOrgAdmin && (
                                                 <OldButton
                                                     text="Create Avatar"
                                                     classNames="mt-4 text-center self-start"
                                                     onClick={() => {
-                                                        setOpenNewProjectModal(
-                                                            true,
-                                                        )
-                                                        console.log(
-                                                            'create avatar',
-                                                        )
+                                                        setOpenNewProjectModal(true)
+                                                        console.log('create avatar')
                                                     }}
                                                 />
                                             )}
@@ -117,9 +93,7 @@ const Org: NextPage = () => {
                                 <div className="h-full py-6 px-4 sm:px-6 lg:px-8">
                                     {/* Start main area*/}
                                     <div className="relative h-full">
-                                        <div className="text-4xl font-bold">
-                                            Members
-                                        </div>
+                                        <div className="text-4xl font-bold">Members</div>
                                     </div>
                                     {/* End main area */}
                                 </div>

@@ -15,9 +15,7 @@ export const slugify = (name: string) => {
     })
 }
 
-export const pfpStateToRequestedTraits = (
-    pfpState: TraitWithEarnedBool[],
-): RequestedTraits =>
+export const pfpStateToRequestedTraits = (pfpState: TraitWithEarnedBool[]): RequestedTraits =>
     pfpState.map((trait) => {
         return { name: trait.name, category: trait.category }
     }) as RequestedTraits
@@ -31,9 +29,7 @@ export const springAnimation = {
 }
 
 export const truncateAddress = (address: string): string =>
-    `0x${address.slice(2, 6).toUpperCase()}...${address
-        .slice(-4)
-        .toUpperCase()}`
+    `0x${address.slice(2, 6).toUpperCase()}...${address.slice(-4).toUpperCase()}`
 
 export const hashTraits = (traits: TraitWithEarnedBool[]): string => {
     const traitString = traits
@@ -57,9 +53,7 @@ export const IsNewComboAllowed = (
     // replace the trait for the category of the newTrait
     const newPfpState = pfpState
         .filter((trait) => !trait.isModifiable)
-        .map((trait) =>
-            trait.category === newTrait.category ? newTrait : trait,
-        )
+        .map((trait) => (trait.category === newTrait.category ? newTrait : trait))
 
     const combo: Record<string, string> = {}
     for (const trait of newPfpState) {

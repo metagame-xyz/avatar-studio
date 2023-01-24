@@ -19,13 +19,7 @@ type PfpPreviewProps = {
     openSeaLink?: string | null
 }
 
-const PfpPreview = ({
-    pfpState,
-    className,
-    mintStatus,
-    txHash = '',
-    openSeaLink = '',
-}: PfpPreviewProps) => {
+const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink = '' }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     const { data: user } = trpc.member.me.useQuery()
 
@@ -71,9 +65,7 @@ const PfpPreview = ({
     return (
         <motion.div
             layout="position"
-            className={`mx-auto grid w-4/5 max-w-[650px] content-center gap-y-8 ${
-                className ? className : ''
-            }`}
+            className={`mx-auto grid w-4/5 max-w-[650px] content-center gap-y-8 ${className ? className : ''}`}
             transition={{ springAnimation }}
         >
             <div className="relative col-span-1 mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-charcoal">
@@ -120,11 +112,7 @@ const PfpPreview = ({
                                                     mass: 1,
                                                 }}
                                             >
-                                                <Icon
-                                                    className="ml-3"
-                                                    image={upperRightArrow}
-                                                    size={0}
-                                                />
+                                                <Icon className="ml-3" image={upperRightArrow} size={0} />
                                             </motion.span>
                                         </Link>
                                     </motion.div>
@@ -173,15 +161,7 @@ const PfpPreview = ({
                     </div>
                 )}
                 {pfpState.map(({ name, category, pngUrl, zIndex }) => {
-                    return (
-                        <Image
-                            key={name}
-                            alt={`${name} ${category}`}
-                            src={pngUrl}
-                            style={{ zIndex }}
-                            fill
-                        />
-                    )
+                    return <Image key={name} alt={`${name} ${category}`} src={pngUrl} style={{ zIndex }} fill />
                 })}
             </div>
             <div className="mx-auto flex items-center gap-5">
@@ -207,10 +187,7 @@ const PfpPreview = ({
                         // onClick={createImageDownload} // TODO
                     >
                         <ArrowDownTrayIcon className="w-5" />
-                        Download{' '}
-                        <span className="text-sm font-light text-gray-400">
-                            PNG
-                        </span>
+                        Download <span className="text-sm font-light text-gray-400">PNG</span>
                     </button>
                 )}
             </div>

@@ -321,18 +321,14 @@ export const llamaPfpABI = [
         type: 'function',
     },
     {
-        inputs: [
-            { internalType: 'address', name: '_validSigner', type: 'address' },
-        ],
+        inputs: [{ internalType: 'address', name: '_validSigner', type: 'address' }],
         name: 'setValidSigner',
         outputs: [],
         stateMutability: 'nonpayable',
         type: 'function',
     },
     {
-        inputs: [
-            { internalType: 'bytes4', name: 'interfaceId', type: 'bytes4' },
-        ],
+        inputs: [{ internalType: 'bytes4', name: 'interfaceId', type: 'bytes4' }],
         name: 'supportsInterface',
         outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
         stateMutability: 'view',
@@ -364,9 +360,7 @@ export const llamaPfpABI = [
         type: 'function',
     },
     {
-        inputs: [
-            { internalType: 'address', name: 'newOwner', type: 'address' },
-        ],
+        inputs: [{ internalType: 'address', name: 'newOwner', type: 'address' }],
         name: 'transferOwnership',
         outputs: [],
         stateMutability: 'nonpayable',

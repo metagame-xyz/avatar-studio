@@ -44,8 +44,7 @@ const TraitImage = ({
         <div className="w-28">
             <button
                 className={`        group relative h-28 w-28 overflow-hidden rounded-md bg-ui-charcoal ${
-                    selected &&
-                    'bg-none outline outline-2 outline-offset-2 outline-teal-400'
+                    selected && 'bg-none outline outline-2 outline-offset-2 outline-teal-400'
                 } ${className}`}
                 disabled={(!earned && earned !== null) || disabled}
                 onClick={() => updatePfpState(trait)}

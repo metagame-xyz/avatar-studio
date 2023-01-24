@@ -2,11 +2,7 @@ import { hashMessage } from '@ethersproject/hash'
 import type { Account } from '@prisma/client'
 import { recoverAddress } from 'ethers/lib/utils'
 import { hashTraits } from 'utils'
-import {
-    getEarnedTraits,
-    getMemberWithProject,
-    getNetworkName,
-} from 'utils/prisma'
+import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
 import type { TraitWithEarnedBool } from 'utils/types'
 import { AddressZ, requestedTraitsSchema } from 'utils/types'
@@ -14,94 +10,84 @@ import { z } from 'zod'
 import { protectedProcedure, publicProcedure, router } from '../trpc'
 
 export const memberRouter = router({
-    getByDID: publicProcedure
-        .input(z.object({ id: z.string() }))
-        .query(async ({ ctx, input }) => {
-            return ctx.prisma.user.findUnique({
-                where: {
-                    privyDID: input.id,
+    getByDID: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+        return ctx.prisma.user.findUnique({
+            where: {
+                privyDID: input.id,
+            },
+        })
+    }),
+    createOrUpdate: protectedProcedure.input(z.object({ privyUser: privyUserZ })).mutation(async ({ ctx, input }) => {
+        const { privyUser } = input
+
+        // remove chainId and walletType keys if they exist, lowercase address
+        const linkedAccountsClean = privyUser.linkedAccounts.map((account) => {
+            if (account.type !== 'wallet') return account
+
+            account.address = account.address.toLowerCase()
+
+            delete account.chainId
+            delete account.walletType
+
+            return account
+        })
+
+        if (ctx.session.userId !== privyUser.id) {
+            throw new Error('User ID does not match')
+        }
+
+        const user = await ctx.prisma.user.upsert({
+            create: {
+                email: privyUser.email?.address,
+                address: privyUser.wallet?.address.toLowerCase(),
+                privyDID: privyUser.id,
+                accounts: {
+                    create: [...linkedAccountsClean],
                 },
-            })
-        }),
-    createOrUpdate: protectedProcedure
-        .input(z.object({ privyUser: privyUserZ }))
-        .mutation(async ({ ctx, input }) => {
-            const { privyUser } = input
+            },
+            update: {
+                address: privyUser.wallet?.address.toLowerCase(),
+                email: privyUser.email?.address,
+            },
+            where: {
+                privyDID: privyUser.id,
+            },
+            include: {
+                accounts: true,
+            },
+        })
 
-            // remove chainId and walletType keys if they exist, lowercase address
-            const linkedAccountsClean = privyUser.linkedAccounts.map(
-                (account) => {
-                    if (account.type !== 'wallet') return account
+        const existingPrivyAccounts = user.accounts
 
-                    account.address = account.address.toLowerCase()
+        // merge new PrivyAccounts with existing ones by type
+        const mergedPrivyAccounts = linkedAccountsClean.map((newAccount) => {
+            const existingAccount = existingPrivyAccounts.find((a) => a.type === newAccount.type)
 
-                    delete account.chainId
-                    delete account.walletType
+            if (!existingAccount) return newAccount as Account
 
-                    return account
-                },
-            )
+            return {
+                ...existingAccount,
+                ...newAccount,
+            } as Account
+        })
 
-            if (ctx.session.userId !== privyUser.id) {
-                throw new Error('User ID does not match')
-            }
-
-            const user = await ctx.prisma.user.upsert({
+        // loop through mergedPrivyAccounts and upsert into the DB
+        // only doing a loop instead of createMany bc of sqlLite limitations
+        for (const account of mergedPrivyAccounts) {
+            await ctx.prisma.account.upsert({
                 create: {
-                    email: privyUser.email?.address,
-                    address: privyUser.wallet?.address.toLowerCase(),
-                    privyDID: privyUser.id,
-                    accounts: {
-                        create: [...linkedAccountsClean],
-                    },
+                    ...account,
+                    userId: user.id,
                 },
                 update: {
-                    address: privyUser.wallet?.address.toLowerCase(),
-                    email: privyUser.email?.address,
+                    ...account,
                 },
                 where: {
-                    privyDID: privyUser.id,
-                },
-                include: {
-                    accounts: true,
+                    id: account.id || '',
                 },
             })
-
-            const existingPrivyAccounts = user.accounts
-
-            // merge new PrivyAccounts with existing ones by type
-            const mergedPrivyAccounts = linkedAccountsClean.map(
-                (newAccount) => {
-                    const existingAccount = existingPrivyAccounts.find(
-                        (a) => a.type === newAccount.type,
-                    )
-
-                    if (!existingAccount) return newAccount as Account
-
-                    return {
-                        ...existingAccount,
-                        ...newAccount,
-                    } as Account
-                },
-            )
-
-            // loop through mergedPrivyAccounts and upsert into the DB
-            // only doing a loop instead of createMany bc of sqlLite limitations
-            for (const account of mergedPrivyAccounts) {
-                await ctx.prisma.account.upsert({
-                    create: {
-                        ...account,
-                        userId: user.id,
-                    },
-                    update: {
-                        ...account,
-                    },
-                    where: {
-                        id: account.id || '',
-                    },
-                })
-            }
-        }),
+        }
+    }),
     me: protectedProcedure.query(async ({ ctx }) => {
         const member = await ctx.prisma.user.findUniqueOrThrow({
             where: {
@@ -145,15 +131,14 @@ export const memberRouter = router({
 
             if (!address) return null
 
-            const orgInvite =
-                await ctx.prisma.organizationInvitation.findFirstOrThrow({
-                    where: {
-                        status: 'PENDING',
-                        inviteeAddress: address,
-                        organizationId: input.organizationId,
-                        role: input.role,
-                    },
-                })
+            const orgInvite = await ctx.prisma.organizationInvitation.findFirstOrThrow({
+                where: {
+                    status: 'PENDING',
+                    inviteeAddress: address,
+                    organizationId: input.organizationId,
+                    role: input.role,
+                },
+            })
 
             const [user] = await ctx.prisma.$transaction([
                 ctx.prisma.user.update({
@@ -186,16 +171,10 @@ export const memberRouter = router({
             return user
         }),
     // get all the traits a user has achieved
-    traitsAchieved: protectedProcedure
-        .input(z.object({ projectSlug: z.string() }))
-        .query(async ({ ctx, input }) => {
-            const member = await getMemberWithProject(
-                ctx.prisma,
-                ctx.session.userId,
-                input.projectSlug,
-            )
-            return getEarnedTraits(member)
-        }),
+    traitsAchieved: protectedProcedure.input(z.object({ projectSlug: z.string() })).query(async ({ ctx, input }) => {
+        const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug)
+        return getEarnedTraits(member)
+    }),
 
     nftMetadata: protectedProcedure
         .input(z.object({ projectSlug: z.string(), chainName: z.string() }))
@@ -204,12 +183,7 @@ export const memberRouter = router({
             const network = getNetworkName(input.chainName)
             // get the latest version of the user's nftMetadata for the project
 
-            const member = await getMemberWithProject(
-                ctx.prisma,
-                ctx.session.userId,
-                input.projectSlug,
-                network,
-            )
+            const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
 
             if (!member.nftMetadata[0]) throw new Error('No NFT metadata found')
 
@@ -254,18 +228,12 @@ export const memberRouter = router({
                     input.signature,
                 ),
             )
-            const member = await getMemberWithProject(
-                ctx.prisma,
-                ctx.session.userId,
-                input.projectSlug,
-                network,
-            )
+            const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
 
             const allTraitsWithEarned = getEarnedTraits(member)
 
             if (!member.address) throw new Error('User address not found')
-            if (member.address !== signerAddress)
-                throw new Error('Invalid signature')
+            if (member.address !== signerAddress) throw new Error('Invalid signature')
 
             const project = member.projects[0]?.project
             if (!project) throw new Error('Project not found')
@@ -275,14 +243,10 @@ export const memberRouter = router({
 
             for (let i = 0; i < requestedTraits.length; i++) {
                 const requestedTrait = requestedTraits[i]
-                const tc = allTraitsWithEarned.find(
-                    (tc) => tc.name === requestedTrait?.category,
-                )
+                const tc = allTraitsWithEarned.find((tc) => tc.name === requestedTrait?.category)
                 if (!tc) throw new Error('Invalid trait category')
 
-                const trait = tc.traits.find(
-                    (t) => t.name === requestedTrait?.name,
-                )
+                const trait = tc.traits.find((t) => t.name === requestedTrait?.name)
                 if (!trait) throw new Error('Invalid trait')
 
                 if (!trait.earned) throw new Error('Trait not earned')
@@ -293,18 +257,12 @@ export const memberRouter = router({
             const existingNftData = member.nftMetadata[0]
             if (!existingNftData) throw new Error('No NFT metadata found')
 
-            const permanentTraitCategories = allTraitsWithEarned
-                .filter((tc) => !tc.isModifiable)
-                .map((tc) => tc.name)
+            const permanentTraitCategories = allTraitsWithEarned.filter((tc) => !tc.isModifiable).map((tc) => tc.name)
 
             if (existingNftData) {
                 // Check if they're trying to change non-modifiable categories: reject
                 for (const requestedTrait of requestedTraits) {
-                    if (
-                        permanentTraitCategories.includes(
-                            requestedTrait.category,
-                        )
-                    ) {
+                    if (permanentTraitCategories.includes(requestedTrait.category)) {
                         throw new Error('Cannot modify non-modifiable trait')
                     }
                 }
@@ -312,11 +270,7 @@ export const memberRouter = router({
                 // check to see if they haven't changed any traits at all
                 if (
                     requestedTraits.every((t) =>
-                        existingNftData.traits.some(
-                            (et) =>
-                                et.name === t.name &&
-                                et.traitCategoryName === t.category,
-                        ),
+                        existingNftData.traits.some((et) => et.name === t.name && et.traitCategoryName === t.category),
                     )
                 ) {
                     throw new Error('No changes made')
@@ -325,24 +279,21 @@ export const memberRouter = router({
 
             // if this is their first time creating nft metadata, make sure they're creating a unique set of non-modifiable traits
             if (!existingNftData) {
-                const usedTraitComboNft =
-                    await ctx.prisma.nftMetadata.findFirst({
-                        where: {
-                            projectSlug,
-                            network,
-                            traitHash: hashTraits(approvedTraits),
-                            // redundant, but just to be safe
-                            NOT: {
-                                userId: member.id,
-                            },
+                const usedTraitComboNft = await ctx.prisma.nftMetadata.findFirst({
+                    where: {
+                        projectSlug,
+                        network,
+                        traitHash: hashTraits(approvedTraits),
+                        // redundant, but just to be safe
+                        NOT: {
+                            userId: member.id,
                         },
-                        include: { member: true },
-                    })
+                    },
+                    include: { member: true },
+                })
 
                 if (usedTraitComboNft) {
-                    throw new Error(
-                        `Trait combo already used by ${usedTraitComboNft.member.firstName}`,
-                    )
+                    throw new Error(`Trait combo already used by ${usedTraitComboNft.member.firstName}`)
                 }
             }
 

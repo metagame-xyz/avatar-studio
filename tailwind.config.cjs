@@ -50,11 +50,9 @@ module.exports = {
                 'fade-in-3': '0.6s ease 0.3s 1 normal forwards running fadeIn',
                 'fade-in-4': '0.6s ease 0.4s 1 normal forwards running fadeIn',
                 'fade-in-5': '0.7s ease 0.5s 1 normal forwards running fadeIn',
-                'fade-in-fast':
-                    '0.1s ease 0.05s 1 normal forwards running fadeIn',
+                'fade-in-fast': '0.1s ease 0.05s 1 normal forwards running fadeIn',
                 tooltip: '0.3s ease 0.05s 1 normal forwards running tooltip',
-                carousel:
-                    '180s linear 0s infinite normal none running carousel',
+                carousel: '180s linear 0s infinite normal none running carousel',
             },
             boxShadow: {
                 glow: '0px 2px 16px 0px rgba(62, 25, 189, 1), 0px 2px 10px 0px rgba(25, 4, 52, 1)',

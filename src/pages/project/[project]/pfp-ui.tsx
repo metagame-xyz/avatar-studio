@@ -4,22 +4,12 @@ import TraitSelectionPanel from 'components/TraitSelectionPanel'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import {
-    isComboAllowed,
-    pfpStateToRequestedTraits,
-    springAnimation,
-} from 'utils/index'
+import { isComboAllowed, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
 import type { CheckResponse, ToastData, TraitWithEarnedBool } from 'utils/types'
 import { AddressZ } from 'utils/types'
-import {
-    useAccount,
-    useContractWrite,
-    usePrepareContractWrite,
-    useSignMessage,
-    useWaitForTransaction,
-} from 'wagmi'
+import { useAccount, useContractWrite, usePrepareContractWrite, useSignMessage, useWaitForTransaction } from 'wagmi'
 
 const PfpUI = () => {
     const router = useRouter()
@@ -31,10 +21,7 @@ const PfpUI = () => {
     const { data: project } = trpc.project.getBySlug.useQuery(projectSlug, {
         enabled: !!projectSlug,
     })
-    const { data: assetData } = trpc.member.traitsAchieved.useQuery(
-        { projectSlug },
-        { enabled: !!projectSlug },
-    )
+    const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
     const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
         {
@@ -77,14 +64,11 @@ const PfpUI = () => {
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [mintEnabled, setMintEnabled] = useState(false)
 
-    const [existingPfpState, setExistingPfpState] = useState<
-        TraitWithEarnedBool[] | null
-    >(null)
+    const [existingPfpState, setExistingPfpState] = useState<TraitWithEarnedBool[] | null>(null)
 
     // set existing pfp state if user has an nft
     useEffect(() => {
-        existingNftMetadata?.traits &&
-            setExistingPfpState(existingNftMetadata?.traits)
+        existingNftMetadata?.traits && setExistingPfpState(existingNftMetadata?.traits)
     }, [existingNftMetadata])
 
     const actionType = hasMintedNFT ? 'Update' : 'Mint'
@@ -98,10 +82,7 @@ const PfpUI = () => {
             let i = 0
             let defaultPfpState = assetData
                 ?.filter((tc) => !tc.isModifiable)
-                .map(
-                    (traitCategory) =>
-                        traitCategory.traits[i] as TraitWithEarnedBool,
-                ) as TraitWithEarnedBool[]
+                .map((traitCategory) => traitCategory.traits[i] as TraitWithEarnedBool) as TraitWithEarnedBool[]
 
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
@@ -114,10 +95,7 @@ const PfpUI = () => {
                     }) as TraitWithEarnedBool[]
 
                 safety++
-                if (safety > 144)
-                    throw new Error(
-                        'Could not find an allowed combo. Call Brenner',
-                    )
+                if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
             }
             console.log('defaultPfpState', defaultPfpState)
             setPfpState(defaultPfpState)
@@ -156,26 +134,16 @@ const PfpUI = () => {
     }, [signError])
 
     // TODO maybe un-hardcode?
-    const contractAddressDirty =
-        chain.name === 'mainnet'
-            ? project?.contractAddress
-            : project?.testContractAddress
+    const contractAddressDirty = chain.name === 'mainnet' ? project?.contractAddress : project?.testContractAddress
 
-    const contractAddress = AddressZ.parse(
-        contractAddressDirty,
-    ) as `0x${string}`
+    const contractAddress = AddressZ.parse(contractAddressDirty) as `0x${string}`
 
     // Minting functions
     const { config } = usePrepareContractWrite({
         address: contractAddress || '0x0000',
         abi: llamaPfpABI,
         functionName: 'mintWithSignature',
-        args: [
-            address as `0x${string}`,
-            metagameSignature?.v,
-            metagameSignature?.r,
-            metagameSignature?.s,
-        ],
+        args: [address as `0x${string}`, metagameSignature?.v, metagameSignature?.r, metagameSignature?.s],
         enabled: pfpState.length === 4,
     })
 
@@ -239,9 +207,7 @@ const PfpUI = () => {
         if (!trait.category) {
             setPfpState([])
         }
-        const updatedState = pfpState.filter(
-            (t) => t.category !== trait.category,
-        )
+        const updatedState = pfpState.filter((t) => t.category !== trait.category)
         setPfpState([...updatedState, trait])
         return
     }
@@ -261,18 +227,13 @@ const PfpUI = () => {
                     <PfpPreview
                         pfpState={pfpState}
                         className="lg:h-[calc(100vh_-_96px)]"
-                        mintStatus={
-                            postMintData?.status === 0 ? 'error' : mintStatus
-                        }
+                        mintStatus={postMintData?.status === 0 ? 'error' : mintStatus}
                         txHash={txHash}
                         openSeaLink={existingNftMetadata?.externalUrl || null}
                     />
                 </motion.div>
 
-                <motion.div
-                    animate={{ x: hideSelectionPanel ? '100%' : '0' }}
-                    transition={springAnimation}
-                >
+                <motion.div animate={{ x: hideSelectionPanel ? '100%' : '0' }} transition={springAnimation}>
                     <TraitSelectionPanel
                         pfpState={pfpState}
                         assetData={assetData}

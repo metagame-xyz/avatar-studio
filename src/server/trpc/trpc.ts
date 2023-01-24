@@ -80,12 +80,10 @@ const isProjectOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     return next({ ctx })
 })
 
-const getNetworkName = (chainName: string) =>
-    env.NODE_ENV === 'production' ? chainName : 'goerli'
+const getNetworkName = (chainName: string) => (env.NODE_ENV === 'production' ? chainName : 'goerli')
 
 const getNetwork = t.middleware(async ({ ctx, next, rawInput }) => {
-    const chainName = ((rawInput as Record<string, unknown>)?.chainName ||
-        'goerli') as string
+    const chainName = ((rawInput as Record<string, unknown>)?.chainName || 'goerli') as string
     return next({
         ctx: {
             ...ctx,
@@ -102,11 +100,5 @@ export const publicProcedure = t.procedure.use(getNetwork)
  * Protected procedure
  **/
 export const protectedProcedure = t.procedure.use(getNetwork).use(isAuthed)
-export const protectedOrgProcedure = t.procedure
-    .use(getNetwork)
-    .use(isAuthed)
-    .use(isOrgAdmin)
-export const protectedProjectProcedure = t.procedure
-    .use(getNetwork)
-    .use(isAuthed)
-    .use(isProjectOrgAdmin)
+export const protectedOrgProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isOrgAdmin)
+export const protectedProjectProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isProjectOrgAdmin)

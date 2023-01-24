@@ -25,11 +25,7 @@ const OldButton = ({
     classNames: string
 }) => {
     return (
-        <button
-            type="button"
-            className={classNamesFn(ButtonTypeClass[type], classNames)}
-            onClick={onClick}
-        >
+        <button type="button" className={classNamesFn(ButtonTypeClass[type], classNames)} onClick={onClick}>
             {text}
         </button>
     )

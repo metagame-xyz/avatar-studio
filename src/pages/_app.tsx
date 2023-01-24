@@ -39,10 +39,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
     }
 
     return (
-        <PrivyProvider
-            appId={env.NEXT_PUBLIC_PRIVY_APP_ID}
-            onSuccess={onLoginSuccess}
-        >
+        <PrivyProvider appId={env.NEXT_PUBLIC_PRIVY_APP_ID} onSuccess={onLoginSuccess}>
             <WagmiConfig client={wagmiClient}>
                 <Navbar />
                 <Component {...pageProps} />

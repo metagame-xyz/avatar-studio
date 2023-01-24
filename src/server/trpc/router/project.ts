@@ -5,29 +5,27 @@ import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
 export const projectRouter = router({
-    getBySlug: publicProcedure
-        .input(z.string())
-        .query(async ({ ctx, input }) => {
-            try {
-                const data = await ctx.prisma.project.findUniqueOrThrow({
-                    where: {
-                        slug: input,
-                    },
-                    include: {
-                        members: { include: { member: true } },
-                        organization: true,
-                        traitCategories: { include: { traits: true } },
-                    },
-                })
-                return data
-            } catch (error) {
-                console.log('error', error)
-                throw new TRPCError({
-                    code: 'NOT_FOUND',
-                    message: 'Project not found',
-                })
-            }
-        }),
+    getBySlug: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
+        try {
+            const data = await ctx.prisma.project.findUniqueOrThrow({
+                where: {
+                    slug: input,
+                },
+                include: {
+                    members: { include: { member: true } },
+                    organization: true,
+                    traitCategories: { include: { traits: true } },
+                },
+            })
+            return data
+        } catch (error) {
+            console.log('error', error)
+            throw new TRPCError({
+                code: 'NOT_FOUND',
+                message: 'Project not found',
+            })
+        }
+    }),
     createNewProject: protectedOrgProcedure
         .input(z.object({ name: z.string(), organizationId: z.number() }))
         .mutation(async ({ ctx, input }) => {
@@ -93,9 +91,7 @@ export const projectRouter = router({
                 },
             })
 
-            const traitsArr = LatestNftMetadataArr.map((nft) =>
-                nft.traits.filter((t) => !t.traitCategory.isModifiable),
-            )
+            const traitsArr = LatestNftMetadataArr.map((nft) => nft.traits.filter((t) => !t.traitCategory.isModifiable))
 
             const usedNonModifiableCombos: Record<string, string>[] = []
             for (const traits of traitsArr) {
