@@ -1,9 +1,30 @@
+import type { Achievement, TraitCategory } from '@prisma/client'
 import { PrismaClient } from '@prisma/client'
+import { hashTraits } from '../src/utils'
+import { getFromS3 } from '../src/utils/s3'
+import type { TraitWithEarnedBool } from '../src/utils/types'
+import { LlamaTier } from '../src/utils/types'
+// import { prisma } from '../src/server/db/client'
+import * as AWS from 'aws-sdk'
+
+import * as dotenv from 'dotenv'
+
+dotenv.config()
+
 const prisma = new PrismaClient()
+
+AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+})
 
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
 const privyDID_1 = 'did:privy:clcqu9l350001m908u2ojo5gc'
 const brennerEmail = 'brenner@themetagame.xyz'
+
+const goerliTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
+const privyDID_2 = 'did:privy:cld99jkny0001jq08q3wrr93p'
+
 async function main() {
     const brenner = await prisma.user.create({
         data: {
@@ -29,6 +50,26 @@ async function main() {
             lastName: 'Spear',
         },
     })
+
+    const nir = await prisma.user.create({
+        data: {
+            address: goerliTestAddress,
+            privyDID: privyDID_2,
+            accounts: {
+                create: [
+                    {
+                        type: 'wallet',
+                        address: goerliTestAddress,
+                        chainType: 'ethereum',
+                        verifiedAt: '2023-01-11T20:23:17.000Z',
+                    },
+                ],
+            },
+            firstName: 'Nir',
+            lastName: 'Kabessa',
+        },
+    })
+
     const brassFactory = await prisma.organization.upsert({
         where: { slug: 'brass-factory-blockchain-club' },
         update: {},
@@ -99,7 +140,229 @@ async function main() {
         },
     })
 
-    // console.log({ brenner, brassFactory, organizations, invitation })
+    for (const member of [brenner, nir]) {
+        await prisma.membersOfProjects.create({
+            data: {
+                projectSlug: llamaPfp.slug,
+                userId: member.id,
+                role: 'MEMBER',
+            },
+        })
+    }
+
+    const llamaLevel = await prisma.achievementCategory.create({
+        data: {
+            projectId: llamaPfp.id,
+            name: 'Llama Level',
+            type: 'LEVEL',
+            description: 'What level you are in Llama DAO',
+            achievements: {
+                create: [
+                    {
+                        name: LlamaTier.Traveler,
+                        level: 1,
+                    },
+                    {
+                        name: LlamaTier.Explorer,
+                        level: 2,
+                    },
+                    {
+                        name: LlamaTier.Mountaineer,
+                        level: 3,
+                    },
+                    {
+                        name: LlamaTier.Rancher,
+                        level: 4,
+                    },
+                ],
+            },
+        },
+        include: {
+            achievements: true,
+        },
+    })
+
+    const achievements = llamaLevel.achievements
+
+    const llamaAchievement = await prisma.memberAchievements.create({
+        data: {
+            userId: brenner.id,
+            achievementId: (achievements[1] as Achievement).id,
+            status: true,
+        },
+    })
+
+    const { traitCategories } = await getFromS3(AWS, prisma, llamaPfp.slug)
+
+    const backgroundCategory = traitCategories.find(
+        (tc) => tc.name === 'Background',
+    ) as TraitCategory
+
+    await prisma.traitCategory.update({
+        where: {
+            projectId_name: {
+                projectId: backgroundCategory.projectId,
+                name: backgroundCategory.name,
+            },
+        },
+        data: {
+            isDefaultAchieved: false,
+            isModifiable: true,
+        },
+    })
+
+    // loop through the categories update the zIndex of the other categories, body=10, eyes=20, ears=21
+    for (const traitCategory of traitCategories) {
+        const zMap = {
+            Background: 0,
+            Body: 10,
+            Eyes: 20,
+            Ears: 21,
+        } as Record<string, number>
+
+        await prisma.traitCategory.update({
+            where: {
+                projectId_name: {
+                    projectId: traitCategory.projectId,
+                    name: traitCategory.name,
+                },
+            },
+            data: {
+                zIndex: zMap[traitCategory.name],
+            },
+        })
+    }
+
+    let TraitCategoriesWithTraits = await prisma.traitCategory.findMany({
+        where: {
+            projectId: llamaPfp.id,
+        },
+        include: { traits: { include: { traitCategory: true } } },
+    })
+
+    const backgroundTraits = TraitCategoriesWithTraits.find(
+        (tc) => tc.name === 'Background',
+    )?.traits
+
+    if (!backgroundTraits) throw Error('No background traits found')
+
+    // 7 backgrounds, ~2 achievements per background
+    for (const [i, trait] of backgroundTraits.entries()) {
+        const levelRequired = Math.floor(i / 2) + 1
+        // const levelLogic = 'GREATER_THAN_OR_EQUAL'
+
+        const achievementsToConnect = achievements
+            .filter((a) => (a?.level || 0) >= levelRequired)
+            .map((a) => ({ id: a?.id }))
+
+        await prisma.trait.update({
+            where: {
+                id: trait.id,
+            },
+            data: {
+                isDefaultAchieved: false,
+                levelRequired: Math.floor(i / 2) + 1,
+                levelLogic: 'GREATER_THAN_OR_EQUAL',
+                levelCategory: {
+                    connect: {
+                        id: llamaLevel.id,
+                    },
+                },
+                achievementsRequired: {
+                    connect: achievementsToConnect,
+                },
+                achievementsRequiredDescription: `Level ${levelRequired} or higher`,
+            },
+        })
+    }
+
+    TraitCategoriesWithTraits = await prisma.traitCategory.findMany({
+        where: {
+            projectId: llamaPfp.id,
+        },
+        include: { traits: { include: { traitCategory: true } } },
+    })
+
+    const bgTraits = TraitCategoriesWithTraits.find(
+        (tc) => tc.name === 'Background',
+    )?.traits
+
+    const eyeTraits = TraitCategoriesWithTraits.find(
+        (tc) => tc.name === 'Eyes',
+    )?.traits
+
+    const earTraits = TraitCategoriesWithTraits.find(
+        (tc) => tc.name === 'Ears',
+    )?.traits
+
+    const bodyTraits = TraitCategoriesWithTraits.find(
+        (tc) => tc.name === 'Body',
+    )?.traits
+
+    if (!bgTraits || !eyeTraits || !earTraits || !bodyTraits)
+        throw Error('No traits found')
+
+    const traitsToConnect = [
+        bgTraits[0],
+        bodyTraits[0],
+        eyeTraits[0],
+        earTraits[0],
+    ]
+    const traitsToConnect2 = [
+        bgTraits[1],
+        bodyTraits[1],
+        eyeTraits[1],
+        earTraits[0], // ears
+    ]
+    const traitsToConnect3 = [
+        bgTraits[2],
+        bodyTraits[0],
+        eyeTraits[0],
+        earTraits[0], // ears
+    ]
+    const traitsToConnect4 = [
+        bgTraits[3],
+        bodyTraits[1],
+        eyeTraits[1],
+        earTraits[0], // ears
+    ]
+
+    const traitsToConnectArr = [
+        traitsToConnect,
+        traitsToConnect2,
+        traitsToConnect3,
+        traitsToConnect4,
+    ]
+
+    for (const [i, traits] of traitsToConnectArr.entries()) {
+        const member = i % 2 === 0 ? brenner : nir
+        const traitsWithEarnedBool = traits?.map((t) => {
+            return {
+                ...t,
+                category: t?.traitCategory.name,
+                zIndex: t?.traitCategory.zIndex,
+                earned: true,
+                isModifiable: t?.traitCategory.isModifiable,
+            } as TraitWithEarnedBool
+        }) as TraitWithEarnedBool[]
+
+        const nftMetaData = await prisma.nftMetadata.create({
+            data: {
+                userId: member.id,
+                projectSlug: llamaPfp.slug,
+                tokenId: (i % 2) + 1,
+                image: 'TODO',
+                name: `${member.firstName}'s Llama`,
+                description: 'TODO',
+                externalUrl: 'TODO',
+                walletAddress: member.address || '',
+                traits: {
+                    connect: traitsWithEarnedBool.map((t) => ({ id: t.id })),
+                },
+                traitHash: hashTraits(traitsWithEarnedBool),
+            },
+        })
+    }
 }
 main()
     .then(async () => {

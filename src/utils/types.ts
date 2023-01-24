@@ -1,0 +1,118 @@
+import type {
+    Achievement,
+    MemberAchievements,
+    MembersOfProjects,
+    NftMetadata,
+    Organization,
+    Project,
+    Trait,
+    TraitCategory,
+    User,
+} from '@prisma/client'
+import { z } from 'zod'
+
+export const toLowercaseFn = (x: string) => x.toLowerCase()
+export const addressRegex = new RegExp(/^0x[a-fA-F0-9]{40}$/)
+export const AddressZ = z.string().regex(addressRegex).transform(toLowercaseFn)
+
+export const requestedTraitsSchema = z.array(
+    z.object({ name: z.string(), category: z.string() }),
+)
+export type RequestedTraits = z.infer<typeof requestedTraitsSchema>
+
+export type CheckResponse = {
+    valid: boolean
+    signature: {
+        r: `0x${string}`
+        s: `0x${string}`
+        _vs: string
+        recoveryParam: number
+        v: number
+        yParityAndS: string
+        compact: string
+    }
+}
+
+export type MintStatus = 'loading' | 'success' | 'error' | 'idle'
+
+export type Status = 'success' | 'error' | 'loading' | 'idle'
+
+export type ToastData = {
+    open: boolean
+    message: string
+    type: Status
+}
+
+export type PfpUpdateRequest = TraitWithEarnedBool[]
+
+export type ProfileIconSizeType = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+
+export type TraitWithEarnedBool = Trait & {
+    earned: boolean
+    category: string
+    zIndex: number
+    isModifiable: boolean
+}
+
+export type TraitCategoryWithTraitsWithEarned = TraitCategory & {
+    traits: TraitWithEarnedBool[]
+}
+
+export type TraitCategoryWitTraits = TraitCategory & {
+    traits: Trait[]
+}
+
+export type TraitWithCategory = Trait & {
+    traitCategory: TraitCategory
+}
+
+export const enum LlamaTier {
+    Traveler = 'Traveler',
+    Explorer = 'Explorer',
+    Mountaineer = 'Mountaineer',
+    Rancher = 'Rancher',
+}
+
+export const traitSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    pngUrl: z.string(),
+    isDefaultAchieved: z.boolean().nullable(),
+    achievementsRequiredDescription: z.string().nullable(),
+    levelLogic: z.string().nullable(),
+    levelRequired: z.number().nullable(),
+    projectId: z.number(),
+    traitCategoryName: z.string(),
+    achievementCategoryId: z.number().nullable(),
+})
+
+export const traitWithEarnedBoolSchema = traitSchema.and(
+    z.object({
+        earned: z.boolean(),
+        category: z.string(),
+        zIndex: z.number(),
+    }),
+)
+
+export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
+
+export type MemberWithAProject = User & {
+    projects: (MembersOfProjects & {
+        project: Project & {
+            traitCategories: (TraitCategory & {
+                traits: Trait[]
+            })[]
+            organization: Organization
+        }
+    })[]
+    achievements: (MemberAchievements & {
+        achievement: Achievement & {
+            traits: Trait[]
+        }
+    })[]
+    nftMetadata: (NftMetadata & {
+        traits: (Trait & {
+            traitCategory: TraitCategory
+        })[]
+    })[]
+}

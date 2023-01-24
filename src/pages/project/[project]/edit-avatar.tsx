@@ -2,7 +2,6 @@ import { type NextPage } from 'next'
 import NextError from 'next/error'
 
 import Head from 'next/head'
-import Image from 'next/image'
 import { useRouter } from 'next/router'
 
 import { trpc } from 'utils/trpc'
@@ -48,11 +47,11 @@ const Project: NextPage = () => {
                             <div>{category.name}</div>
                             <div>{category.zIndex}</div>
                             <div>
-                                Modifiable: {category.modifiable.toString()}
+                                Modifiable: {category.isModifiable.toString()}
                             </div>
                             <div className="grid grid-cols-3 content-evenly  gap-3">
                                 {category.traits.map(
-                                    ({ name, pngUrl, defaultAchieved }) => (
+                                    ({ name, pngUrl, isDefaultAchieved }) => (
                                         <div
                                             key={name}
                                             className="flex flex-col items-center"

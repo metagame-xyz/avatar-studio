@@ -1,5 +1,5 @@
 import { usePrivy } from '@privy-io/react-auth'
-import Button, { ButtonType } from 'components/Button'
+import OldButton, { ButtonType } from 'components/OldButton'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
 import Head from 'next/head'
@@ -52,7 +52,7 @@ const Home: NextPage = () => {
                                 <div className="text-lg">
                                     {organization.name}
                                 </div>
-                                <Button
+                                <OldButton
                                     text="Accept Invitation"
                                     onClick={() =>
                                         mutation.mutate({
@@ -108,7 +108,7 @@ const Home: NextPage = () => {
                         <h3 className="text-2xl font-bold"></h3>
                         <Invitations />
                     </div>
-                    <Button
+                    <OldButton
                         text="Log Out"
                         onClick={logout}
                         type={ButtonType.Secondary}

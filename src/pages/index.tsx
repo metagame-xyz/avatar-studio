@@ -1,5 +1,5 @@
 import { usePrivy } from '@privy-io/react-auth'
-import Button from 'components/Button'
+import OldButton from 'components/OldButton'
 import { type NextPage } from 'next'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -55,7 +55,7 @@ const Home: NextPage = () => {
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <div className="flex flex-col items-center justify-center gap-4">
-                            <Button text="log in" onClick={login} />
+                            <OldButton text="log in" onClick={login} />
                         </div>
                     </div>
                 </div>

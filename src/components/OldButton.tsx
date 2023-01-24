@@ -13,7 +13,7 @@ const ButtonTypeClass = {
         'inline-flex items-center rounded-md border border-transparent bg-[#2D3836] px-4 py-2 text-base font-medium text-teal-50 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1',
 }
 
-const Button = ({
+const OldButton = ({
     text,
     onClick,
     type,
@@ -35,9 +35,9 @@ const Button = ({
     )
 }
 
-Button.defaultProps = {
+OldButton.defaultProps = {
     type: ButtonType.Primary,
     classNames: '',
 }
 
-export default Button
+export default OldButton

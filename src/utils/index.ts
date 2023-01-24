@@ -1,4 +1,6 @@
+import { hashMessage } from '@ethersproject/hash'
 import slugifyFn from 'slugify'
+import type { TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
     return classes.filter(Boolean).join(' ')
@@ -12,11 +14,29 @@ export const slugify = (name: string) => {
     })
 }
 
-// export const getKeys = <T>(obj: Record<string, T>) =>
-//     Object.keys(obj) as Array<keyof T>
+export const cleanPfpStateForSubmission = (pfpState: TraitWithEarnedBool[]) =>
+    pfpState.map((trait) => {
+        return { name: trait.name, category: trait.category }
+    })
 
-// export const getEntries = <T>(obj: Record<string, T>) =>
-//     Object.entries(obj) as Array<[string, T]>
+export const springAnimation = {
+    duration: 0.1,
+    type: 'spring',
+    stiffness: 100,
+    damping: 15,
+    mass: 1,
+}
 
-// export const getValues = <T>(obj: Record<string, T>) =>
-//     Object.values(obj) as Array<T>
+export const truncateAddress = (address: string): string =>
+    `0x${address.slice(2, 6).toUpperCase()}...${address
+        .slice(-4)
+        .toUpperCase()}`
+
+export const hashTraits = (traits: TraitWithEarnedBool[]): string => {
+    const traitString = traits
+        .filter((t) => !t.isModifiable)
+        .map((trait) => `${trait.category}-${trait.name}`)
+        .sort()
+        .join('')
+    return hashMessage(traitString)
+}

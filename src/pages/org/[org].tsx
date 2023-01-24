@@ -8,8 +8,8 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
-import Button from 'components/Button'
 import NewProjectModal from 'components/NewProjectModal'
+import OldButton from 'components/OldButton'
 import { trpc } from 'utils/trpc'
 
 const Org: NextPage = () => {
@@ -94,7 +94,7 @@ const Org: NextPage = () => {
                                             </div>
                                             <Projects />
                                             {isOrgAdmin && (
-                                                <Button
+                                                <OldButton
                                                     text="Create Avatar"
                                                     classNames="mt-4 text-center self-start"
                                                     onClick={() => {

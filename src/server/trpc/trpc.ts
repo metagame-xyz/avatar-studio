@@ -2,6 +2,7 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { z } from 'zod'
 
+import { env } from 'env/server.mjs'
 import { type Context } from './context'
 
 const t = initTRPC.context<Context>().create({
@@ -14,11 +15,6 @@ const t = initTRPC.context<Context>().create({
 export const router = t.router
 
 /**
- * Unprotected procedure
- **/
-export const publicProcedure = t.procedure
-
-/**
  * Reusable middleware to ensure
  * users are logged in
  */
@@ -29,7 +25,9 @@ const isAuthed = t.middleware(({ ctx, next }) => {
     // for some reason, prevents the session type from being null
     // and for some reason, we don't need to pass the prisma client? but I am anyways?
     // return next({ ctx })
-    return next({ ctx: { session: { ...ctx.session }, prisma: ctx.prisma } })
+    return next({
+        ctx: { ...ctx, session: { ...ctx.session }, prisma: ctx.prisma },
+    })
 })
 
 const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
@@ -82,11 +80,33 @@ const isProjectOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     return next({ ctx })
 })
 
+const getNetworkName = (chainName: string) =>
+    env.NODE_ENV === 'production' ? chainName : 'goerli'
+
+const getNetwork = t.middleware(async ({ ctx, next, rawInput }) => {
+    const chainName = ((rawInput as Record<string, unknown>)?.chainName ||
+        'goerli') as string
+    return next({
+        ctx: {
+            ...ctx,
+            network: getNetworkName(chainName),
+        },
+    })
+})
+
+/**
+ * Unprotected procedure
+ **/
+export const publicProcedure = t.procedure.use(getNetwork)
 /**
  * Protected procedure
  **/
-export const protectedProcedure = t.procedure.use(isAuthed)
-export const protectedOrgProcedure = t.procedure.use(isAuthed).use(isOrgAdmin)
+export const protectedProcedure = t.procedure.use(getNetwork).use(isAuthed)
+export const protectedOrgProcedure = t.procedure
+    .use(getNetwork)
+    .use(isAuthed)
+    .use(isOrgAdmin)
 export const protectedProjectProcedure = t.procedure
+    .use(getNetwork)
     .use(isAuthed)
     .use(isProjectOrgAdmin)
