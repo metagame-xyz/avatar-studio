@@ -102,6 +102,7 @@ const PfpUI = () => {
                         traitCategory.traits[i] as TraitWithEarnedBool,
                 ) as TraitWithEarnedBool[]
 
+            let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
                 // create a new combo for defaultPfPState if taken
                 defaultPfpState = assetData
@@ -110,6 +111,12 @@ const PfpUI = () => {
                         i = (i + 1) % traitCategory.traits.length
                         return traitCategory.traits[i] as TraitWithEarnedBool
                     }) as TraitWithEarnedBool[]
+
+                safety++
+                if (safety > 144)
+                    throw new Error(
+                        'Could not find an allowed combo. Call Brenner',
+                    )
             }
             console.log('defaultPfpState', defaultPfpState)
             setPfpState(defaultPfpState)
