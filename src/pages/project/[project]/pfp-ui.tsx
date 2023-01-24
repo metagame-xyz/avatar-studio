@@ -6,7 +6,11 @@ import TraitSelectionPanel from 'components/TraitSelectionPanel'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { cleanPfpStateForSubmission, springAnimation } from 'utils/index'
+import {
+    cleanPfpStateForSubmission,
+    isComboAllowed,
+    springAnimation,
+} from 'utils/index'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
 import type { CheckResponse, ToastData, TraitWithEarnedBool } from 'utils/types'
@@ -38,15 +42,13 @@ const PfpUI = () => {
         { enabled: !!projectSlug && !!chain },
     )
 
-    const { data } = trpc.project.getUsedNftCombos.useQuery(
+    const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
             projectSlug,
             chainName: chain?.name || '',
         },
         { enabled: !!projectSlug && !!chain },
     )
-
-    console.log('data', data)
 
     // TODO
     const checkResponse: CheckResponse = {
@@ -75,33 +77,44 @@ const PfpUI = () => {
     const [txHash, setTxHash] = React.useState<`0x${string}`>()
     const [mintEnabled, setMintEnabled] = React.useState(false)
 
-    const [initialPfpState, setInitialPfpState] = React.useState<
-        TraitWithEarnedBool[]
-    >([])
+    const [existingPfpState, setExistingPfpState] = React.useState<
+        TraitWithEarnedBool[] | null
+    >(null)
 
     React.useEffect(() => {
         existingNftMetadata?.traits &&
-            setInitialPfpState(existingNftMetadata?.traits)
+            setExistingPfpState(existingNftMetadata?.traits)
     }, [existingNftMetadata])
 
     const actionType = hasMintedNFT ? 'Update' : 'Mint'
 
+    // set initial pfpState
     React.useEffect(() => {
         if (existingNftMetadata?.traits && assetData) {
             setPfpState(existingNftMetadata.traits)
         } else if (assetData) {
             console.log('assetData', assetData)
-            const defaultPfpState = assetData
+            let i = 0
+            let defaultPfpState = assetData
                 ?.filter((tc) => !tc.isModifiable)
                 .map(
                     (traitCategory) =>
-                        traitCategory.traits[0] as TraitWithEarnedBool,
+                        traitCategory.traits[i] as TraitWithEarnedBool,
                 ) as TraitWithEarnedBool[]
 
+            while (!isComboAllowed(usedCombos, defaultPfpState)) {
+                // create a new combo for defaultPfPState if taken
+                defaultPfpState = assetData
+                    ?.filter((tc) => !tc.isModifiable)
+                    .map((traitCategory) => {
+                        i = (i + 1) % traitCategory.traits.length
+                        return traitCategory.traits[i] as TraitWithEarnedBool
+                    }) as TraitWithEarnedBool[]
+            }
             console.log('defaultPfpState', defaultPfpState)
             setPfpState(defaultPfpState)
         }
-    }, [assetData, existingNftMetadata?.traits])
+    }, [assetData, existingNftMetadata?.traits, usedCombos])
 
     // Signing transaction (pre-mint & for updating pfp)
     const {
@@ -182,9 +195,9 @@ const PfpUI = () => {
 
     React.useEffect(() => {
         if (mutation.status === 'error') {
-            if (actionType === 'Update') {
-                setPfpState(initialPfpState)
-            }
+            // if (actionType === 'Update') {
+            //     setPfpState(existingPfpState)
+            // }
             triggerErrorToast('Something went wrong. Please try again.')
         }
 
@@ -192,7 +205,7 @@ const PfpUI = () => {
             setMintEnabled(true)
             triggerSuccessToast("We're ready to mint your Llama PFP!")
         }
-    }, [mutation.status, actionType, initialPfpState])
+    }, [mutation.status, actionType, existingPfpState])
 
     const triggerErrorToast = (message: string) => {
         setToast({ message, open: true, type: 'error' })
@@ -252,7 +265,7 @@ const PfpUI = () => {
                     <TraitSelectionPanel
                         pfpState={pfpState}
                         assetData={assetData}
-                        initialPfpState={initialPfpState}
+                        existingPfpState={existingPfpState}
                         updatePfpState={updatePfpState}
                         className="lg:h-[calc(100vh_-_96px)]"
                         actionType={actionType}

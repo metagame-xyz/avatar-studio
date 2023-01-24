@@ -1,7 +1,6 @@
 import type { NftMetadata } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { slugify } from 'utils'
-import type { TraitWithEarnedBool } from 'utils/types'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
@@ -94,33 +93,17 @@ export const projectRouter = router({
                 },
             })
 
-            const traitsWithEarnedBool = LatestNftMetadataArr.map((nft) => {
-                return nft.traits.map((t) => {
-                    return {
-                        ...t,
-                        category: t.traitCategory.name,
-                        zIndex: t.traitCategory.zIndex,
-                        earned: true,
-                        isModifiable: t.traitCategory.isModifiable,
-                    } as TraitWithEarnedBool
-                }) as TraitWithEarnedBool[]
-            })
+            const traitsArr = LatestNftMetadataArr.map((nft) =>
+                nft.traits.filter((t) => !t.traitCategory.isModifiable),
+            )
 
-            const usedNonModifiableCombos: Set<string> = new Set()
-            // const usedNonModifiableCombos: string[] = []
-
-            for (const traitWithEarnedBool of traitsWithEarnedBool) {
-                usedNonModifiableCombos.add(
-                    traitWithEarnedBool
-                        .filter((t) => !t.isModifiable)
-                        .sort((a, b) => a.zIndex - b.zIndex)
-                        .reduce(
-                            (acc, { category, name }) =>
-                                `${acc} ${category}:${name}`,
-                            '',
-                        )
-                        .trim(),
-                )
+            const usedNonModifiableCombos: Record<string, string>[] = []
+            for (const traits of traitsArr) {
+                const obj = {} as Record<string, string>
+                for (const trait of traits) {
+                    obj[trait.traitCategoryName] = trait.name
+                }
+                usedNonModifiableCombos.push(obj)
             }
 
             return usedNonModifiableCombos

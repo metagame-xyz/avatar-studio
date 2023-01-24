@@ -1,4 +1,5 @@
 import { hashMessage } from '@ethersproject/hash'
+import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { TraitWithEarnedBool } from './types'
 
@@ -39,4 +40,44 @@ export const hashTraits = (traits: TraitWithEarnedBool[]): string => {
         .sort()
         .join('')
     return hashMessage(traitString)
+}
+
+export const IsNewComboAllowed = (
+    isCategoryModifiable: boolean,
+    usedCombos: Record<string, string>[] | undefined,
+    pfpState: TraitWithEarnedBool[],
+    newTrait: TraitWithEarnedBool,
+): boolean => {
+    if (!usedCombos) return true
+    if (!newTrait.earned) return false
+    if (isCategoryModifiable) return true
+
+    // replace the trait for the category of the newTrait
+    const newPfpState = pfpState
+        .filter((trait) => !trait.isModifiable)
+        .map((trait) =>
+            trait.category === newTrait.category ? newTrait : trait,
+        )
+
+    const combo: Record<string, string> = {}
+    for (const trait of newPfpState) {
+        combo[trait.category] = trait.name
+    }
+
+    // compare the newPfpState with the usedCombos
+    return !usedCombos.some((usedCombo) => isEqual(combo, usedCombo))
+}
+
+export const isComboAllowed = (
+    usedCombos: Record<string, string>[] | undefined,
+    PfpState: TraitWithEarnedBool[],
+): boolean => {
+    if (!usedCombos) return true
+    const combo: Record<string, string> = {}
+
+    const permanentTraits = PfpState.filter((trait) => !trait.isModifiable)
+    for (const trait of permanentTraits) {
+        combo[trait.category] = trait.name
+    }
+    return !usedCombos.some((usedCombo) => isEqual(combo, usedCombo))
 }

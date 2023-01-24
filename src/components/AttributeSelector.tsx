@@ -1,6 +1,9 @@
 import Title from 'components/Title'
 import TraitImage from 'components/TraitImage'
+import { useRouter } from 'next/router'
+import { trpc } from 'utils/trpc'
 
+import { IsNewComboAllowed } from 'utils'
 import type {
     TraitCategoryWithTraitsWithEarned,
     TraitWithEarnedBool,
@@ -11,7 +14,6 @@ type AttributeSelectorProps = {
     backgroundTrait: TraitWithEarnedBool
     pfpState: TraitWithEarnedBool[]
     updatePfpState: (trait: TraitWithEarnedBool) => void
-    usedNonModifiableCombos?: string[]
 }
 
 const AttributeSelector = ({
@@ -19,30 +21,21 @@ const AttributeSelector = ({
     backgroundTrait,
     pfpState,
     updatePfpState,
-    usedNonModifiableCombos = [],
 }: AttributeSelectorProps) => {
+    const router = useRouter()
+    const projectSlug = router.query.project as string
+
+    // const { chain } = useNetwork() // TODO
+    const chain = { name: 'goerli' }
+    const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
+        {
+            projectSlug,
+            chainName: chain?.name || '',
+        },
+        { enabled: !!projectSlug && !!chain },
+    )
+
     const { name, traits: traitOptions, isModifiable } = traitCategory
-    // Disable already created Llama combos
-    const selectedBodyObject = pfpState.filter((c) => c.name === 'Body')[0]
-    const selectedBodyString = `${selectedBodyObject?.category}:${selectedBodyObject?.name}`
-
-    const selectedEyesObject = pfpState.filter((c) => c.name === 'Eyes')[0]
-    const selectedEyesString = `${selectedEyesObject?.category}:${selectedEyesObject?.name}`
-
-    // TODO
-    const determineIfDisabled = (option: TraitWithEarnedBool): boolean => {
-        if (name === 'Body') {
-            return usedNonModifiableCombos.includes(
-                `Body:${option.name} ${selectedEyesString}`,
-            )
-        }
-        if (name === 'Eyes') {
-            return usedNonModifiableCombos.includes(
-                `${selectedBodyString} Eyes:${option.name}`,
-            )
-        }
-        return option.earned !== false ? false : true
-    }
 
     return (
         <div className="grid">
@@ -88,12 +81,19 @@ const AttributeSelector = ({
                             pfpState.filter((t) => t.name === trait.name)
                                 .length > 0
                         }
-                        disabled={determineIfDisabled(trait)}
+                        disabled={
+                            !IsNewComboAllowed(
+                                isModifiable,
+                                usedCombos,
+                                pfpState,
+                                trait,
+                            )
+                        }
                         disabledMessage={
                             trait.earned === false
                                 ? trait?.achievementsRequiredDescription ||
                                   "Sorry, you haven't unlocked this trait yet."
-                                : 'Sorry, someone else already has that llama!'
+                                : 'Sorry, someone else already has that combo!'
                         }
                         updatePfpState={updatePfpState}
                     />

@@ -19,7 +19,7 @@ type TraitSelectionPanelProps = {
     actionType: 'Mint' | 'Update'
     assetData: TraitCategoryWithTraitsWithEarned[]
     pfpState: TraitWithEarnedBool[]
-    initialPfpState: TraitWithEarnedBool[]
+    existingPfpState: TraitWithEarnedBool[] | null
     updatePfpState: (trait: TraitWithEarnedBool) => void
     signMessage: Function
     userIsSigning: boolean
@@ -34,7 +34,7 @@ const TraitSelectionPanel = ({
     actionType,
     assetData,
     pfpState,
-    initialPfpState,
+    existingPfpState,
     updatePfpState,
     signMessage,
     userIsSigning,
@@ -44,17 +44,17 @@ const TraitSelectionPanel = ({
     mintEnabled,
     className = '',
 }: TraitSelectionPanelProps) => {
-    const checkIfPfpChanged = () => {
-        if (initialPfpState.length !== pfpState.length) return false
+    // const checkIfPfpChanged = () => {
+    //     if (existingPfpState.length !== pfpState.length) return false
 
-        return initialPfpState.every((trait1, index) => {
-            const trait2 = pfpState[index] as TraitWithEarnedBool
-            return (
-                trait1.name === trait2.name &&
-                trait1.category === trait2.category
-            )
-        })
-    }
+    //     return existingPfpState.every((trait1, index) => {
+    //         const trait2 = pfpState[index] as TraitWithEarnedBool
+    //         return (
+    //             trait1.name === trait2.name &&
+    //             trait1.category === trait2.category
+    //         )
+    //     })
+    // }
 
     return (
         <div
@@ -94,7 +94,7 @@ const TraitSelectionPanel = ({
                             <button
                                 className="btn-secondary flex items-center gap-x-2"
                                 onClick={() => {
-                                    resetPfpState(initialPfpState)
+                                    resetPfpState(existingPfpState)
                                 }}
                                 disabled={
                                     actionType === 'Mint'
@@ -122,7 +122,7 @@ const TraitSelectionPanel = ({
                                 <button
                                     className="flex items-center gap-x-2 rounded"
                                     onClick={() => mintFunction?.()}
-                                    disabled={pfpState.length !== 4}
+                                    disabled={false} // TODO
                                 >
                                     {mintStatus === 'loading' ? (
                                         <Loader size="sm" />
@@ -179,7 +179,7 @@ const TraitSelectionPanel = ({
                                 ),
                             })
                         }
-                        disabled={pfpState.length !== 4 || checkIfPfpChanged()}
+                        disabled={false} // TODO
                     >
                         {userIsSigning ? (
                             <Loader size="sm" />
