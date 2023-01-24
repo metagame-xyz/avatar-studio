@@ -13,7 +13,11 @@ import { z } from 'zod'
 
 export const toLowercaseFn = (x: string) => x.toLowerCase()
 export const addressRegex = new RegExp(/^0x[a-fA-F0-9]{40}$/)
-export const AddressZ = z.string().regex(addressRegex).transform(toLowercaseFn)
+export const AddressZ = z
+    .string()
+    .regex(addressRegex)
+    .startsWith('0x')
+    .transform(toLowercaseFn)
 
 export const requestedTraitsSchema = z.array(
     z.object({ name: z.string(), category: z.string() }),

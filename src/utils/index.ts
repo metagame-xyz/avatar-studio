@@ -1,7 +1,7 @@
 import { hashMessage } from '@ethersproject/hash'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
-import type { TraitWithEarnedBool } from './types'
+import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
     return classes.filter(Boolean).join(' ')
@@ -15,10 +15,12 @@ export const slugify = (name: string) => {
     })
 }
 
-export const cleanPfpStateForSubmission = (pfpState: TraitWithEarnedBool[]) =>
+export const pfpStateToRequestedTraits = (
+    pfpState: TraitWithEarnedBool[],
+): RequestedTraits =>
     pfpState.map((trait) => {
         return { name: trait.name, category: trait.category }
-    })
+    }) as RequestedTraits
 
 export const springAnimation = {
     duration: 0.1,

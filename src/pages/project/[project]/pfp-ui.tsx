@@ -1,19 +1,18 @@
-import { useMutation } from '@tanstack/react-query'
-import axios from 'axios'
 import PfpPreview from 'components/PfpPreview'
 import Toast from 'components/Toast'
 import TraitSelectionPanel from 'components/TraitSelectionPanel'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
-import React from 'react'
+import { useEffect, useState } from 'react'
 import {
-    cleanPfpStateForSubmission,
     isComboAllowed,
+    pfpStateToRequestedTraits,
     springAnimation,
 } from 'utils/index'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
 import type { CheckResponse, ToastData, TraitWithEarnedBool } from 'utils/types'
+import { AddressZ } from 'utils/types'
 import {
     useAccount,
     useContractWrite,
@@ -29,6 +28,9 @@ const PfpUI = () => {
     const { address } = useAccount()
     // const { chain } = useNetwork() // TODO
     const chain = { name: 'goerli' }
+    const { data: project } = trpc.project.getBySlug.useQuery(projectSlug, {
+        enabled: !!projectSlug,
+    })
     const { data: assetData } = trpc.member.traitsAchieved.useQuery(
         { projectSlug },
         { enabled: !!projectSlug },
@@ -64,24 +66,23 @@ const PfpUI = () => {
         },
     }
 
-    const [hasMintedNFT, setHasMintedNFT] = React.useState(
-        !!existingNftMetadata,
-    )
-    const [hideSelectionPanel, setHideSelectionPanel] = React.useState(false)
-    const [pfpState, setPfpState] = React.useState<TraitWithEarnedBool[]>([])
-    const [toast, setToast] = React.useState<ToastData>({
+    const [hasMintedNFT, setHasMintedNFT] = useState(!!existingNftMetadata)
+    const [hideSelectionPanel, setHideSelectionPanel] = useState(false)
+    const [pfpState, setPfpState] = useState<TraitWithEarnedBool[]>([])
+    const [toast, setToast] = useState<ToastData>({
         open: false,
         message: '',
         type: 'error',
     })
-    const [txHash, setTxHash] = React.useState<`0x${string}`>()
-    const [mintEnabled, setMintEnabled] = React.useState(false)
+    const [txHash, setTxHash] = useState<`0x${string}`>()
+    const [mintEnabled, setMintEnabled] = useState(false)
 
-    const [existingPfpState, setExistingPfpState] = React.useState<
+    const [existingPfpState, setExistingPfpState] = useState<
         TraitWithEarnedBool[] | null
     >(null)
 
-    React.useEffect(() => {
+    // set existing pfp state if user has an nft
+    useEffect(() => {
         existingNftMetadata?.traits &&
             setExistingPfpState(existingNftMetadata?.traits)
     }, [existingNftMetadata])
@@ -89,7 +90,7 @@ const PfpUI = () => {
     const actionType = hasMintedNFT ? 'Update' : 'Mint'
 
     // set initial pfpState
-    React.useEffect(() => {
+    useEffect(() => {
         if (existingNftMetadata?.traits && assetData) {
             setPfpState(existingNftMetadata.traits)
         } else if (assetData) {
@@ -123,6 +124,15 @@ const PfpUI = () => {
         }
     }, [assetData, existingNftMetadata?.traits, usedCombos])
 
+    const createNftMetadata = trpc.member.createNftMetadata.useMutation({
+        onSuccess: (data) => {
+            console.log('createNftMetadata', data)
+        },
+    })
+
+    const { signature: metagameSignature } = checkResponse || {
+        signature: {},
+    }
     // Signing transaction (pre-mint & for updating pfp)
     const {
         error: signError,
@@ -130,23 +140,34 @@ const PfpUI = () => {
         signMessage,
     } = useSignMessage({
         onSuccess(data) {
-            mutation.mutate({ signature: data })
+            createNftMetadata.mutate({
+                projectSlug,
+                requestedTraits: pfpStateToRequestedTraits(pfpState),
+                chainName: chain?.name || '',
+                signature: data,
+            })
         },
     })
 
-    const { signature: metagameSignature } = checkResponse || {
-        signature: {},
-    }
-
-    React.useEffect(() => {
+    useEffect(() => {
         if (signError) {
             triggerErrorToast('Error signing message.')
         }
     }, [signError])
 
+    // TODO maybe un-hardcode?
+    const contractAddressDirty =
+        chain.name === 'mainnet'
+            ? project?.contractAddress
+            : project?.testContractAddress
+
+    const contractAddress = AddressZ.parse(
+        contractAddressDirty,
+    ) as `0x${string}`
+
     // Minting functions
     const { config } = usePrepareContractWrite({
-        address: '0xc2a7079c589405d31cf0f3473b5be1ca2e6efae1', // test contract (allows 100 mints/address) - test contract with limited mints (0x9Ef619726DcD94354882D06DEd4601edc2f868eb)
+        address: contractAddress || '0x0000',
         abi: llamaPfpABI,
         functionName: 'mintWithSignature',
         args: [
@@ -166,22 +187,7 @@ const PfpUI = () => {
         hash: mintData?.hash,
     })
 
-    const updateMetagameData = async ({
-        signature,
-    }: {
-        signature: `0x${string}`
-    }) => {
-        return axios.post('http://localhost:3001/api/llama/updatePfp', {
-            // TODO
-            llamaUserId: 'A_LLAMA_USER_ID', // TODO
-            requestedLayers: cleanPfpStateForSubmission(pfpState),
-            jwt: 'AN_AUTH_TOKEN', // TODO
-            signature: signature,
-            userAddress: address,
-        })
-    }
-
-    React.useEffect(() => {
+    useEffect(() => {
         if (mintStatus === 'loading') {
             setHideSelectionPanel(true)
             setTxHash(mintData?.hash)
@@ -198,21 +204,19 @@ const PfpUI = () => {
         }
     }, [mintStatus, mintData, postMintData])
 
-    const mutation = useMutation({ mutationFn: updateMetagameData })
-
-    React.useEffect(() => {
-        if (mutation.status === 'error') {
+    useEffect(() => {
+        if (createNftMetadata.status === 'error') {
             // if (actionType === 'Update') {
             //     setPfpState(existingPfpState)
             // }
             triggerErrorToast('Something went wrong. Please try again.')
         }
 
-        if (mutation.status === 'success' && actionType === 'Mint') {
+        if (createNftMetadata.status === 'success' && actionType === 'Mint') {
             setMintEnabled(true)
-            triggerSuccessToast("We're ready to mint your Llama PFP!")
+            triggerSuccessToast("We're ready to mint your NFT")
         }
-    }, [mutation.status, actionType, existingPfpState])
+    }, [createNftMetadata.status, actionType, existingPfpState])
 
     const triggerErrorToast = (message: string) => {
         setToast({ message, open: true, type: 'error' })
@@ -278,7 +282,7 @@ const PfpUI = () => {
                         actionType={actionType}
                         signMessage={signMessage}
                         userIsSigning={userIsSigning}
-                        metagameStatus={mutation.status}
+                        createNftMetadataStatus={createNftMetadata.status}
                         mintEnabled={mintEnabled}
                         mintFunction={mint}
                         mintStatus={mintStatus}

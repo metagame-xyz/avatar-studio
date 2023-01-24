@@ -8,7 +8,7 @@ import Title from 'components/Title'
 import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
 import sparkles from 'public/icons/sparkles.svg'
-import { cleanPfpStateForSubmission, springAnimation } from 'utils/index'
+import { pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import type {
     MintStatus,
     TraitCategoryWithTraitsWithEarned,
@@ -24,7 +24,7 @@ type TraitSelectionPanelProps = {
     signMessage: Function
     userIsSigning: boolean
     mintFunction: Function | undefined
-    metagameStatus: MintStatus
+    createNftMetadataStatus: MintStatus
     mintStatus: MintStatus
     mintEnabled: boolean
     className?: string
@@ -39,7 +39,7 @@ const TraitSelectionPanel = ({
     signMessage,
     userIsSigning,
     mintFunction,
-    metagameStatus,
+    createNftMetadataStatus,
     mintStatus,
     mintEnabled,
     className = '',
@@ -140,16 +140,14 @@ const TraitSelectionPanel = ({
                                 onClick={() =>
                                     signMessage({
                                         message: JSON.stringify(
-                                            cleanPfpStateForSubmission(
-                                                pfpState,
-                                            ),
+                                            pfpStateToRequestedTraits(pfpState),
                                         ),
                                     })
                                 }
                                 disabled={pfpState.length !== 4}
                             >
                                 {userIsSigning ||
-                                metagameStatus === 'loading' ? (
+                                createNftMetadataStatus === 'loading' ? (
                                     <>
                                         {' '}
                                         <Loader size="sm" />
@@ -175,7 +173,7 @@ const TraitSelectionPanel = ({
                         onClick={() =>
                             signMessage({
                                 message: JSON.stringify(
-                                    cleanPfpStateForSubmission(pfpState),
+                                    pfpStateToRequestedTraits(pfpState),
                                 ),
                             })
                         }

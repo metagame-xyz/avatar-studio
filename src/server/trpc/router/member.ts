@@ -238,7 +238,7 @@ export const memberRouter = router({
                 signature: z.string(),
             }),
         )
-        .query(async ({ ctx, input }) => {
+        .mutation(async ({ ctx, input }) => {
             const { requestedTraits, projectSlug, chainName } = input
             const network = getNetworkName(chainName)
 
