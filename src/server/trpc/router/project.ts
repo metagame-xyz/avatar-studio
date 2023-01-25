@@ -47,16 +47,11 @@ export const projectRouter = router({
             const network = ctx.network
             const { projectSlug } = input
 
-            console.log('projectSlug', projectSlug)
-            console.log('network', network)
-
             const data = await ctx.prisma.$queryRaw<
                 NftMetadata[]
             >`SELECT * FROM NftMetadata WHERE projectSlug = ${projectSlug} AND network = ${network}
             GROUP BY userId
             HAVING MAX(timestamp)`
-
-            console.log('data', data)
 
             const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
                 where: { id: { in: data.map((d) => d.id) } },
@@ -73,7 +68,7 @@ export const projectRouter = router({
             const network = ctx.network
             const { projectSlug } = input
 
-            console.log('projectSlug', projectSlug)
+            console.log('ctx.projectSlug', ctx.projectSlug)
             console.log('network', network)
 
             const data = await ctx.prisma.$queryRaw<
@@ -81,8 +76,6 @@ export const projectRouter = router({
             >`SELECT * FROM NftMetadata WHERE projectSlug = ${projectSlug} AND network = ${network}
             GROUP BY userId
             HAVING MAX(timestamp)`
-
-            console.log('data', data)
 
             const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
                 where: { id: { in: data.map((d) => d.id) } },
@@ -101,9 +94,6 @@ export const projectRouter = router({
                 }
                 usedNonModifiableCombos.push(obj)
             }
-
             return usedNonModifiableCombos
-
-            // return LatestNftMetadataArr
         }),
 })

@@ -1,6 +1,7 @@
 import { hashMessage } from '@ethersproject/hash'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
+
 import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {

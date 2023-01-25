@@ -13,6 +13,7 @@ export const serverSchema = z.object({
     PRIVY_APP_SECRET: z.string(),
     AWS_ACCESS_KEY: z.string(),
     AWS_SECRET_ACCESS_KEY: z.string(),
+    VALIDATOR_PRIVATE_KEY: z.string(),
 })
 
 /**

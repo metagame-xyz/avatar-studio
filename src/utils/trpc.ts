@@ -13,6 +13,25 @@ const getBaseUrl = () => {
     return `http://localhost:${process.env.PORT ?? 3000}` // dev SSR should use localhost
 }
 
+const getSlugs = (): Record<string, string | undefined> => {
+    if (typeof window === 'undefined') return {}
+    const path = window.location.pathname
+
+    const projectRegex = new RegExp(`project/([^/]+)(?:/|$).`)
+    const projectslug = path.match(projectRegex)?.[1]
+
+    const orgRegex = new RegExp(`org/([^/]+)(?:/|$).`)
+    const orgslug = path.match(orgRegex)?.[1]
+
+    return { projectslug, orgslug }
+}
+
+// const getNetwork = async () => {
+//     if (typeof window === 'undefined') return ''
+//     const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+//     return chainId // returns as 0x5
+// }
+
 export const trpc = createTRPCNext<AppRouter>({
     config() {
         return {
@@ -27,8 +46,11 @@ export const trpc = createTRPCNext<AppRouter>({
                     url: `${getBaseUrl()}/api/trpc`,
                     async headers() {
                         const accessToken = await getAccessToken()
+                        const slugs = getSlugs()
+                        // const network = await getNetwork()
                         return {
                             Authorization: `Bearer ${accessToken}`,
+                            ...slugs,
                         }
                     },
                 }),

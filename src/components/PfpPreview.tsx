@@ -9,12 +9,13 @@ import opensea from 'public/icons/opensea.svg'
 import upperRightArrow from 'public/icons/upperRightArrow.svg'
 import { springAnimation } from 'utils/index'
 import { trpc } from 'utils/trpc'
-import type { MintStatus, TraitWithEarnedBool } from 'utils/types'
+import type { TraitWithEarnedBool } from 'utils/types'
+import { Status } from 'utils/types'
 
 type PfpPreviewProps = {
     pfpState: TraitWithEarnedBool[]
     className?: string
-    mintStatus: MintStatus
+    mintStatus: Status
     txHash?: string
     openSeaLink?: string | null
 }
@@ -69,7 +70,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink 
             transition={{ springAnimation }}
         >
             <div className="relative col-span-1 mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-charcoal">
-                {(mintStatus === 'loading' || mintStatus === 'success') && (
+                {(mintStatus === Status.loading || mintStatus === Status.success) && (
                     <div className="relative flex h-full w-full items-center justify-center">
                         <motion.div
                             layout
@@ -79,7 +80,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink 
                             transition={{ springAnimation }}
                         >
                             <AnimatePresence>
-                                {mintStatus === 'loading' && (
+                                {mintStatus === Status.loading && (
                                     <motion.div
                                         className="overflow-hidden rounded-full"
                                         initial={{ width: '64px', opacity: 0 }}
@@ -117,7 +118,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink 
                                         </Link>
                                     </motion.div>
                                 )}
-                                {mintStatus === 'success' && (
+                                {mintStatus === Status.success && (
                                     <>
                                         <motion.span
                                             initial={{

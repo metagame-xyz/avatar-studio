@@ -11,6 +11,8 @@ const privy = new PrivyClient(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIV
 
 type CreateContextOptions = {
     verifiedClaims: AuthTokenClaims | null
+    projectSlug: string | null
+    orgSlug: string | null
 }
 
 /** Use this helper for:
@@ -22,6 +24,8 @@ export const createContextInner = async (opts: CreateContextOptions) => {
     return {
         session: opts.verifiedClaims,
         prisma,
+        projectSlug: opts.projectSlug,
+        orgSlug: opts.orgSlug,
     }
 }
 
@@ -33,6 +37,10 @@ export const createContext = async (opts: CreateNextContextOptions) => {
     const { req } = opts
 
     const authToken = req.headers?.authorization?.replace('Bearer ', '')
+    const projectSlug = (req.headers?.projectslug || null) as string | null
+    const orgSlug = (req.headers?.orgslug || null) as string | null
+
+    // console.log('headers', req.headers)
 
     let verifiedClaims: AuthTokenClaims | null = null
 
@@ -42,7 +50,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
         console.log(`Token verification failed with error ${error}.`)
     }
 
-    return await createContextInner({ verifiedClaims })
+    return await createContextInner({ verifiedClaims, projectSlug, orgSlug })
     // Get the session from the server using the unstable_getServerSession wrapper function
     // const session = await getServerAuthSession({ req, res })
 }

@@ -2,6 +2,7 @@ import { hashMessage } from '@ethersproject/hash'
 import type { Account } from '@prisma/client'
 import { recoverAddress } from 'ethers/lib/utils'
 import { hashTraits } from 'utils'
+import { generateMintingSignature } from 'utils/backend'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
 import type { TraitWithEarnedBool } from 'utils/types'
@@ -183,6 +184,8 @@ export const memberRouter = router({
             const network = getNetworkName(input.chainName)
             // get the latest version of the user's nftMetadata for the project
 
+            console.log('ctx.projectSlug', ctx.projectSlug)
+
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
 
             if (!member.nftMetadata[0]) throw new Error('No NFT metadata found')
@@ -233,7 +236,7 @@ export const memberRouter = router({
             const allTraitsWithEarned = getEarnedTraits(member)
 
             if (!member.address) throw new Error('User address not found')
-            if (member.address !== signerAddress) throw new Error('Invalid signature')
+            if (member.address !== signerAddress) throw new Error('Invalid signer')
 
             const project = member.projects[0]?.project
             if (!project) throw new Error('Project not found')
@@ -297,6 +300,13 @@ export const memberRouter = router({
                 }
             }
 
+            // generate signature for the address
+            const contractAddress = network === 'mainnet' ? project.contractAddress : project.testContractAddress
+
+            if (!contractAddress) throw new Error('Contract address not found')
+
+            const signature = await generateMintingSignature(member.address, project.slug, contractAddress, network)
+
             // // generate the multi-layer image using canvas
             // const canvas = createCanvas(2400, 2400)
             // const ctx = canvas.getContext('2d')
@@ -320,7 +330,7 @@ export const memberRouter = router({
             // )
 
             // add a new nftMetadata record
-            const nftMetadata = await ctx.prisma.nftMetadata.create({
+            await ctx.prisma.nftMetadata.create({
                 data: {
                     userId: member.id,
                     projectSlug,
@@ -339,6 +349,6 @@ export const memberRouter = router({
                 },
             })
 
-            return nftMetadata
+            return signature
         }),
 })

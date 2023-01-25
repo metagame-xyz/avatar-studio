@@ -1,27 +1,28 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { PencilSquareIcon } from '@heroicons/react/24/solid'
+import type { SignMessageArgs } from '@wagmi/core'
 import AttributeSelector from 'components/AttributeSelector'
 import Icon from 'components/Icon'
 import Loader from 'components/Loader'
 import Title from 'components/Title'
 import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
+import isEqual from 'lodash.isequal'
 import sparkles from 'public/icons/sparkles.svg'
 import { pfpStateToRequestedTraits, springAnimation } from 'utils/index'
-import type { MintStatus, TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
+import { ActionType, Status, TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
 
 type TraitSelectionPanelProps = {
-    actionType: 'Mint' | 'Update'
+    actionType: ActionType
     assetData: TraitCategoryWithTraitsWithEarned[]
-    pfpState: TraitWithEarnedBool[]
     existingPfpState: TraitWithEarnedBool[] | null
+    pfpState: TraitWithEarnedBool[]
     updatePfpState: (trait: TraitWithEarnedBool) => void
-    signMessage: Function
+    signMessage: (args?: SignMessageArgs | undefined) => void
     userIsSigning: boolean
-    mintFunction: Function | undefined
-    createNftMetadataStatus: MintStatus
-    mintStatus: MintStatus
+    mintFunction: ((overrideConfig?: undefined) => void) | undefined
+    createNftMetadataStatus: Status
+    mintStatus: Status
     mintEnabled: boolean
     className?: string
 }
@@ -29,8 +30,8 @@ type TraitSelectionPanelProps = {
 const TraitSelectionPanel = ({
     actionType,
     assetData,
-    pfpState,
     existingPfpState,
+    pfpState,
     updatePfpState,
     signMessage,
     userIsSigning,
@@ -40,18 +41,6 @@ const TraitSelectionPanel = ({
     mintEnabled,
     className = '',
 }: TraitSelectionPanelProps) => {
-    // const checkIfPfpChanged = () => {
-    //     if (existingPfpState.length !== pfpState.length) return false
-
-    //     return existingPfpState.every((trait1, index) => {
-    //         const trait2 = pfpState[index] as TraitWithEarnedBool
-    //         return (
-    //             trait1.name === trait2.name &&
-    //             trait1.category === trait2.category
-    //         )
-    //     })
-    // }
-
     return (
         <div
             className={`relative col-span-1 flex w-full flex-col justify-between border-gray-800 ${
@@ -77,28 +66,7 @@ const TraitSelectionPanel = ({
             </div>
 
             <div className="sticky flex items-center justify-center gap-x-4 border-t-2 border-gray-800 py-6">
-                {/* {!mintEnabled && !userIsSigning ? (
-                    <AnimatePresence>
-                        <div>
-                            <button
-                                className="btn-secondary flex items-center gap-x-2"
-                                onClick={() => {
-                                    resetPfpState(existingPfpState)
-                                }}
-                                disabled={
-                                    actionType === 'Mint'
-                                        ? false
-                                        : checkIfPfpChanged()
-                                }
-                            >
-                                <ArrowPathIcon className="w-5" />
-                                Reset Choices
-                            </button>
-                        </div>
-                    </AnimatePresence>
-                ) : null} */}
-
-                {actionType === 'Mint' ? (
+                {actionType === ActionType.mint ? (
                     mintEnabled ? (
                         <AnimatePresence>
                             <motion.div
@@ -131,20 +99,27 @@ const TraitSelectionPanel = ({
                                         message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
                                     })
                                 }
-                                disabled={pfpState.length !== 4}
+                                disabled={isEqual(pfpState, existingPfpState) || userIsSigning}
                             >
-                                {userIsSigning || createNftMetadataStatus === 'loading' ? (
+                                {userIsSigning || createNftMetadataStatus === Status.loading ? (
                                     <>
                                         {' '}
                                         <Loader size="sm" />
-                                        <span>Sign</span>
+                                        <span>Save Trait Choices</span>
                                     </>
                                 ) : (
                                     <>
                                         <PencilSquareIcon className="w-5" />
-                                        <span>Sign</span>
-                                        <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
-                                        <Tooltip text="We need your signature before you can mint." withInfoIcon />
+                                        <span>Save Trait Choices</span>
+                                        {!existingPfpState && (
+                                            <>
+                                                <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
+                                                <Tooltip
+                                                    text="You must save your trait choices before you mint."
+                                                    withInfoIcon
+                                                />
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </button>{' '}

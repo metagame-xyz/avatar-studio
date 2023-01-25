@@ -18,22 +18,27 @@ export const AddressZ = z.string().regex(addressRegex).startsWith('0x').transfor
 export const requestedTraitsSchema = z.array(z.object({ name: z.string(), category: z.string() }))
 export type RequestedTraits = z.infer<typeof requestedTraitsSchema>
 
-export type CheckResponse = {
-    valid: boolean
-    signature: {
-        r: `0x${string}`
-        s: `0x${string}`
-        _vs: string
-        recoveryParam: number
-        v: number
-        yParityAndS: string
-        compact: string
-    }
+export type Signature = {
+    r: `0x${string}`
+    s: `0x${string}`
+    _vs: string
+    recoveryParam: number
+    v: number
+    yParityAndS: string
+    compact: string
 }
 
-export type MintStatus = 'loading' | 'success' | 'error' | 'idle'
+export const enum Status {
+    loading = 'loading',
+    success = 'success',
+    error = 'error',
+    idle = 'idle',
+}
 
-export type Status = 'success' | 'error' | 'loading' | 'idle'
+export const enum ActionType {
+    mint = 'Mint',
+    update = 'Update',
+}
 
 export type ToastData = {
     open: boolean
