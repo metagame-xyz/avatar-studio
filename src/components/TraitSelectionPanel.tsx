@@ -10,7 +10,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import isEqual from 'lodash.isequal'
 import sparkles from 'public/icons/sparkles.svg'
 import { pfpStateToRequestedTraits, springAnimation } from 'utils/index'
-import { ActionType, Status, TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
+import type { TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
+import { ActionType, Status } from 'utils/types'
 
 type TraitSelectionPanelProps = {
     actionType: ActionType
@@ -66,78 +67,59 @@ const TraitSelectionPanel = ({
             </div>
 
             <div className="sticky flex items-center justify-center gap-x-4 border-t-2 border-gray-800 py-6">
-                {actionType === ActionType.mint ? (
-                    mintEnabled ? (
-                        <AnimatePresence>
-                            <motion.div
-                                key="mint"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ springAnimation }}
-                            >
-                                <button
-                                    className="flex items-center gap-x-2 rounded"
-                                    onClick={() => mintFunction?.()}
-                                    disabled={false} // TODO
-                                >
-                                    {mintStatus === 'loading' ? (
-                                        <Loader size="sm" />
-                                    ) : (
-                                        <Icon size={2} image={sparkles} />
-                                    )}
-                                    Mint NFT
-                                </button>
-                            </motion.div>{' '}
-                        </AnimatePresence>
-                    ) : (
-                        <div>
+                {mintEnabled ? (
+                    <AnimatePresence>
+                        <motion.div
+                            key="mint"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ springAnimation }}
+                        >
                             <button
                                 className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
-                                onClick={() =>
-                                    signMessage({
-                                        message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
-                                    })
-                                }
-                                disabled={isEqual(pfpState, existingPfpState) || userIsSigning}
+                                onClick={() => mintFunction?.()}
+                                disabled={false} // TODO
                             >
-                                {userIsSigning || createNftMetadataStatus === Status.loading ? (
-                                    <>
-                                        {' '}
-                                        <Loader size="sm" />
-                                        <span>Save Trait Choices</span>
-                                    </>
+                                {mintStatus === Status.loading ? (
+                                    <Loader size="sm" />
                                 ) : (
+                                    <Icon size={2} image={sparkles} />
+                                )}
+                                Mint NFT
+                            </button>
+                        </motion.div>
+                    </AnimatePresence>
+                ) : (
+                    <div>
+                        <button
+                            className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
+                            onClick={() =>
+                                signMessage({
+                                    message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
+                                })
+                            }
+                            disabled={isEqual(pfpState, existingPfpState) || userIsSigning}
+                        >
+                            <>
+                                {userIsSigning || createNftMetadataStatus === Status.loading ? (
+                                    <Loader size="sm" />
+                                ) : (
+                                    <PencilSquareIcon className="w-5" />
+                                )}
+                                <span>{`${actionType === ActionType.mint ? 'Save' : 'Update'} Trait Choices`}</span>
+                                {!existingPfpState && (
                                     <>
-                                        <PencilSquareIcon className="w-5" />
-                                        <span>Save Trait Choices</span>
-                                        {!existingPfpState && (
-                                            <>
-                                                <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
-                                                <Tooltip
-                                                    text="You must save your trait choices before you mint."
-                                                    withInfoIcon
-                                                />
-                                            </>
-                                        )}
+                                        <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
+                                        <Tooltip
+                                            text="You must save your trait choices before you mint."
+                                            withInfoIcon
+                                        />
                                     </>
                                 )}
-                            </button>{' '}
-                        </div>
-                    )
-                ) : (
-                    <button
-                        className="flex items-center gap-x-2 rounded"
-                        onClick={() =>
-                            signMessage({
-                                message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
-                            })
-                        }
-                        disabled={false} // TODO
-                    >
-                        {userIsSigning ? <Loader size="sm" /> : <Icon size={2} image={sparkles} />}
-                        Update NFT
-                    </button>
+                            </>
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

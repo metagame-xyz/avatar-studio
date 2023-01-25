@@ -58,6 +58,7 @@ const PfpUI = () => {
     // set existing pfp state if user has an nft
     useEffect(() => {
         existingNftMetadata?.traits && setExistingPfpState(existingNftMetadata?.traits)
+        existingNftMetadata && setHasMintedNFT(true)
     }, [existingNftMetadata])
 
     const actionType = hasMintedNFT ? ActionType.update : ActionType.mint

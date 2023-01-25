@@ -30,7 +30,6 @@ export const projectRouter = router({
     createNewProject: protectedOrgProcedure
         .input(z.object({ name: z.string(), organizationId: z.number() }))
         .mutation(async ({ ctx, input }) => {
-            console.log('input', input)
             const { name, organizationId } = input
             const slug = slugify(name)
 
