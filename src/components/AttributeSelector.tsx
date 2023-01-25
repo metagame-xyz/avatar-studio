@@ -1,6 +1,5 @@
 import Title from 'components/Title'
 import TraitImage from 'components/TraitImage'
-import { useRouter } from 'next/router'
 import { trpc } from 'utils/trpc'
 
 import { IsNewComboAllowed } from 'utils'
@@ -14,17 +13,13 @@ type AttributeSelectorProps = {
 }
 
 const AttributeSelector = ({ traitCategory, backgroundTrait, pfpState, updatePfpState }: AttributeSelectorProps) => {
-    const router = useRouter()
-    const projectSlug = router.query.project as string
-
     // const { chain } = useNetwork() // TODO
     const chain = { name: 'goerli' }
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
-            projectSlug,
             chainName: chain?.name || '',
         },
-        { enabled: !!projectSlug && !!chain },
+        { enabled: !!chain },
     )
 
     const { name, traits: traitOptions, isModifiable } = traitCategory

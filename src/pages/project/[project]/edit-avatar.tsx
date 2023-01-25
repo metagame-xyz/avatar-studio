@@ -2,15 +2,11 @@ import { type NextPage } from 'next'
 import NextError from 'next/error'
 
 import Head from 'next/head'
-import { useRouter } from 'next/router'
 
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
-    const router = useRouter()
-    const slug = router.query.project as string
-
-    const { data: project, error, status } = trpc.project.getBySlug.useQuery(slug, { enabled: !!slug })
+    const { data: project, error, status } = trpc.project.getProject.useQuery()
 
     const { data: user } = trpc.member.me.useQuery()
 
@@ -37,7 +33,7 @@ const Project: NextPage = () => {
                             <div>{category.zIndex}</div>
                             <div>Modifiable: {category.isModifiable.toString()}</div>
                             <div className="grid grid-cols-3 content-evenly  gap-3">
-                                {category.traits.map(({ name, pngUrl, isDefaultAchieved }) => (
+                                {category.traits.map(({ name, pngUrl }) => (
                                     <div key={name} className="flex flex-col items-center">
                                         <img src={pngUrl} width={100} height={100} alt={name} />
                                         <div>{name}</div>

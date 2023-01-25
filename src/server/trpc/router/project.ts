@@ -5,11 +5,12 @@ import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
 export const projectRouter = router({
-    getBySlug: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    getProject: publicProcedure.query(async ({ ctx }) => {
         try {
+            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
             const data = await ctx.prisma.project.findUniqueOrThrow({
                 where: {
-                    slug: input,
+                    slug: ctx.projectSlug,
                 },
                 include: {
                     members: { include: { member: true } },
@@ -41,59 +42,53 @@ export const projectRouter = router({
                 },
             })
         }),
-    getAllNftMetadata: publicProcedure
-        .input(z.object({ projectSlug: z.string(), chainName: z.string() }))
-        .query(async ({ ctx, input }) => {
-            const network = ctx.network
-            const { projectSlug } = input
+    getAllNftMetadata: publicProcedure.input(z.object({ chainName: z.string() })).query(async ({ ctx }) => {
+        const network = ctx.network
+        if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
-            const data = await ctx.prisma.$queryRaw<
-                NftMetadata[]
-            >`SELECT * FROM NftMetadata WHERE projectSlug = ${projectSlug} AND network = ${network}
+        const data = await ctx.prisma.$queryRaw<
+            NftMetadata[]
+        >`SELECT * FROM NftMetadata WHERE projectSlug = ${ctx.projectSlug} AND network = ${network}
             GROUP BY userId
             HAVING MAX(timestamp)`
 
-            const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
-                where: { id: { in: data.map((d) => d.id) } },
-                include: {
-                    traits: true,
-                },
-            })
+        const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
+            where: { id: { in: data.map((d) => d.id) } },
+            include: {
+                traits: true,
+            },
+        })
 
-            return LatestNftMetadataArr
-        }),
-    getUsedNftCombos: publicProcedure
-        .input(z.object({ projectSlug: z.string(), chainName: z.string() }))
-        .query(async ({ ctx, input }) => {
-            const network = ctx.network
-            const { projectSlug } = input
+        return LatestNftMetadataArr
+    }),
+    getUsedNftCombos: publicProcedure.input(z.object({ chainName: z.string() })).query(async ({ ctx }) => {
+        const network = ctx.network
 
-            console.log('ctx.projectSlug', ctx.projectSlug)
-            console.log('network', network)
+        if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
-            const data = await ctx.prisma.$queryRaw<
-                NftMetadata[]
-            >`SELECT * FROM NftMetadata WHERE projectSlug = ${projectSlug} AND network = ${network}
+        const data = await ctx.prisma.$queryRaw<
+            NftMetadata[]
+        >`SELECT * FROM NftMetadata WHERE projectSlug = ${ctx.projectSlug} AND network = ${network}
             GROUP BY userId
             HAVING MAX(timestamp)`
 
-            const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
-                where: { id: { in: data.map((d) => d.id) } },
-                include: {
-                    traits: { include: { traitCategory: true } },
-                },
-            })
+        const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
+            where: { id: { in: data.map((d) => d.id) } },
+            include: {
+                traits: { include: { traitCategory: true } },
+            },
+        })
 
-            const traitsArr = LatestNftMetadataArr.map((nft) => nft.traits.filter((t) => !t.traitCategory.isModifiable))
+        const traitsArr = LatestNftMetadataArr.map((nft) => nft.traits.filter((t) => !t.traitCategory.isModifiable))
 
-            const usedNonModifiableCombos: Record<string, string>[] = []
-            for (const traits of traitsArr) {
-                const obj = {} as Record<string, string>
-                for (const trait of traits) {
-                    obj[trait.traitCategoryName] = trait.name
-                }
-                usedNonModifiableCombos.push(obj)
+        const usedNonModifiableCombos: Record<string, string>[] = []
+        for (const traits of traitsArr) {
+            const obj = {} as Record<string, string>
+            for (const trait of traits) {
+                obj[trait.traitCategoryName] = trait.name
             }
-            return usedNonModifiableCombos
-        }),
+            usedNonModifiableCombos.push(obj)
+        }
+        return usedNonModifiableCombos
+    }),
 })

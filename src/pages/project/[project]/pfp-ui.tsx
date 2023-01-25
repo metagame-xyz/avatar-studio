@@ -25,9 +25,7 @@ const PfpUI = () => {
     const { address } = useAccount()
     // const { chain } = useNetwork() // TODO
     const chain = goerli
-    const { data: project } = trpc.project.getBySlug.useQuery(projectSlug, {
-        enabled: !!projectSlug,
-    })
+    const { data: project } = trpc.project.getProject.useQuery()
     const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
     const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
@@ -39,10 +37,7 @@ const PfpUI = () => {
     )
 
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
-        {
-            projectSlug,
-            chainName: chain?.name || '',
-        },
+        { chainName: chain?.name || '' },
         { enabled: !!projectSlug && !!chain },
     )
 
