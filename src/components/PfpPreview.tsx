@@ -17,10 +17,10 @@ type PfpPreviewProps = {
     className?: string
     mintStatus: Status
     txHash?: string
-    openSeaLink?: string | null
+    openSeaUrl?: string | null
 }
 
-const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink = '' }: PfpPreviewProps) => {
+const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaUrl = '' }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     const { data: user } = trpc.member.me.useQuery()
 
@@ -166,30 +166,30 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink 
                 })}
             </div>
             <div className="mx-auto flex items-center gap-5">
-                {openSeaLink && (
+                {openSeaUrl && (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ springAnimation }}
-                        className="h-full"
+                        className="h-full flex-row"
                     >
-                        <button
-                            className="btn-ghost flex h-full items-center gap-2"
-                            onClick={() => window.open(openSeaLink || '')}
+                        <a
+                            className="btn-ghost mr-3 items-center gap-2"
+                            href={openSeaUrl}
+                            target="_blank"
+                            rel="noreferrer"
                         >
-                            <Icon image={opensea} size={1} />
+                            <Icon image={opensea} size={2} />
                             OpenSea
+                        </a>
+                        <button
+                            className="btn-ghost items-center gap-2"
+                            // onClick={createImageDownload} // TODO
+                        >
+                            <ArrowDownTrayIcon className="w-5" />
+                            Download <span className="text-sm font-light text-gray-400">PNG</span>
                         </button>
                     </motion.div>
-                )}
-                {openSeaLink && (
-                    <button
-                        className="btn-ghost flex items-center gap-2"
-                        // onClick={createImageDownload} // TODO
-                    >
-                        <ArrowDownTrayIcon className="w-5" />
-                        Download <span className="text-sm font-light text-gray-400">PNG</span>
-                    </button>
                 )}
             </div>
         </motion.div>

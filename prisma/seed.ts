@@ -28,6 +28,8 @@ const privyDID_2 = 'did:privy:cld99jkny0001jq08q3wrr93p'
 const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
 const privyDID_3 = 'did:privy:cldcb05ow0007ml08ugao0o7h'
 
+const goerliContractAddress = '0x2ba797c234c8fe25847225b11b616bce729b0b53'
+
 async function main() {
     const brenner = await prisma.user.create({
         data: {
@@ -159,6 +161,7 @@ async function main() {
             name: 'Llama Pfp',
             slug: 'llama-pfp',
             organizationId: brassFactory.id,
+            testContractAddress: goerliContractAddress,
         },
     })
 
@@ -206,10 +209,17 @@ async function main() {
 
     const achievements = llamaLevel.achievements
 
-    const llamaAchievement = await prisma.memberAchievements.create({
+    await prisma.memberAchievements.create({
         data: {
             userId: brenner.id,
             achievementId: (achievements[1] as Achievement).id,
+            status: true,
+        },
+    })
+    await prisma.memberAchievements.create({
+        data: {
+            userId: nir.id,
+            achievementId: (achievements[2] as Achievement).id,
             status: true,
         },
     })

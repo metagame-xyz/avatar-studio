@@ -2,6 +2,7 @@ import { hashMessage } from '@ethersproject/hash'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 
+import type { Chain } from 'wagmi'
 import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
@@ -87,4 +88,11 @@ export const pageToLoad = (member: any): string => {
         return '/project/' + member.projects[0].slug
     }
     return '/home'
+}
+
+export const getOpenseaUrl = (chain: Chain, contactAddress: string | null | undefined, tokenId?: number | null) => {
+    if (!contactAddress || !tokenId) return null
+    const testnetString = chain.testnet ? 'testnets.' : ''
+    const chainName = chain.network.toLowerCase()
+    return `https://${testnetString}opensea.io/assets/${chainName}/${contactAddress}/${tokenId}`
 }

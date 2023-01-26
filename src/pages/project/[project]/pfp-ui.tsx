@@ -4,7 +4,7 @@ import TraitSelectionPanel from 'components/TraitSelectionPanel'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { isComboAllowed, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
+import { getOpenseaUrl, isComboAllowed, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
 import type { Signature, ToastData, TraitWithEarnedBool } from 'utils/types'
@@ -206,6 +206,18 @@ const PfpUI = () => {
 
     if (!assetData) return <div>Loading...</div>
 
+    console.log(
+        'chain',
+        chain,
+        'contractAddress',
+        contractAddress,
+        'existingNftMetadata?.tokenId',
+        existingNftMetadata?.tokenId,
+    )
+    const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
+
+    console.log('openseaUrl', openseaUrl)
+
     return (
         <>
             <Toast data={toast} setData={setToast} />
@@ -221,7 +233,7 @@ const PfpUI = () => {
                         className="lg:h-[calc(100vh_-_96px)]"
                         mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}
                         txHash={txHash}
-                        openSeaLink={existingNftMetadata?.externalUrl || null}
+                        openSeaUrl={openseaUrl}
                     />
                 </motion.div>
 
