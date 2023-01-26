@@ -1,7 +1,6 @@
 import { hashMessage } from '@ethersproject/hash'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
-
 import type { Chain } from 'wagmi'
 import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
@@ -15,6 +14,17 @@ export const slugify = (name: string) => {
         strict: true,
         locale: 'en',
     })
+}
+
+export function areTraitsEqual(traits1: TraitWithEarnedBool[] | null, traits2: TraitWithEarnedBool[] | null): boolean {
+    if (!traits1 || !traits2) return false
+
+    traits1.sort((a, b) => a.id - b.id)
+    traits2.sort((a, b) => a.id - b.id)
+    for (let i = 0; i < traits1.length; i++) {
+        if (traits1[i]?.id !== traits2[i]?.id) return false
+    }
+    return true
 }
 
 export const pfpStateToRequestedTraits = (pfpState: TraitWithEarnedBool[]): RequestedTraits =>

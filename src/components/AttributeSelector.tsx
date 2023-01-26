@@ -26,7 +26,7 @@ const AttributeSelector = ({ traitCategory, backgroundTrait, pfpState, updatePfp
 
     return (
         <div className="grid">
-            <Title level={3} className="font-title font-bold">
+            <Title level={3} className="font-title mb-1 text-center font-bold sm:mb-0 sm:text-left">
                 {name}
             </Title>
             {!isModifiable ? (
@@ -46,7 +46,7 @@ const AttributeSelector = ({ traitCategory, backgroundTrait, pfpState, updatePfp
                 </div>
             ) : null}
             <div
-                className="fill-28 mt-4 grid gap-4"
+                className="fill-28 mt-4 grid justify-items-center gap-4"
                 style={{
                     gridTemplateColumns: `repeat(auto-fill, minmax(7rem, 1fr))`,
                 }}

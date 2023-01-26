@@ -79,7 +79,6 @@ const Org: NextPage = () => {
                                                     classNames="mt-4 text-center self-start"
                                                     onClick={() => {
                                                         setOpenNewProjectModal(true)
-                                                        console.log('create avatar')
                                                     }}
                                                 />
                                             )}

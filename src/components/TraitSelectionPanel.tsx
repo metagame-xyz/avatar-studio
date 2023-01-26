@@ -4,12 +4,10 @@ import type { SignMessageArgs } from '@wagmi/core'
 import AttributeSelector from 'components/AttributeSelector'
 import Icon from 'components/Icon'
 import Loader from 'components/Loader'
-import Title from 'components/Title'
 import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
-import isEqual from 'lodash.isequal'
 import sparkles from 'public/icons/sparkles.svg'
-import { pfpStateToRequestedTraits, springAnimation } from 'utils/index'
+import { areTraitsEqual, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import type { TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
 import { ActionType, Status } from 'utils/types'
 
@@ -49,12 +47,6 @@ const TraitSelectionPanel = ({
             }`}
         >
             <div className="grid gap-y-4 overflow-y-scroll p-6">
-                <div className="grid gap-y-4 text-center">
-                    <Title level={3} className="font-title font-bold">
-                        {actionType === 'Mint' ? 'Build your Avatar' : 'Update your Avatar'}
-                    </Title>
-                    <p className="text-md text-teal-50/75">Unlock more traits over time</p>
-                </div>
                 {assetData?.map((tc) => {
                     // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
                     return !!existingPfpState && !tc.isModifiable ? null : (
@@ -102,7 +94,7 @@ const TraitSelectionPanel = ({
                                     message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
                                 })
                             }
-                            disabled={isEqual(pfpState, existingPfpState) || userIsSigning}
+                            disabled={areTraitsEqual(pfpState, existingPfpState) || userIsSigning}
                         >
                             <>
                                 {userIsSigning || createNftMetadataStatus === Status.loading ? (

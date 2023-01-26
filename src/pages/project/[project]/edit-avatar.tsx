@@ -1,92 +1,259 @@
-import { type NextPage } from 'next'
-import NextError from 'next/error'
-
-import Head from 'next/head'
-
+import PfpPreview from 'components/PfpPreview'
+import Title from 'components/Title'
+import Toast from 'components/Toast'
+import TraitSelectionPanel from 'components/TraitSelectionPanel'
+import { motion } from 'framer-motion'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { getOpenseaUrl, isComboAllowed, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
+import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
+import type { Signature, ToastData, TraitWithEarnedBool } from 'utils/types'
+import { ActionType, Status } from 'utils/types'
+import {
+    goerli,
+    useAccount,
+    useContractWrite,
+    usePrepareContractWrite,
+    useSignMessage,
+    useWaitForTransaction,
+} from 'wagmi'
 
-const Project: NextPage = () => {
-    const { data: project, error, status } = trpc.project.getProject.useQuery()
+const EditAvatar = () => {
+    const router = useRouter()
+    const projectSlug = router.query.project as string
 
-    const { data: user } = trpc.member.me.useQuery()
+    const { address } = useAccount()
+    // const { chain } = useNetwork() // TODO
+    const chain = goerli
+    const { data: project } = trpc.project.getProject.useQuery()
+    const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
-    // check is user is an org admin
-    const isOrgAdmin = user?.organizations?.find((org) => project?.organizationId === org.id)
+    const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
+        {
+            projectSlug,
+            chainName: chain?.name || '',
+        },
+        { enabled: !!projectSlug && !!chain },
+    )
 
-    if (error) {
-        return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
+    const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
+        { chainName: chain?.name || '' },
+        { enabled: !!projectSlug && !!chain },
+    )
+
+    const [hasMintedNFT, setHasMintedNFT] = useState(!!existingNftMetadata)
+    const [hideSelectionPanel, setHideSelectionPanel] = useState(false)
+    const [pfpState, setPfpState] = useState<TraitWithEarnedBool[]>([])
+    const [toast, setToast] = useState<ToastData>({
+        open: false,
+        message: '',
+        type: Status.error,
+    })
+    const [txHash, setTxHash] = useState<`0x${string}`>()
+    const [mintEnabled, setMintEnabled] = useState(false)
+    const [signatureForMint, setSignatureForMint] = useState<Signature>()
+
+    const [existingPfpState, setExistingPfpState] = useState<TraitWithEarnedBool[] | null>(null)
+
+    // set existing pfp state if user has an nft
+    useEffect(() => {
+        existingNftMetadata?.traits && setExistingPfpState(existingNftMetadata?.traits)
+        existingNftMetadata && setHasMintedNFT(true)
+    }, [existingNftMetadata])
+
+    const actionType = hasMintedNFT ? ActionType.update : ActionType.mint
+
+    // set initial pfpState
+    useEffect(() => {
+        if (existingNftMetadata?.traits && assetData) {
+            setPfpState(existingNftMetadata.traits)
+        } else if (assetData) {
+            let i = 0
+            let defaultPfpState = assetData
+                ?.filter((tc) => !tc.isModifiable)
+                .map((traitCategory) => traitCategory.traits[i] as TraitWithEarnedBool) as TraitWithEarnedBool[]
+
+            let safety = 0
+            while (!isComboAllowed(usedCombos, defaultPfpState)) {
+                // create a new combo for defaultPfPState if taken
+                defaultPfpState = assetData
+                    ?.filter((tc) => !tc.isModifiable)
+                    .map((traitCategory) => {
+                        i = (i + 1) % traitCategory.traits.length
+                        return traitCategory.traits[i] as TraitWithEarnedBool
+                    }) as TraitWithEarnedBool[]
+
+                safety++
+                if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
+            }
+            setPfpState(defaultPfpState)
+        }
+    }, [assetData, existingNftMetadata?.traits, usedCombos])
+
+    const createNftMetadata = trpc.member.createNftMetadata.useMutation({
+        onSuccess: (data) => {
+            setSignatureForMint(data)
+            console.log('signatureForMint:', data)
+        },
+    })
+
+    // Signing transaction (pre-mint & for updating pfp)
+    const {
+        error: signError,
+        isLoading: userIsSigning,
+        signMessage,
+    } = useSignMessage({
+        onSuccess(data) {
+            createNftMetadata.mutate({
+                projectSlug,
+                requestedTraits: pfpStateToRequestedTraits(pfpState),
+                chainName: chain?.name || '',
+                signature: data,
+            })
+        },
+    })
+
+    useEffect(() => {
+        if (signError) {
+            triggerErrorToast('Error signing message.')
+        }
+    }, [signError])
+
+    // TODO maybe un-hardcode?
+    const contractAddress = chain?.name === 'mainnet' ? project?.contractAddress : project?.testContractAddress
+
+    const placeholderHex = '0x00' as `0x${string}`
+
+    // Minting functions
+    const { config } = usePrepareContractWrite({
+        address: contractAddress as `0x${string}`,
+        abi: llamaPfpABI,
+        functionName: 'mintWithSignature',
+        args: [
+            address as `0x${string}`,
+            signatureForMint?.v || 0,
+            signatureForMint?.r || placeholderHex,
+            signatureForMint?.s || placeholderHex,
+        ],
+        enabled: !!contractAddress && !!signatureForMint,
+    })
+
+    const { data: txResult, write: mint } = useContractWrite(config)
+
+    // note that mintStatus is the HTTP request, not the successful transaction on Ethereum
+    // To see whether the txn was reverted, we need to check postMintData.status === 0
+    const { data: txReceipt, status: mintStatus } = useWaitForTransaction({
+        hash: txResult?.hash,
+    })
+
+    useEffect(() => {
+        if (mintStatus === Status.loading) {
+            setHideSelectionPanel(true)
+            setTxHash(txResult?.hash)
+        }
+
+        if (mintStatus === Status.success && txReceipt?.status === 1) {
+            setHasMintedNFT(true)
+            triggerSuccessToast(`Your ${project?.name} NFT was minted successfully!`)
+        }
+
+        if (mintStatus === Status.error || txReceipt?.status === 0) {
+            setHideSelectionPanel(false)
+            triggerErrorToast('Something went wrong. Please try again.')
+        }
+    }, [mintStatus, txResult, txReceipt, project])
+
+    useEffect(() => {
+        if (createNftMetadata.status === Status.error) {
+            // if (actionType === 'Update') {
+            //     setPfpState(existingPfpState)
+            // }
+            triggerErrorToast('Something went wrong. Please try again.')
+        }
+
+        if (createNftMetadata.status === Status.success && actionType === ActionType.mint) {
+            setMintEnabled(true)
+            triggerSuccessToast('You may mint your NFT now')
+        }
+    }, [createNftMetadata.status, actionType, existingPfpState])
+
+    const triggerErrorToast = (message: string) => {
+        setToast({ message, open: true, type: Status.error })
+        const timeout = setTimeout(() => {
+            setToast((toast) => ({ ...toast, open: false }))
+        }, 4000)
+
+        return () => clearTimeout(timeout)
     }
-    if (status !== 'success') {
-        return <div>Loading...</div>
+    const triggerSuccessToast = (message: string) => {
+        setToast({ message, open: true, type: Status.success })
+        const timeout = setTimeout(() => {
+            setToast((toast) => ({ ...toast, open: false }))
+        }, 4000)
+
+        return () => clearTimeout(timeout)
     }
 
-    const { name, id } = project
-
-    // a component that loops through the traits category array, and has the trait category as the header, and the traits listed below
-    const Traits = () => {
-        return (
-            <>
-                {project.traitCategories.map((category) => {
-                    return (
-                        <div key={category.name}>
-                            <div>{category.name}</div>
-                            <div>{category.zIndex}</div>
-                            <div>Modifiable: {category.isModifiable.toString()}</div>
-                            <div className="grid grid-cols-3 content-evenly  gap-3">
-                                {category.traits.map(({ name, pngUrl }) => (
-                                    <div key={name} className="flex flex-col items-center">
-                                        <img src={pngUrl} width={100} height={100} alt={name} />
-                                        <div>{name}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )
-                })}
-            </>
-        )
+    const updatePfpState = (trait: TraitWithEarnedBool): void => {
+        if (!trait.category) {
+            setPfpState([])
+        }
+        const updatedState = pfpState.filter((t) => t.category !== trait.category)
+        setPfpState([...updatedState, trait])
+        return
     }
 
-    const data = Object.entries({ 1: project.members, b: project.members })
+    if (!assetData) return <div>Loading...</div>
+
+    const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 
     return (
         <>
-            <Head>
-                <title>{name}</title>
-                {/* <meta name="description" content="Generated by create-t3-app" /> */}
-                <link rel="icon" href="/favicon.ico" />
-            </Head>
-            <>
-                <div className="relative flex min-h-screen flex-col ">
-                    <div className="mx-auto grid w-full max-w-7xl grid-cols-1 lg:grid-cols-2 xl:px-0">
-                        {/* Left sidebar & main wrapper */}
-                        {/* Start right half */}
-                        <div className="col-span-1">
-                            <div className=" h-full py-6 pl-4 pr-6 sm:pl-6 xl:pl-0">
-                                <div className="relative h-full">
-                                    <div className="flex flex-col">
-                                        <div className="text-center text-4xl font-bold">{name}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {/* End right half */}
-
-                        {/* Right half */}
-                        <div className="col-span-1">
-                            <div className="h-full py-6 px-4 sm:px-6 xl:pr-0">
-                                <div className="relative h-full">
-                                    <div className="text-center text-4xl font-bold">Traits</div>
-                                    <Traits />
-                                </div>
-                            </div>
-                        </div>
-                        {/* End main area */}
-                    </div>
+            <Toast data={toast} setData={setToast} />
+            <div className="mx-auto flex h-24 w-full items-center justify-center">
+                <div className="grid gap-y-4 text-center">
+                    <Title level={3} className="font-title font-bold">
+                        {actionType === 'Mint' ? 'Build your Avatar' : 'Update your Avatar'}
+                    </Title>
+                    <p className="text-md text-teal-50/75">Unlock more traits over time</p>
                 </div>
-            </>
+            </div>
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:h-[calc(100vh_-_96px)]">
+                <motion.div
+                    layout
+                    animate={{ width: hideSelectionPanel ? '100vw' : '' }}
+                    transition={springAnimation}
+                    className="lg:h-[calc(100vh_-_96px)]"
+                >
+                    <PfpPreview
+                        pfpState={pfpState}
+                        className="lg:h-[calc(100vh_-_96px)]"
+                        mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}
+                        txHash={txHash}
+                        openSeaUrl={openseaUrl}
+                    />
+                </motion.div>
+
+                <motion.div animate={{ x: hideSelectionPanel ? '100%' : '0' }} transition={springAnimation}>
+                    <TraitSelectionPanel
+                        pfpState={pfpState}
+                        assetData={assetData}
+                        existingPfpState={existingPfpState}
+                        updatePfpState={updatePfpState}
+                        className="lg:h-[calc(100vh_-_96px)]"
+                        actionType={actionType}
+                        signMessage={signMessage}
+                        userIsSigning={userIsSigning}
+                        createNftMetadataStatus={createNftMetadata.status as Status}
+                        mintEnabled={mintEnabled}
+                        mintFunction={mint}
+                        mintStatus={mintStatus as Status}
+                    />
+                </motion.div>
+            </div>
         </>
     )
 }
 
-export default Project
+export default EditAvatar
