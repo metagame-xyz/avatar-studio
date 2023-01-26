@@ -66,10 +66,10 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaUrl =
     return (
         <motion.div
             layout="position"
-            className={`mx-auto grid w-4/5 max-w-[650px] content-center gap-y-8 ${className ? className : ''}`}
+            className={`flex-column sticky top-0 py-6 pr-4 pl-6 ${className ? className : ''}`}
             transition={{ springAnimation }}
         >
-            <div className="relative col-span-1 mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-charcoal">
+            <div className="relative mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-gray">
                 {(mintStatus === Status.loading || mintStatus === Status.success) && (
                     <div className="relative flex h-full w-full items-center justify-center">
                         <motion.div
@@ -167,7 +167,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaUrl =
             </div>
             {openSeaUrl && (
                 <motion.div
-                    className="mx-auto flex gap-3"
+                    className="mx-auto my-2 flex justify-center gap-3"
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ springAnimation }}

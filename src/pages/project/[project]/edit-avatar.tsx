@@ -219,29 +219,23 @@ const EditAvatar = () => {
                     <p className="text-md text-teal-50/75">Unlock more traits over time</p>
                 </div>
             </div>
-            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:h-[calc(100vh_-_96px)]">
-                <motion.div
-                    layout
-                    animate={{ width: hideSelectionPanel ? '100vw' : '' }}
-                    transition={springAnimation}
-                    className="lg:h-[calc(100vh_-_96px)]"
-                >
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 ">
+                <motion.div layout transition={springAnimation} className="">
                     <PfpPreview
                         pfpState={pfpState}
-                        className="lg:h-[calc(100vh_-_96px)]"
+                        className=""
                         mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}
                         txHash={txHash}
                         openSeaUrl={openseaUrl}
                     />
                 </motion.div>
 
-                <motion.div animate={{ x: hideSelectionPanel ? '100%' : '0' }} transition={springAnimation}>
+                <motion.div transition={springAnimation}>
                     <TraitSelectionPanel
                         pfpState={pfpState}
                         assetData={assetData}
                         existingPfpState={existingPfpState}
                         updatePfpState={updatePfpState}
-                        className="lg:h-[calc(100vh_-_96px)]"
                         actionType={actionType}
                         signMessage={signMessage}
                         userIsSigning={userIsSigning}

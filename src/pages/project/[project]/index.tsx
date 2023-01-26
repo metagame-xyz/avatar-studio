@@ -58,7 +58,8 @@ const Project: NextPage = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <>
-                <div className="relative flex min-h-screen flex-col">
+                {/*  Height is vh100 - header + footer */}
+                <div className="relative flex min-h-[calc(100vh_-_120px)] flex-col">
                     {/* 3 column wrapper */}
                     <div className="mx-auto w-full max-w-7xl flex-grow  lg:flex xl:px-8">
                         {/* Left sidebar & main wrapper */}
@@ -69,14 +70,12 @@ const Project: NextPage = () => {
                                     <div className="relative h-full">
                                         <div className="flex flex-col">
                                             <div className="text-4xl font-bold">{name}</div>
-                                            <button
+                                            <a
                                                 className="btn-primary mt-4 self-start text-center"
-                                                onClick={() => {
-                                                    router.push(`/project/${slug}/pfp-ui`)
-                                                }}
+                                                href={`/project/${slug}/edit-avatar`}
                                             >
                                                 {hasMinted ? `Update Avatar` : `Mint Avatar`}
-                                            </button>
+                                            </a>
                                         </div>
                                     </div>
                                     {/* End left column area */}

@@ -42,11 +42,9 @@ const TraitSelectionPanel = ({
 }: TraitSelectionPanelProps) => {
     return (
         <div
-            className={`relative col-span-1 flex w-full flex-col justify-between border-gray-800 ${
-                className.length ? className : ''
-            }`}
+            className={`relative col-span-1 flex w-full flex-col justify-between ${className.length ? className : ''}`}
         >
-            <div className="grid gap-y-4 overflow-y-scroll p-6">
+            <div className="grid gap-y-4 py-6 pr-6 pl-4">
                 {assetData?.map((tc) => {
                     // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
                     return !!existingPfpState && !tc.isModifiable ? null : (
@@ -61,7 +59,7 @@ const TraitSelectionPanel = ({
                 })}
             </div>
 
-            <div className="sticky flex items-center justify-center gap-x-4 border-t-2 border-gray-800 py-6">
+            <div className="flex items-center justify-center gap-x-4 py-6">
                 {mintEnabled ? (
                     <AnimatePresence>
                         <motion.div

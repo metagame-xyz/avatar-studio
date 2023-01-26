@@ -94,7 +94,7 @@ module.exports = {
                     'yankee-blue': { DEFAULT: '#1e293b', light: '#1E2848' },
                     'dark-jungle': '#141B27',
                     'eerie-black': '#111729',
-                    charcoal: '#36445F',
+                    gray: '#212B36',
                 },
                 // black: '#0b101a',
                 black: '#010505',

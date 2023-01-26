@@ -10,6 +10,7 @@ import { publicProvider } from 'wagmi/providers/public'
 import { ALCHEMY_PROJECT_ID } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
+import Footer from 'components/Footer'
 import Navbar from 'components/Navbar'
 import { env } from 'env/client.mjs'
 import 'styles/globals.css'
@@ -43,6 +44,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
             <WagmiConfig client={wagmiClient}>
                 <Navbar />
                 <Component {...pageProps} />
+                <Footer />
             </WagmiConfig>
         </PrivyProvider>
     )
