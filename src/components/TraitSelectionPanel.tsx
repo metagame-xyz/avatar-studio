@@ -55,15 +55,18 @@ const TraitSelectionPanel = ({
                     </Title>
                     <p className="text-md text-teal-50/75">Unlock more traits over time</p>
                 </div>
-                {assetData?.map((tc) => (
-                    <AttributeSelector
-                        key={tc.name}
-                        traitCategory={tc}
-                        backgroundTrait={assetData.find((t) => t.name === 'Body')?.traits[0] as TraitWithEarnedBool} // TODO no hardcode
-                        pfpState={pfpState}
-                        updatePfpState={updatePfpState}
-                    />
-                ))}
+                {assetData?.map((tc) => {
+                    // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
+                    return !!existingPfpState && !tc.isModifiable ? null : (
+                        <AttributeSelector
+                            key={tc.name}
+                            traitCategory={tc}
+                            backgroundTrait={assetData.find((t) => t.name === 'Body')?.traits[0] as TraitWithEarnedBool} // TODO no hardcode
+                            pfpState={pfpState}
+                            updatePfpState={updatePfpState}
+                        />
+                    )
+                })}
             </div>
 
             <div className="sticky flex items-center justify-center gap-x-4 border-t-2 border-gray-800 py-6">
