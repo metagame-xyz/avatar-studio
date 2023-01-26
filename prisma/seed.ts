@@ -25,6 +25,9 @@ const brennerEmail = 'brenner@themetagame.xyz'
 const goerliTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
 const privyDID_2 = 'did:privy:cld99jkny0001jq08q3wrr93p'
 
+const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
+const privyDID_3 = 'did:privy:cldcb05ow0007ml08ugao0o7h'
+
 async function main() {
     const brenner = await prisma.user.create({
         data: {
@@ -67,6 +70,25 @@ async function main() {
             },
             firstName: 'Nir',
             lastName: 'Kabessa',
+        },
+    })
+
+    const jon = await prisma.user.create({
+        data: {
+            address: rinkebyTestAddress,
+            privyDID: privyDID_3,
+            accounts: {
+                create: [
+                    {
+                        type: 'wallet',
+                        address: rinkebyTestAddress,
+                        chainType: 'ethereum',
+                        verifiedAt: '2023-01-11T20:25:17.000Z',
+                    },
+                ],
+            },
+            firstName: 'Jon',
+            lastName: 'Wu',
         },
     })
 
@@ -140,7 +162,7 @@ async function main() {
         },
     })
 
-    for (const member of [brenner, nir]) {
+    for (const member of [brenner, nir, jon]) {
         await prisma.membersOfProjects.create({
             data: {
                 projectSlug: llamaPfp.slug,

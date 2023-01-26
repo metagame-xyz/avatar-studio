@@ -29,8 +29,8 @@ export const springAnimation = {
     mass: 1,
 }
 
-export const truncateAddress = (address: string): string =>
-    `0x${address.slice(2, 6).toUpperCase()}...${address.slice(-4).toUpperCase()}`
+export const truncateAddress = (address: string | null | undefined): string =>
+    address ? `0x${address.slice(2, 6).toUpperCase()}...${address.slice(-4).toUpperCase()}` : ''
 
 export const hashTraits = (traits: TraitWithEarnedBool[]): string => {
     const traitString = traits

@@ -6,7 +6,8 @@ import { usePrivy } from '@privy-io/react-auth'
 import makeBlockie from 'ethereum-blockies-base64'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useAccount, useEnsAvatar } from 'wagmi'
+import { useRouter } from 'next/router'
+import { useEnsAvatar } from 'wagmi'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },
@@ -22,12 +23,19 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-    const { address, isConnected, isConnecting } = useAccount()
-    const { user } = usePrivy()
-    const { data: ensAvatarUrl } = useEnsAvatar({ address })
+    // const { address, isConnected, isConnecting } = useAccount()
+    const router = useRouter()
+    const { user, logout: privyLogout } = usePrivy()
+    const address = user?.wallet?.address as `0x${string}`
+    const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
+
+    const logout = async () => {
+        await privyLogout()
+        router.push('/')
+    }
     // console.log('user', user)
     // console.log('address', address)
     // console.log('isConnected', isConnected)
@@ -125,7 +133,14 @@ export default function Navbar() {
                                         <div>
                                             <Menu.Button className="flex rounded-full bg-black text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-black">
                                                 <span className="sr-only">Open user menu</span>
-                                                <img className="h-8 w-8 rounded-full" src={avatarUrl} alt="" />
+                                                <Image
+                                                    className="h-8 w-8 rounded-full"
+                                                    src={avatarUrl}
+                                                    alt=""
+                                                    unoptimized
+                                                    height={32}
+                                                    width={32}
+                                                />
                                             </Menu.Button>
                                         </div>
 
@@ -173,6 +188,9 @@ export default function Navbar() {
                                                                 active ? 'bg-gray-100' : '',
                                                                 'block px-4 py-2 text-sm text-gray-700',
                                                             )}
+                                                            onClick={async () => {
+                                                                await logout()
+                                                            }}
                                                         >
                                                             Sign out
                                                         </a>

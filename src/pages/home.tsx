@@ -18,7 +18,7 @@ const Home: NextPage = () => {
 
     const { logout: privyLogout } = usePrivy()
 
-    console.log('user', user?.invitations)
+    console.log('user', user)
 
     const logout = async () => {
         await privyLogout()

@@ -17,10 +17,10 @@ const getSlugs = (): Record<string, string | undefined> => {
     if (typeof window === 'undefined') return {}
     const path = window.location.pathname
 
-    const projectRegex = new RegExp(`project/([^/]+)(?:/|$).`)
+    const projectRegex = new RegExp(`project\/([^\/]+)(?:\/|$)`)
     const projectslug = path.match(projectRegex)?.[1]
 
-    const orgRegex = new RegExp(`org/([^/]+)(?:/|$).`)
+    const orgRegex = new RegExp(`org\/([^\/]+)(?:\/|$)`)
     const orgslug = path.match(orgRegex)?.[1]
 
     return { projectslug, orgslug }
