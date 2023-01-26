@@ -99,6 +99,7 @@ export const memberRouter = router({
                 projects: { include: { project: true } },
                 achievements: { include: { achievement: true } },
                 invitations: { include: { organization: true } },
+                nftMetadata: true,
                 accounts: true,
             },
         })
@@ -184,11 +185,9 @@ export const memberRouter = router({
             const network = getNetworkName(input.chainName)
             // get the latest version of the user's nftMetadata for the project
 
-            console.log('ctx.projectSlug', ctx.projectSlug)
-
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
 
-            if (!member.nftMetadata[0]) throw new Error('No NFT metadata found')
+            if (!member.nftMetadata[0]) return null
 
             const traits = member.nftMetadata[0].traits.map((t) => {
                 return {

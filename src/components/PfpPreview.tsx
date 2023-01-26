@@ -166,7 +166,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink 
                 })}
             </div>
             <div className="mx-auto flex items-center gap-5">
-                {!openSeaLink && (
+                {openSeaLink && (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -182,7 +182,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaLink 
                         </button>
                     </motion.div>
                 )}
-                {!openSeaLink && (
+                {openSeaLink && (
                     <button
                         className="btn-ghost flex items-center gap-2"
                         // onClick={createImageDownload} // TODO

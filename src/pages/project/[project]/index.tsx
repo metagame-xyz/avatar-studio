@@ -15,18 +15,19 @@ const Project: NextPage = () => {
 
     const { data: project, error, status } = trpc.project.getProject.useQuery()
 
-    const { data: user } = trpc.member.me.useQuery()
+    const { data: user, status: userStatus } = trpc.member.me.useQuery()
     // check is user is an org admin
     // const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.id)
 
     if (error) {
         return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
-    if (status !== 'success') {
+    if (status !== 'success' || userStatus !== 'success') {
         return <div>Loading...</div>
     }
 
     const { name, slug } = project
+    const hasMinted = user.nftMetadata.length > 0
 
     const Members = () => {
         const members =
@@ -68,14 +69,13 @@ const Project: NextPage = () => {
                                     <div className="relative h-full">
                                         <div className="flex flex-col">
                                             <div className="text-4xl font-bold">{name}</div>
-                                            <div className="mt-4 mb-2 text-3xl font-bold">Avatars</div>
                                             <button
                                                 className="btn-primary mt-4 self-start text-center"
                                                 onClick={() => {
                                                     router.push(`/project/${slug}/pfp-ui`)
                                                 }}
                                             >
-                                                Update Avatar
+                                                {hasMinted ? `Update Avatar` : `Mint Avatar`}
                                             </button>
                                         </div>
                                     </div>
