@@ -165,33 +165,26 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaUrl =
                     return <Image key={name} alt={`${name} ${category}`} src={pngUrl} style={{ zIndex }} fill />
                 })}
             </div>
-            <div className="mx-auto flex items-center gap-5">
-                {openSeaUrl && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ springAnimation }}
-                        className="h-full flex-row"
+            {openSeaUrl && (
+                <motion.div
+                    className="mx-auto flex gap-3"
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ springAnimation }}
+                >
+                    <a className="btn-ghost items-center gap-2" href={openSeaUrl} target="_blank" rel="noreferrer">
+                        <Icon image={opensea} size={2} />
+                        OpenSea
+                    </a>
+                    <button
+                        className="btn-ghost items-center gap-2"
+                        // onClick={createImageDownload} // TODO
                     >
-                        <a
-                            className="btn-ghost mr-3 items-center gap-2"
-                            href={openSeaUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            <Icon image={opensea} size={2} />
-                            OpenSea
-                        </a>
-                        <button
-                            className="btn-ghost items-center gap-2"
-                            // onClick={createImageDownload} // TODO
-                        >
-                            <ArrowDownTrayIcon className="w-5" />
-                            Download <span className="text-sm font-light text-gray-400">PNG</span>
-                        </button>
-                    </motion.div>
-                )}
-            </div>
+                        <ArrowDownTrayIcon className="w-5" />
+                        Download <span className="text-sm font-light text-gray-400">PNG</span>
+                    </button>
+                </motion.div>
+            )}
         </motion.div>
     )
 }
