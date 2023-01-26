@@ -78,3 +78,13 @@ export const isComboAllowed = (
     }
     return !usedCombos.some((usedCombo) => isEqual(combo, usedCombo))
 }
+
+export const pageToLoad = (member: any): string => {
+    if (member?.organizations?.length === 1) {
+        return '/org/' + member.organizations[0].slug
+    }
+    if (member?.projects?.length === 1) {
+        return '/project/' + member.projects[0].slug
+    }
+    return '/home'
+}
