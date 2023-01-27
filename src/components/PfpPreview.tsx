@@ -14,13 +14,12 @@ import { Status } from 'utils/types'
 
 type PfpPreviewProps = {
     pfpState: TraitWithEarnedBool[]
-    className?: string
     mintStatus: Status
     txHash?: string
     openSeaUrl?: string | null
 }
 
-const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaUrl = '' }: PfpPreviewProps) => {
+const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     const { data: user } = trpc.member.me.useQuery()
 
@@ -66,7 +65,7 @@ const PfpPreview = ({ pfpState, className, mintStatus, txHash = '', openSeaUrl =
     return (
         <motion.div
             layout="position"
-            className={`flex-column sticky top-0 py-6 pr-4 pl-6 ${className ? className : ''}`}
+            className={`flex-column sticky top-0 py-6 pr-4 pl-6`}
             transition={{ springAnimation }}
         >
             <div className="relative mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-gray">

@@ -1,4 +1,6 @@
+import Loading from 'components/Loading'
 import PfpPreview from 'components/PfpPreview'
+import Shell from 'components/Shell'
 import Title from 'components/Title'
 import Toast from 'components/Toast'
 import TraitSelectionPanel from 'components/TraitSelectionPanel'
@@ -204,49 +206,66 @@ const EditAvatar = () => {
         return
     }
 
-    if (!assetData) return <div>Loading...</div>
+    if (!assetData) return <Loading />
 
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 
-    return (
-        <>
-            <Toast data={toast} setData={setToast} />
-            <div className="mx-auto flex h-24 w-full items-center justify-center">
-                <div className="grid gap-y-4 text-center">
-                    <Title level={3} className="font-title font-bold">
-                        {actionType === 'Mint' ? 'Build your Avatar' : 'Update your Avatar'}
-                    </Title>
-                    <p className="text-md text-teal-50/75">Unlock more traits over time</p>
+    const Header = () => {
+        return (
+            <>
+                <Toast data={toast} setData={setToast} />
+                <div className="mx-auto flex items-center justify-center">
+                    <div className="grid gap-y-2 text-center">
+                        <Title level={3} className="font-title font-bold">
+                            {actionType === 'Mint' ? 'Build your Avatar' : 'Update your Avatar'}
+                        </Title>
+                        <p className="text-md text-teal-50/75">Unlock more traits over time</p>
+                    </div>
                 </div>
-            </div>
-            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 ">
-                <motion.div layout transition={springAnimation} className="">
-                    <PfpPreview
-                        pfpState={pfpState}
-                        className=""
-                        mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}
-                        txHash={txHash}
-                        openSeaUrl={openseaUrl}
-                    />
-                </motion.div>
+            </>
+        )
+    }
+    const LeftChild = () => {
+        return (
+            <motion.div layout transition={springAnimation} className="">
+                <PfpPreview
+                    pfpState={pfpState}
+                    mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}
+                    txHash={txHash}
+                    openSeaUrl={openseaUrl}
+                />
+            </motion.div>
+        )
+    }
 
-                <motion.div transition={springAnimation}>
-                    <TraitSelectionPanel
-                        pfpState={pfpState}
-                        assetData={assetData}
-                        existingPfpState={existingPfpState}
-                        updatePfpState={updatePfpState}
-                        actionType={actionType}
-                        signMessage={signMessage}
-                        userIsSigning={userIsSigning}
-                        createNftMetadataStatus={createNftMetadata.status as Status}
-                        mintEnabled={mintEnabled}
-                        mintFunction={mint}
-                        mintStatus={mintStatus as Status}
-                    />
-                </motion.div>
-            </div>
-        </>
+    const RightChild = () => {
+        return (
+            <motion.div transition={springAnimation}>
+                <TraitSelectionPanel
+                    pfpState={pfpState}
+                    assetData={assetData}
+                    existingPfpState={existingPfpState}
+                    updatePfpState={updatePfpState}
+                    actionType={actionType}
+                    signMessage={signMessage}
+                    userIsSigning={userIsSigning}
+                    createNftMetadataStatus={createNftMetadata.status as Status}
+                    mintEnabled={mintEnabled}
+                    mintFunction={mint}
+                    mintStatus={mintStatus as Status}
+                />
+            </motion.div>
+        )
+    }
+
+    return (
+        <Shell
+            LeftChild={<LeftChild />}
+            RightChild={<RightChild />}
+            Header={<Header />}
+            pageTitle="edit avatar"
+            leftWidth="half"
+        />
     )
 }
 

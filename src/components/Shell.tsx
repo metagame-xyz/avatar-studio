@@ -3,12 +3,13 @@ import Head from 'next/head'
 type ShellProps = {
     LeftChild: JSX.Element
     RightChild: JSX.Element
+    Header?: JSX.Element
     pageTitle: string
     leftWidth?: 'third' | 'half'
 }
 
-const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, pageTitle, leftWidth = 'third' }) => {
-    const width = leftWidth === 'third' ? 'w-4/12' : 'w-6/12'
+const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, Header, pageTitle, leftWidth = 'third' }) => {
+    const width = leftWidth === 'third' ? 'sm:w-4/12' : 'sm:w-6/12'
     return (
         <>
             <Head>
@@ -19,25 +20,26 @@ const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, pageTitle, leftWid
             <>
                 {/* Background color split screen for large screens */}
                 <div className="relative flex min-h-[calc(100vh_-_120px)] flex-col">
-                    {/* 2 column wrapper */}
+                    {/* page wrapper */}
+                    <div className="container mx-auto">{Header}</div>
                     <div className="container mx-auto w-full flex-grow lg:flex xl:px-8">
                         {/* Left sidebar & main wrapper */}
                         <div className="min-w-0 flex-1 sm:flex">
-                            <div className={`sm:${width} sm:flex-shrink-0`}>
+                            {/* Start left column area */}
+                            <div className={`sm:flex-shrink-0 ` + width}>
                                 <div className="h-full py-6 pl-4 pr-6 sm:pl-6 lg:pl-8 xl:pl-0">
-                                    {/* Start left column area */}
                                     <div className="relative h-full">{LeftChild}</div>
-                                    {/* End left column area */}
                                 </div>
                             </div>
+                            {/* End left column area */}
 
+                            {/* Start main area*/}
                             <div className="sm:min-w-0 sm:flex-1">
                                 <div className="h-full py-6 px-4 sm:px-6 lg:px-8">
-                                    {/* Start main area*/}
                                     <div className="relative h-full">{RightChild}</div>
-                                    {/* End main area */}
                                 </div>
                             </div>
+                            {/* End main area */}
                         </div>
                     </div>
                 </div>

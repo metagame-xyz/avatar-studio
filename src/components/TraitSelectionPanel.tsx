@@ -23,7 +23,6 @@ type TraitSelectionPanelProps = {
     createNftMetadataStatus: Status
     mintStatus: Status
     mintEnabled: boolean
-    className?: string
 }
 
 const TraitSelectionPanel = ({
@@ -38,12 +37,9 @@ const TraitSelectionPanel = ({
     createNftMetadataStatus,
     mintStatus,
     mintEnabled,
-    className = '',
 }: TraitSelectionPanelProps) => {
     return (
-        <div
-            className={`relative col-span-1 flex w-full flex-col justify-between ${className.length ? className : ''}`}
-        >
+        <div className={`relative col-span-1 flex w-full flex-col justify-between`}>
             <div className="grid gap-y-4 py-6 pr-6 pl-4">
                 {assetData?.map((tc) => {
                     // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)

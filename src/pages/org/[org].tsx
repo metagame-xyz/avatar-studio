@@ -25,9 +25,8 @@ const Org: NextPage = () => {
     if (error) {
         return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
-    if (status !== 'success') {
-        return <Loading />
-    }
+
+    if (status !== 'success') return <Loading />
 
     const { name, id } = org
 
@@ -76,7 +75,7 @@ const Org: NextPage = () => {
     const RightChild = () => {
         return (
             <>
-                <div className="text-4xl font-bold">Members</div>
+                <div className="text-4xl font-bold">Admins</div>
                 <MembersList membersList={org.admins} />
             </>
         )
