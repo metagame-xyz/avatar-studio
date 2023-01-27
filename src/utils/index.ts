@@ -91,10 +91,15 @@ export const isComboAllowed = (
 }
 
 export const pageToLoad = (member: any): string => {
-    if (member?.organizations?.length === 1) {
+    if (member?.organizations?.length > 1 || member?.projects?.length > 1) {
+        return '/home'
+    }
+    if (member?.projects?.length === 1) {
+        console.log('member.organizations[0].slug', member.organizations[0].slug)
         return '/org/' + member.organizations[0].slug
     }
     if (member?.projects?.length === 1) {
+        console.log('member.projects[0].slug', member.projects[0].slug)
         return '/project/' + member.projects[0].slug
     }
     return '/home'

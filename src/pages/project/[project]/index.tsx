@@ -1,21 +1,15 @@
+import { UserCircleIcon } from '@heroicons/react/24/outline'
+import Loading from 'components/Loading'
+import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
-
-import { UserCircleIcon } from '@heroicons/react/24/outline'
-import Shell from 'components/Shell'
-
-import { useRouter } from 'next/router'
-
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
-    const router = useRouter()
-    // const slug = router.query.project as string
-
     const { data: project, error, status } = trpc.project.getProject.useQuery()
-
     const { data: user, status: userStatus } = trpc.member.me.useQuery()
+
     // check is user is an org admin
     // const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.id)
 
@@ -23,7 +17,7 @@ const Project: NextPage = () => {
         return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
     if (status !== 'success' || userStatus !== 'success') {
-        return <div>Loading...</div>
+        return <Loading />
     }
 
     const { name, slug } = project

@@ -8,7 +8,7 @@ type ShellProps = {
 }
 
 const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, pageTitle, leftWidth = 'third' }) => {
-    const width = leftWidth === 'third' ? '33' : '50'
+    const width = leftWidth === 'third' ? 'w-4/12' : 'w-6/12'
     return (
         <>
             <Head>
@@ -23,7 +23,7 @@ const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, pageTitle, leftWid
                     <div className="container mx-auto w-full flex-grow lg:flex xl:px-8">
                         {/* Left sidebar & main wrapper */}
                         <div className="min-w-0 flex-1 sm:flex">
-                            <div className={`sm:min-w-[${width}%] sm:flex-shrink-0 xl:w-64`}>
+                            <div className={`sm:${width} sm:flex-shrink-0`}>
                                 <div className="h-full py-6 pl-4 pr-6 sm:pl-6 lg:pl-8 xl:pl-0">
                                     {/* Start left column area */}
                                     <div className="relative h-full">{LeftChild}</div>
