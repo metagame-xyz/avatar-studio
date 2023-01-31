@@ -1,30 +1,28 @@
 import { PrivyProvider, type User as PrivyUser } from '@privy-io/react-auth'
-import { type AppType } from 'next/app'
-import { useRouter } from 'next/router'
-import { configureChains, createClient, WagmiConfig } from 'wagmi'
-import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
-import { InjectedConnector } from 'wagmi/connectors/injected'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
-import { publicProvider } from 'wagmi/providers/public'
-
-import { ALCHEMY_PROJECT_ID } from 'utils/constants'
-import { trpc } from 'utils/trpc'
-
+import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
 import Footer from 'components/Footer'
 import Navbar from 'components/Navbar'
 import { env } from 'env/client.mjs'
+import { type AppType } from 'next/app'
+import { useRouter } from 'next/router'
 import 'styles/globals.css'
+import { trpc } from 'utils/trpc'
+import { configureChains } from 'wagmi'
+import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
+import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { publicProvider } from 'wagmi/providers/public'
 
-export const { chains, provider } = configureChains(
+// export const { chains, provider } = configureChains(
+export const configureChainsConfig = configureChains(
     [mainnet, goerli, polygon, optimism],
-    [alchemyProvider({ apiKey: ALCHEMY_PROJECT_ID }), publicProvider()],
+    [alchemyProvider({ apiKey: env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID }), publicProvider()],
 )
 
-const wagmiClient = createClient({
-    autoConnect: true,
-    connectors: [new InjectedConnector({ chains })],
-    provider,
-})
+// const wagmiClient = createClient({
+//     autoConnect: true,
+//     connectors: [new InjectedConnector({ chains })],
+//     provider,
+// })
 
 const MyApp: AppType = ({ Component, pageProps }) => {
     const router = useRouter()
@@ -41,11 +39,13 @@ const MyApp: AppType = ({ Component, pageProps }) => {
 
     return (
         <PrivyProvider appId={env.NEXT_PUBLIC_PRIVY_APP_ID} onSuccess={onLoginSuccess}>
-            <WagmiConfig client={wagmiClient}>
+            {/* <WagmiConfig client={wagmiClient}> */}
+            <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
                 <Navbar />
                 <Component {...pageProps} />
                 <Footer />
-            </WagmiConfig>
+            </PrivyWagmiConnector>
+            {/* </WagmiConfig> */}
         </PrivyProvider>
     )
 }

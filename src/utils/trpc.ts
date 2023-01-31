@@ -1,11 +1,11 @@
+import { getAccessToken } from '@privy-io/react-auth'
 import { httpBatchLink, loggerLink, TRPCClientError } from '@trpc/client'
 import { createTRPCNext } from '@trpc/next'
 import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server'
-import superjson from 'superjson'
-
-import { getAccessToken } from '@privy-io/react-auth'
+import { getNetwork } from '@wagmi/core'
 import Router from 'next/router'
 import { type AppRouter } from 'server/trpc/router/_app'
+import superjson from 'superjson'
 
 const getBaseUrl = () => {
     if (typeof window !== 'undefined') return '' // browser should use relative url
@@ -24,6 +24,13 @@ const getSlugs = (): Record<string, string | undefined> => {
     const orgslug = path.match(orgRegex)?.[1]
 
     return { projectslug, orgslug }
+}
+
+const getChain = (): string => {
+    if (typeof window === 'undefined') return 'undefined'
+    const { chain } = getNetwork()
+    // console.log('chain', chain)
+    return chain?.network ?? 'undefined'
 }
 
 // const getNetwork = async () => {
@@ -47,10 +54,13 @@ export const trpc = createTRPCNext<AppRouter>({
                     async headers() {
                         const accessToken = await getAccessToken()
                         const slugs = getSlugs()
+                        const chain = getChain()
+                        // console.log('chain2: ', chain)
                         // const network = await getNetwork()
                         return {
                             Authorization: `Bearer ${accessToken}`,
                             ...slugs,
+                            chain,
                         }
                     },
                 }),

@@ -1,7 +1,7 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Account } from '@prisma/client'
 import { recoverAddress } from 'ethers/lib/utils'
-import { hashTraits } from 'utils'
+import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
@@ -90,6 +90,7 @@ export const memberRouter = router({
         }
     }),
     me: protectedProcedure.query(async ({ ctx }) => {
+        // console.log('network', ctx.network)
         const member = await ctx.prisma.user.findUniqueOrThrow({
             where: {
                 privyDID: ctx.session.userId,
@@ -179,25 +180,17 @@ export const memberRouter = router({
     }),
 
     nftMetadata: protectedProcedure
-        .input(z.object({ projectSlug: z.string(), chainName: z.string() }))
+        .input(z.object({ projectSlug: z.string(), chainNetwork: z.string() }))
         .query(async ({ ctx, input }) => {
-            // if node env isn't prod, use goerli, else, use chainName
-            const network = getNetworkName(input.chainName)
+            // if node env isn't prod, use goerli, else, use chainNetwork
+            const network = getNetworkName(input.chainNetwork)
             // get the latest version of the user's nftMetadata for the project
 
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
 
             if (!member.nftMetadata[0]) return null
 
-            const traits = member.nftMetadata[0].traits.map((t) => {
-                return {
-                    ...t,
-                    category: t.traitCategory.name,
-                    zIndex: t.traitCategory.zIndex,
-                    earned: true,
-                    isModifiable: t.traitCategory.isModifiable,
-                } as TraitWithEarnedBool
-            })
+            const traits = traitsToTraitsWithEarnedBool(member.nftMetadata[0].traits)
 
             const nftMetadata = {
                 ...member.nftMetadata[0],
@@ -209,27 +202,16 @@ export const memberRouter = router({
         .input(
             z.object({
                 requestedTraits: requestedTraitsSchema,
-                chainName: z.string(),
+                chainNetwork: z.string(),
                 projectSlug: z.string(),
                 signature: z.string(),
             }),
         )
         .mutation(async ({ ctx, input }) => {
-            const { requestedTraits, projectSlug, chainName } = input
-            const network = getNetworkName(chainName)
-
-            const signerAddress = AddressZ.parse(
-                recoverAddress(
-                    hashMessage(
-                        JSON.stringify({
-                            requestedTraits,
-                            chainName,
-                            projectSlug,
-                        }),
-                    ),
-                    input.signature,
-                ),
-            )
+            const { requestedTraits, projectSlug, chainNetwork } = input
+            const network = getNetworkName(chainNetwork)
+            const message = JSON.stringify({ requestedTraits, chainNetwork, projectSlug })
+            const signerAddress = AddressZ.parse(recoverAddress(hashMessage(message), input.signature))
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
 
             const allTraitsWithEarned = getEarnedTraits(member)
@@ -276,6 +258,14 @@ export const memberRouter = router({
                     )
                 ) {
                     throw new Error('No changes made')
+                }
+
+                const existingTraits = traitsToTraitsWithEarnedBool(existingNftData.traits)
+                // add back existing non-modifiable traits
+                for (const existingTrait of existingTraits) {
+                    if (!existingTrait.isModifiable) {
+                        approvedTraits.push(existingTrait)
+                    }
                 }
             }
 

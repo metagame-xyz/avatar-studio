@@ -6,10 +6,12 @@ import Icon from 'components/Icon'
 import Loader from 'components/Loader'
 import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useRouter } from 'next/router'
 import sparkles from 'public/icons/sparkles.svg'
 import { areTraitsEqual, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import type { TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
 import { ActionType, Status } from 'utils/types'
+import { useNetwork } from 'wagmi'
 
 type TraitSelectionPanelProps = {
     actionType: ActionType
@@ -38,6 +40,10 @@ const TraitSelectionPanel = ({
     mintStatus,
     mintEnabled,
 }: TraitSelectionPanelProps) => {
+    const { chain } = useNetwork()
+    const router = useRouter()
+    const projectSlug = router.query.project as string
+
     return (
         <div className={`relative col-span-1 flex w-full flex-col justify-between`}>
             <div className="grid gap-y-4 py-6 pr-6 pl-4">
@@ -83,11 +89,19 @@ const TraitSelectionPanel = ({
                     <div>
                         <button
                             className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
-                            onClick={() =>
+                            onClick={() => {
+                                const sendablePfpState =
+                                    actionType == ActionType.mint
+                                        ? pfpState
+                                        : pfpState.filter((trait) => trait.isModifiable)
                                 signMessage({
-                                    message: JSON.stringify(pfpStateToRequestedTraits(pfpState)),
+                                    message: JSON.stringify({
+                                        requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
+                                        chainNetwork: chain?.network || 'ERROR',
+                                        projectSlug,
+                                    }),
                                 })
-                            }
+                            }}
                             disabled={areTraitsEqual(pfpState, existingPfpState) || userIsSigning}
                         >
                             <>

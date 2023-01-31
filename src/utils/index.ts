@@ -1,4 +1,5 @@
 import { hashMessage } from '@ethersproject/hash'
+import type { Trait, TraitCategory } from '@prisma/client'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
@@ -13,6 +14,22 @@ export const slugify = (name: string) => {
         lower: true,
         strict: true,
         locale: 'en',
+    })
+}
+
+export const traitsToTraitsWithEarnedBool = (
+    traits: (Trait & {
+        traitCategory: TraitCategory
+    })[],
+): TraitWithEarnedBool[] => {
+    return traits.map((trait) => {
+        return {
+            ...trait,
+            earned: true,
+            category: trait.traitCategory.name,
+            zIndex: trait.traitCategory.zIndex,
+            isModifiable: trait.traitCategory.isModifiable,
+        }
     })
 }
 
@@ -95,12 +112,12 @@ export const pageToLoad = (member: any): string => {
         return '/home'
     }
     if (member?.projects?.length === 1) {
-        console.log('member.organizations[0].slug', member.organizations[0].slug)
-        return '/org/' + member.organizations[0].slug
+        console.log('member.organizations[0].slug', member.organizations[0]?.slug)
+        return '/org/' + member.organizations[0]?.slug
     }
     if (member?.projects?.length === 1) {
-        console.log('member.projects[0].slug', member.projects[0].slug)
-        return '/project/' + member.projects[0].slug
+        console.log('member.projects[0].slug', member.projects[0]?.slug)
+        return '/project/' + member.projects[0]?.slug
     }
     return '/home'
 }
@@ -108,6 +125,6 @@ export const pageToLoad = (member: any): string => {
 export const getOpenseaUrl = (chain: Chain, contactAddress: string | null | undefined, tokenId?: number | null) => {
     if (!contactAddress || !tokenId) return null
     const testnetString = chain.testnet ? 'testnets.' : ''
-    const chainName = chain.network.toLowerCase()
-    return `https://${testnetString}opensea.io/assets/${chainName}/${contactAddress}/${tokenId}`
+    const chainNetwork = chain.network.toLowerCase()
+    return `https://${testnetString}opensea.io/assets/${chainNetwork}/${contactAddress}/${tokenId}`
 }

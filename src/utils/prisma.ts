@@ -53,7 +53,7 @@ export const getMemberWithProject = (
     }) as Promise<MemberWithAProject>
 }
 
-export const getNetworkName = (chainName: string) => (env.NODE_ENV === 'production' ? chainName : 'goerli')
+export const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'goerli')
 
 export const getEarnedTraits = (member: MemberWithAProject): TraitCategoryWithTraitsWithEarned[] => {
     const project = member.projects[0]?.project

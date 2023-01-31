@@ -41,15 +41,22 @@ export const projectRouter = router({
                 },
             })
         }),
-    getAllNftMetadata: publicProcedure.input(z.object({ chainName: z.string() })).query(async ({ ctx }) => {
+    getAllNftMetadata: publicProcedure.input(z.object({ chainNetwork: z.string() })).query(async ({ ctx }) => {
         const network = ctx.network
         if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
-        const data = await ctx.prisma.$queryRaw<
-            NftMetadata[]
-        >`SELECT * FROM NftMetadata WHERE projectSlug = ${ctx.projectSlug} AND network = ${network}
-            GROUP BY userId
-            HAVING MAX(timestamp)`
+        const data = await ctx.prisma.$queryRaw<NftMetadata[]>`WITH max_timestamps AS (
+            SELECT "userId", MAX("timestamp") AS "timestamp"
+            FROM "NftMetadata"
+            WHERE "projectSlug" = ${ctx.projectSlug}
+            AND "network" = ${network}
+            GROUP BY "userId"
+          )
+          SELECT "NftMetadata".*
+          FROM "NftMetadata"
+          JOIN max_timestamps ON "NftMetadata"."userId" = max_timestamps."userId"
+            AND "NftMetadata"."timestamp" = max_timestamps."timestamp"
+          ORDER BY "timestamp" DESC;`
 
         const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
             where: { id: { in: data.map((d) => d.id) } },
@@ -60,16 +67,23 @@ export const projectRouter = router({
 
         return LatestNftMetadataArr
     }),
-    getUsedNftCombos: publicProcedure.input(z.object({ chainName: z.string() })).query(async ({ ctx }) => {
+    getUsedNftCombos: publicProcedure.input(z.object({ chainNetwork: z.string() })).query(async ({ ctx }) => {
         const network = ctx.network
 
         if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
-        const data = await ctx.prisma.$queryRaw<
-            NftMetadata[]
-        >`SELECT * FROM NftMetadata WHERE projectSlug = ${ctx.projectSlug} AND network = ${network}
-            GROUP BY userId
-            HAVING MAX(timestamp)`
+        const data = await ctx.prisma.$queryRaw<NftMetadata[]>`WITH max_timestamps AS (
+            SELECT "userId", MAX("timestamp") AS "timestamp"
+            FROM "NftMetadata"
+            WHERE "projectSlug" = ${ctx.projectSlug}
+            AND "network" = ${network}
+            GROUP BY "userId"
+          )
+          SELECT "NftMetadata".*
+          FROM "NftMetadata"
+          JOIN max_timestamps ON "NftMetadata"."userId" = max_timestamps."userId"
+            AND "NftMetadata"."timestamp" = max_timestamps."timestamp"
+          ORDER BY "timestamp" DESC;`
 
         const LatestNftMetadataArr = await ctx.prisma.nftMetadata.findMany({
             where: { id: { in: data.map((d) => d.id) } },

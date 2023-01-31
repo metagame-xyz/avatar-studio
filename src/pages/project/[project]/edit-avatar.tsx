@@ -13,9 +13,9 @@ import { trpc } from 'utils/trpc'
 import type { Signature, ToastData, TraitWithEarnedBool } from 'utils/types'
 import { ActionType, Status } from 'utils/types'
 import {
-    goerli,
     useAccount,
     useContractWrite,
+    useNetwork,
     usePrepareContractWrite,
     useSignMessage,
     useWaitForTransaction,
@@ -26,21 +26,23 @@ const EditAvatar = () => {
     const projectSlug = router.query.project as string
 
     const { address } = useAccount()
-    // const { chain } = useNetwork() // TODO
-    const chain = goerli
+    const { chain } = useNetwork() // TODO
+    const trpcUtils = trpc.useContext()
+
+    console.log('chain:', chain)
     const { data: project } = trpc.project.getProject.useQuery()
     const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
     const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
         {
             projectSlug,
-            chainName: chain?.name || '',
+            chainNetwork: chain?.network || '',
         },
         { enabled: !!projectSlug && !!chain },
     )
 
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
-        { chainName: chain?.name || '' },
+        { chainNetwork: chain?.network || '' },
         { enabled: !!projectSlug && !!chain },
     )
 
@@ -96,7 +98,11 @@ const EditAvatar = () => {
     const createNftMetadata = trpc.member.createNftMetadata.useMutation({
         onSuccess: (data) => {
             setSignatureForMint(data)
+            trpcUtils.member.nftMetadata.invalidate()
             console.log('signatureForMint:', data)
+        },
+        onError: (error) => {
+            triggerErrorToast(error.message)
         },
     })
 
@@ -107,10 +113,12 @@ const EditAvatar = () => {
         signMessage,
     } = useSignMessage({
         onSuccess(data) {
+            const sendablePfpState =
+                actionType == ActionType.mint ? pfpState : pfpState.filter((trait) => trait.isModifiable)
             createNftMetadata.mutate({
                 projectSlug,
-                requestedTraits: pfpStateToRequestedTraits(pfpState),
-                chainName: chain?.name || '',
+                requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
+                chainNetwork: chain?.network || '',
                 signature: data,
             })
         },
@@ -123,7 +131,7 @@ const EditAvatar = () => {
     }, [signError])
 
     // TODO maybe un-hardcode?
-    const contractAddress = chain?.name === 'mainnet' ? project?.contractAddress : project?.testContractAddress
+    const contractAddress = chain?.network === 'homestead' ? project?.contractAddress : project?.testContractAddress
 
     const placeholderHex = '0x00' as `0x${string}`
 
@@ -171,14 +179,14 @@ const EditAvatar = () => {
             // if (actionType === 'Update') {
             //     setPfpState(existingPfpState)
             // }
-            triggerErrorToast('Something went wrong. Please try again.')
+            triggerErrorToast(`${createNftMetadata.error?.message}`)
         }
 
         if (createNftMetadata.status === Status.success && actionType === ActionType.mint) {
             setMintEnabled(true)
             triggerSuccessToast('You may mint your NFT now')
         }
-    }, [createNftMetadata.status, actionType, existingPfpState])
+    }, [createNftMetadata.status, actionType, createNftMetadata.error?.message])
 
     const triggerErrorToast = (message: string) => {
         setToast({ message, open: true, type: Status.error })
@@ -206,7 +214,7 @@ const EditAvatar = () => {
         return
     }
 
-    if (!assetData) return <Loading />
+    if (!assetData || !chain) return <Loading />
 
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 

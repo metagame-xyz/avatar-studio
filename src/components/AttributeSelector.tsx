@@ -4,6 +4,7 @@ import { trpc } from 'utils/trpc'
 
 import { IsNewComboAllowed } from 'utils'
 import type { TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
+import { useNetwork } from 'wagmi'
 
 type AttributeSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
@@ -13,11 +14,10 @@ type AttributeSelectorProps = {
 }
 
 const AttributeSelector = ({ traitCategory, backgroundTrait, pfpState, updatePfpState }: AttributeSelectorProps) => {
-    // const { chain } = useNetwork() // TODO
-    const chain = { name: 'goerli' }
+    const { chain } = useNetwork() // TODO
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
-            chainName: chain?.name || '',
+            chainNetwork: chain?.network || '',
         },
         { enabled: !!chain },
     )

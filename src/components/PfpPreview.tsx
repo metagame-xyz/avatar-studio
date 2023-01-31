@@ -165,12 +165,7 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
                 })}
             </div>
             {openSeaUrl && (
-                <motion.div
-                    className="mx-auto my-2 flex justify-center gap-3"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ springAnimation }}
-                >
+                <div className="mx-auto my-2 flex justify-center gap-3">
                     <a className="btn-ghost items-center gap-2" href={openSeaUrl} target="_blank" rel="noreferrer">
                         <Icon image={opensea} size={2} />
                         OpenSea
@@ -182,7 +177,7 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
                         <ArrowDownTrayIcon className="w-5" />
                         Download <span className="text-sm font-light text-gray-400">PNG</span>
                     </button>
-                </motion.div>
+                </div>
             )}
         </motion.div>
     )
