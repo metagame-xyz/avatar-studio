@@ -7,7 +7,7 @@ import makeBlockie from 'ethereum-blockies-base64'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useEnsAvatar } from 'wagmi'
+import { useAccount, useEnsAvatar } from 'wagmi'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },
@@ -23,10 +23,10 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-    // const { address, isConnected, isConnecting } = useAccount()
+    const { address } = useAccount()
     const router = useRouter()
-    const { user, logout: privyLogout } = usePrivy()
-    const address = user?.wallet?.address as `0x${string}`
+    const { logout: privyLogout } = usePrivy()
+    // const address = user?.wallet?.address as `0x${string}`
     const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
