@@ -1,5 +1,7 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Account } from '@prisma/client'
+import * as AWS from 'aws-sdk'
+import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
 import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
@@ -294,6 +296,13 @@ export const memberRouter = router({
             if (!contractAddress) throw new Error('Contract address not found')
 
             const signature = await generateMintingSignature(member.address, project.slug, contractAddress, network)
+
+            AWS.config.update({
+                accessKeyId: env.AWS_ACCESS_KEY,
+                secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+            })
+
+            const s3 = new AWS.S3()
 
             // // generate the multi-layer image using canvas
             // const canvas = createCanvas(2400, 2400)
