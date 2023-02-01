@@ -63,11 +63,7 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
         Success: { backgroundColor: '#6a45ec' }, // TODO
     }
     return (
-        <motion.div
-            layout="position"
-            className={`flex-column sticky top-0 py-6 pr-4 pl-6`}
-            transition={{ springAnimation }}
-        >
+        <motion.div layout="position" className={`flex-column sticky top-0 p-4`} transition={{ springAnimation }}>
             <div className="relative mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-gray">
                 {(mintStatus === Status.loading || mintStatus === Status.success) && (
                     <div className="relative flex h-full w-full items-center justify-center">

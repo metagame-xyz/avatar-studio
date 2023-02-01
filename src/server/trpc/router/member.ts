@@ -239,7 +239,6 @@ export const memberRouter = router({
             }
 
             const existingNftData = member.nftMetadata[0]
-            if (!existingNftData) throw new Error('No NFT metadata found')
 
             const permanentTraitCategories = allTraitsWithEarned.filter((tc) => !tc.isModifiable).map((tc) => tc.name)
 
@@ -323,7 +322,7 @@ export const memberRouter = router({
                 data: {
                     userId: member.id,
                     projectSlug,
-                    tokenId: existingNftData.tokenId,
+                    tokenId: existingNftData?.tokenId || null,
                     name: `${member.firstName}'s ${project.name} Avatar`,
                     description: `${member.firstName}'s ${project.name} Avatar, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
                     walletAddress: member.address,

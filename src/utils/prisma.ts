@@ -1,5 +1,4 @@
 import type { PrismaClient, Trait } from '@prisma/client'
-import { env } from 'env/server.mjs'
 import type { MemberWithAProject, TraitCategoryWithTraitsWithEarned } from './types'
 
 export const getMemberWithProject = (
@@ -53,7 +52,8 @@ export const getMemberWithProject = (
     }) as Promise<MemberWithAProject>
 }
 
-export const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'goerli')
+// export const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'goerli')
+export const getNetworkName = (chainNetwork: string) => chainNetwork
 
 export const getEarnedTraits = (member: MemberWithAProject): TraitCategoryWithTraitsWithEarned[] => {
     const project = member.projects[0]?.project

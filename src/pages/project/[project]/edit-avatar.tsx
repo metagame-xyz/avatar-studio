@@ -26,13 +26,13 @@ const EditAvatar = () => {
     const projectSlug = router.query.project as string
 
     const { address } = useAccount()
-    const { chain } = useNetwork() // TODO
+    const { chain } = useNetwork()
     const trpcUtils = trpc.useContext()
 
-    console.log('chain:', chain)
     const { data: project } = trpc.project.getProject.useQuery()
     const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
+    console.log('chainNetwork', chain?.network)
     const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
         {
             projectSlug,
@@ -41,13 +41,14 @@ const EditAvatar = () => {
         { enabled: !!projectSlug && !!chain },
     )
 
+    console.log(existingNftMetadata)
+
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         { chainNetwork: chain?.network || '' },
         { enabled: !!projectSlug && !!chain },
     )
 
     const [hasMintedNFT, setHasMintedNFT] = useState(!!existingNftMetadata)
-    const [hideSelectionPanel, setHideSelectionPanel] = useState(false)
     const [pfpState, setPfpState] = useState<TraitWithEarnedBool[]>([])
     const [toast, setToast] = useState<ToastData>({
         open: false,
@@ -159,7 +160,6 @@ const EditAvatar = () => {
 
     useEffect(() => {
         if (mintStatus === Status.loading) {
-            setHideSelectionPanel(true)
             setTxHash(txResult?.hash)
         }
 
@@ -169,16 +169,12 @@ const EditAvatar = () => {
         }
 
         if (mintStatus === Status.error || txReceipt?.status === 0) {
-            setHideSelectionPanel(false)
             triggerErrorToast('Something went wrong. Please try again.')
         }
     }, [mintStatus, txResult, txReceipt, project])
 
     useEffect(() => {
         if (createNftMetadata.status === Status.error) {
-            // if (actionType === 'Update') {
-            //     setPfpState(existingPfpState)
-            // }
             triggerErrorToast(`${createNftMetadata.error?.message}`)
         }
 
@@ -216,6 +212,7 @@ const EditAvatar = () => {
 
     if (!assetData || !chain) return <Loading />
 
+    // console.log(chain, contractAddress, existingNftMetadata?.tokenId)
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 
     const Header = () => {
