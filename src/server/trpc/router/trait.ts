@@ -6,8 +6,8 @@ import { protectedProjectProcedure, publicProcedure, router } from '../trpc'
 import * as AWS from 'aws-sdk'
 
 AWS.config.update({
-    accessKeyId: env.AWS_ACCESS_KEY,
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
+    secretAccessKey: env.METAGAME_AWS_SECRET_ACCESS_KEY,
 })
 
 export const traitRouter = router({

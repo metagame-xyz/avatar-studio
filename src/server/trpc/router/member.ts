@@ -298,8 +298,8 @@ export const memberRouter = router({
             const signature = await generateMintingSignature(member.address, project.slug, contractAddress, network)
 
             AWS.config.update({
-                accessKeyId: env.AWS_ACCESS_KEY,
-                secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+                accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
+                secretAccessKey: env.METAGAME_AWS_SECRET_ACCESS_KEY,
             })
 
             const s3 = new AWS.S3()

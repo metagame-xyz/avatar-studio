@@ -11,8 +11,8 @@ export const serverSchema = z.object({
     DISCORD_CLIENT_ID: z.string(),
     DISCORD_CLIENT_SECRET: z.string(),
     PRIVY_APP_SECRET: z.string(),
-    AWS_ACCESS_KEY: z.string(),
-    AWS_SECRET_ACCESS_KEY: z.string(),
+    METAGAME_AWS_ACCESS_KEY: z.string(),
+    METAGAME_AWS_SECRET_ACCESS_KEY: z.string(),
     VALIDATOR_PRIVATE_KEY: z.string(),
 })
 
