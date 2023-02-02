@@ -6,11 +6,11 @@ import { trpc } from 'utils/trpc'
 export default function NewProjectModal({
     open,
     setOpen,
-    organizationId,
+    organizationSlug,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
-    organizationId: number
+    organizationSlug: string
 }) {
     const cancelButtonRef = useRef(null)
     const [name, setName] = useState('')
@@ -88,7 +88,7 @@ export default function NewProjectModal({
                                         onClick={() =>
                                             createProject.mutate({
                                                 name,
-                                                organizationId,
+                                                organizationSlug,
                                             })
                                         }
                                     >

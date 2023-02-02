@@ -119,3 +119,8 @@ export type MemberWithAProject = User & {
         })[]
     })[]
 }
+
+export type AirtableAuthCache = {
+    codeVerifier: string
+    organizationSlug: string
+}

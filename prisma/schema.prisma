@@ -31,21 +31,22 @@ model Account {
 }
 
 model User {
-  id            String                   @id @default(cuid())
-  privyDID      String                   @unique
-  firstName     String?
-  lastName      String?
-  email         String?                  @unique
-  image         String?
-  address       String?                  @unique
-  accounts      Account[]
-  projects      MembersOfProjects[]
-  achievements  MemberAchievements[]
-  organizations MembersOfOrganizations[]
-  invitations   OrganizationInvitation[]
+  id                    String                     @id @default(cuid())
+  privyDID              String                     @unique
+  firstName             String?
+  lastName              String?
+  email                 String?                    @unique
+  image                 String?
+  address               String?                    @unique
+  accounts              Account[]
+  projects              MembersOfProjects[]
+  achievements          MemberAchievements[]
+  organizations         MembersOfOrganizations[]
+  invitations           OrganizationInvitation[]
   //   role          UserRole?
-  role          String?
-  nftMetadata   NftMetadata[]
+  role                  String?
+  nftMetadata           NftMetadata[]
+  airtableAccessGranted OrganizationAirtableAuth[]
 }
 
 model OrganizationInvitation {
@@ -67,12 +68,24 @@ model OrganizationInvitation {
 }
 
 model Organization {
-  id          Int                      @id @unique @default(autoincrement())
-  name        String                   @unique
-  slug        String                   @unique
-  projects    Project[]
-  admins      MembersOfOrganizations[]
-  invitations OrganizationInvitation[]
+  id           Int                       @id @unique @default(autoincrement())
+  name         String                    @unique
+  slug         String                    @unique
+  projects     Project[]
+  admins       MembersOfOrganizations[]
+  invitations  OrganizationInvitation[]
+  airtableAuth OrganizationAirtableAuth?
+}
+
+model OrganizationAirtableAuth {
+  id                  Int          @id @unique @default(autoincrement())
+  scope               String
+  accessToken         String
+  refreshToken        String
+  organization        Organization @relation(fields: [organizationSlug], references: [slug])
+  organizationSlug    String       @unique
+  accessGrantedUser   User         @relation(fields: [accessGrantedUserId], references: [id])
+  accessGrantedUserId String
 }
 
 model MembersOfOrganizations {

@@ -28,16 +28,25 @@ export const projectRouter = router({
         }
     }),
     createNewProject: protectedOrgProcedure
-        .input(z.object({ name: z.string(), organizationId: z.number() }))
+        .input(z.object({ name: z.string(), organizationSlug: z.string() }))
         .mutation(async ({ ctx, input }) => {
-            const { name, organizationId } = input
+            const { name, organizationSlug } = input
             const slug = slugify(name)
+
+            const { id } = await ctx.prisma.organization.findUniqueOrThrow({
+                where: {
+                    slug: organizationSlug,
+                },
+                select: {
+                    id: true,
+                },
+            })
 
             return ctx.prisma.project.create({
                 data: {
                     name,
                     slug,
-                    organization: { connect: { id: organizationId } },
+                    organization: { connect: { id } },
                 },
             })
         }),
