@@ -26,3 +26,61 @@ authorizationUrl.searchParams.set('response_type', 'code')
 authorizationUrl.searchParams.set('scope', env.NEXT_PUBLIC_AIRTABLE_SCOPE)
 
 export const airtableAuthUrl = authorizationUrl.toString()
+
+export type AirtableBase = {
+    id: string
+    name: string
+    permissionLevel: 'none' | 'read' | 'comment' | 'edit' | 'create'
+}
+
+export type AirtableTable = {
+    description?: string
+    fields: AirtableField[]
+    id: string
+    name: string
+    primaryFieldId: string
+    views: AirtableView[]
+}
+
+export type AirtableField = {
+    description?: string
+    id: string
+    name: string
+    options?: {
+        inverseLinkFieldId?: string
+        isReversed?: boolean
+        linkedTableId?: string
+        prefersSingleRecordLink?: boolean
+    }
+    type: string
+}
+
+export type AirtableView = {
+    id: string
+    name: string
+    type: string
+}
+
+export const getBasesList = async (accessToken: string): Promise<AirtableBase[]> => {
+    const url = 'https://api.airtable.com/v0/meta/bases'
+
+    const data = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    }).then((res) => res.json())
+
+    return data.bases
+}
+
+export const getTablesList = async (accessToken: string, baseId: string): Promise<AirtableTable[]> => {
+    const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
+
+    const data = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    }).then((res) => res.json())
+
+    return data.tables
+}

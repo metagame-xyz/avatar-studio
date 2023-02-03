@@ -1,7 +1,9 @@
 import { TRPCError } from '@trpc/server'
+import Airtable from 'airtable'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 import qs from 'qs'
+import { getBasesList, getTablesList } from 'utils/airtable'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
@@ -24,6 +26,7 @@ export const organizationRouter = router({
                 include: {
                     admins: { include: { member: true } },
                     projects: true,
+                    airtableAuth: true,
                 },
             })
             return data
@@ -35,12 +38,46 @@ export const organizationRouter = router({
             })
         }
     }),
+    getAirtableBases: protectedOrgProcedure
+        .input(z.object({ organizationSlug: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const org = await ctx.prisma.organization.findUniqueOrThrow({
+                where: {
+                    slug: input.organizationSlug,
+                },
+                include: {
+                    admins: { include: { member: true } },
+                    projects: true,
+                    airtableAuth: true,
+                },
+            })
+
+            if (!org.airtableAuth) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Airtable auth not found',
+                })
+            }
+
+            const bases = await getBasesList(org.airtableAuth.accessToken)
+            console.log('bases', bases)
+            if (!bases[0]) throw new Error('No bases found')
+
+            const tables = await getTablesList(org.airtableAuth.accessToken, bases[0].id)
+            console.log('tables', tables)
+            tables.map((table) => console.log(table.fields))
+
+            Airtable.configure({ apiKey: org.airtableAuth.accessToken })
+
+            const base = Airtable.base(bases[0].id)
+            console.log('base', base)
+
+            return bases
+        }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))
         .mutation(async ({ ctx, input }) => {
             const { code, codeVerifier, organizationSlug } = input
-
-            console.log('code', code)
 
             const encodedCredentials = Buffer.from(
                 `${clientEnv.NEXT_PUBLIC_AIRTABLE_CLIENT_ID}:${serverEnv.AIRTABLE_CLIENT_SECRET}`,

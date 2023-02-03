@@ -22,6 +22,10 @@ const Org: NextPage = () => {
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
     const [, setAirtableAuthCache] = useSessionStorage('airtableAuthCache', {})
 
+    const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
+
+    console.log('bases browser', bases)
+
     useEffect(() => {
         if (slug && codeVerifierStr) {
             setAirtableAuthCache({
@@ -71,22 +75,19 @@ const Org: NextPage = () => {
                     <div className="self-start">
                         <Projects />
                         {isOrgAdmin && (
-                            <>
-                                <button
-                                    className="btn-primary mt-4 self-start text-center"
-                                    onClick={() => {
-                                        setOpenNewProjectModal(true)
-                                    }}
-                                >
-                                    Create Avatar
-                                </button>
-                                <a
-                                    className="btn-primary mt-4 w-64 items-center text-center"
-                                    href={`${airtableAuthUrl}`}
-                                >
-                                    Link Airtable
-                                </a>
-                            </>
+                            <button
+                                className="btn-primary mt-4 self-start text-center"
+                                onClick={() => {
+                                    setOpenNewProjectModal(true)
+                                }}
+                            >
+                                Create Avatar
+                            </button>
+                        )}
+                        {isOrgAdmin && org.airtableAuth?.refreshToken && (
+                            <a className="btn-primary mt-4 w-64 items-center text-center" href={`${airtableAuthUrl}`}>
+                                Link Airtable
+                            </a>
                         )}
                     </div>
                 </div>
