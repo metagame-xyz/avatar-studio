@@ -1,6 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react'
 import type { Dispatch, SetStateAction } from 'react'
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import type { AirtableBase, AirtableTable } from 'utils/airtable'
 import { trpc } from 'utils/trpc'
 import Dropdown from './Dropdown'
@@ -17,23 +17,22 @@ export default function NewProjectModal({
     projectSlug: string
 }) {
     const cancelButtonRef = useRef(null)
-    const [name, setName] = useState('')
 
     const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug }, { enabled: !!organizationSlug })
 
-    const trpcUtils = trpc.useContext()
+    const addAirtableProject = trpc.project.addAirtableProject.useMutation({
+        onSuccess: () => {
+            setOpen(false)
+            trpc.useContext().project.getProject.invalidate()
+        },
+    })
 
     const [selectedBase, setSelectedBase] = useState<AirtableBase | null>(bases?.[0] || null)
-    const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(null)
+    const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(bases?.[0]?.tables?.[0] || null)
 
-    // tRPC mutation that creates a new project using the input from the dialog div
-    // const createProject = trpc.project.createNewProject.useMutation({
-    //     onSuccess: () => {
-    //         setOpen(false)
-    //         trpcUtils.org.getBySlug.invalidate()
-    //         setName('')
-    //     },
-    // })
+    useEffect(() => {
+        if (selectedBase && selectedBase.tables.length > 0) setSelectedTable(selectedBase.tables[0] || null)
+    }, [selectedBase])
 
     if (!bases) return null
 
@@ -70,37 +69,20 @@ export default function NewProjectModal({
                                             Configure Airtable
                                         </Dialog.Title>
                                         <div className="mt-2">
-                                            <div className="relative rounded-md border border-gray-300 px-3 py-2 shadow-sm focus-within:border-teal-600 focus-within:ring-1 focus-within:ring-teal-600">
-                                                <label
-                                                    htmlFor="name"
-                                                    className="absolute -top-2 left-2 -mt-px inline-block bg-black  px-1 text-xs font-medium"
-                                                >
-                                                    Name
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="name"
-                                                    id="name"
-                                                    className="block w-full border-0 bg-black p-0 text-teal-50 placeholder-gray-500 focus:ring-0 sm:text-sm"
-                                                    placeholder="Haab Goblins Crypto Club"
-                                                    value={name}
-                                                    onChange={(e) => {
-                                                        setName(e.target.value)
-                                                    }}
-                                                />
-                                            </div>
                                             <Dropdown
                                                 items={bases}
                                                 selected={selectedBase}
                                                 setSelected={setSelectedBase}
                                                 label="Airtable Base"
                                             />
-                                            {/* <Dropdown
-                                                items={tables}
-                                                selected={selectedTable}
-                                                setSelected={setSelectedTable}
-                                                label="Airtable Base"
-                                            /> */}
+                                            {selectedBase && (
+                                                <Dropdown
+                                                    items={selectedBase.tables}
+                                                    selected={selectedTable}
+                                                    setSelected={setSelectedTable}
+                                                    label="Airtable Table"
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -108,12 +90,19 @@ export default function NewProjectModal({
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        // onClick={() =>
-                                        //     createProject.mutate({
-                                        //         name,
-                                        //         organizationSlug,
-                                        //     })
-                                        // }
+                                        disabled={!selectedTable || !selectedBase}
+                                        onClick={() => {
+                                            if (selectedTable && selectedBase) {
+                                                addAirtableProject.mutate({
+                                                    projectSlug,
+                                                    organizationSlug,
+                                                    baseId: selectedBase.id,
+                                                    tableId: selectedTable.id,
+                                                    baseName: selectedBase.name,
+                                                    tableName: selectedTable.name,
+                                                })
+                                            }
+                                        }}
                                     >
                                         Update Airtable link
                                     </button>

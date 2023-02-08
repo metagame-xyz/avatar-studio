@@ -49,6 +49,13 @@ const Project: NextPage = () => {
                                 Update Airtable
                             </button>
                         )}
+                        <div className="flex">
+                            <div>Airtable Base: </div> <div>{project.airtableProject?.baseName}</div>
+                        </div>
+                        <div className="flex">
+                            <div>Airtable Table:</div>
+                            <div>{project.airtableProject?.tableName}</div>
+                        </div>
                         <a
                             className="btn-primary mt-4 w-64 items-center text-center"
                             href={`/project/${slug}/edit-avatar`}

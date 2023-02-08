@@ -1,5 +1,4 @@
 import { TRPCError } from '@trpc/server'
-import Airtable from 'airtable'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 import qs from 'qs'
@@ -63,14 +62,28 @@ export const organizationRouter = router({
             console.log('bases', bases)
             if (!bases[0]) throw new Error('No bases found')
 
-            const tables = await getTablesList(org.airtableAuth.accessToken, bases[0].id)
-            console.log('tables', tables)
-            tables.map((table) => console.log(table.fields))
+            for (const base of bases) {
+                const tables = await getTablesList(org.airtableAuth.accessToken, base.id)
+                base.tables = tables
+            }
 
-            Airtable.configure({ apiKey: org.airtableAuth.accessToken })
+            // We can switch to parallelized if it's a problem but I think we'd hit the rate limit of 5 req/s
+            // const getTablesLists = async (accessToken: string, baseIds: string[]) => {
+            //     const promises = baseIds.map(async (baseId) => {
+            //         const tables = await getTablesList(accessToken, baseId)
+            //         return { id: baseId, tables }
+            //     })
+            //     return Promise.all(promises)
+            // }
+            // const baseIds = bases.map((base) => base.id)
+            // const updatedBases = await getTablesLists(org.airtableAuth.accessToken, baseIds)
+            // updatedBases.forEach((updatedBase) => {
+            //     const base = bases.find((base) => base.id === updatedBase.id) as AirtableBase
+            //     base.tables = updatedBase.tables
+            // })
 
-            const base = Airtable.base(bases[0].id)
-            console.log('base', base)
+            // Airtable.configure({ apiKey: org.airtableAuth.accessToken })
+            // const base = Airtable.base(bases[0].id)
 
             return bases
         }),

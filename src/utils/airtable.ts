@@ -31,6 +31,7 @@ export type AirtableBase = {
     id: string
     name: string
     permissionLevel: 'none' | 'read' | 'comment' | 'edit' | 'create'
+    tables: AirtableTable[]
 }
 
 export type AirtableTable = {
