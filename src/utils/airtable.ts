@@ -27,6 +27,15 @@ authorizationUrl.searchParams.set('scope', env.NEXT_PUBLIC_AIRTABLE_SCOPE)
 
 export const airtableAuthUrl = authorizationUrl.toString()
 
+export type AirtableOAuthResponse = {
+    token_type: string
+    scope: string
+    access_token: string
+    expires_in: number
+    refresh_token: string
+    refresh_expires_in: number
+}
+
 export type AirtableBase = {
     id: string
     name: string
@@ -62,7 +71,7 @@ export type AirtableView = {
     type: string
 }
 
-export const getBasesList = async (accessToken: string): Promise<AirtableBase[]> => {
+export const getBasesList = async (accessToken: string): Promise<AirtableBase[] | undefined> => {
     const url = 'https://api.airtable.com/v0/meta/bases'
 
     const data = await fetch(url, {
@@ -74,7 +83,7 @@ export const getBasesList = async (accessToken: string): Promise<AirtableBase[]>
     return data.bases
 }
 
-export const getTablesList = async (accessToken: string, baseId: string): Promise<AirtableTable[]> => {
+export const getTablesList = async (accessToken: string, baseId: string): Promise<AirtableTable[] | undefined> => {
     const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
 
     const data = await fetch(url, {

@@ -1,19 +1,11 @@
 import { TRPCError } from '@trpc/server'
 import { env as clientEnv } from 'env/client.mjs'
-import { env as serverEnv } from 'env/server.mjs'
 import qs from 'qs'
+import type { AirtableOAuthResponse } from 'utils/airtable'
 import { getBasesList, getTablesList } from 'utils/airtable'
+import { airtableAuthHeaders, refreshAirtableAuth } from 'utils/airtableBackend'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
-
-type AirtableOAuthResponse = {
-    token_type: string
-    scope: string
-    access_token: string
-    expires_in: number
-    refresh_token: string
-    refresh_expires_in: number
-}
 
 export const organizationRouter = router({
     getBySlug: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -58,13 +50,15 @@ export const organizationRouter = router({
                 })
             }
 
-            const bases = await getBasesList(org.airtableAuth.accessToken)
-            console.log('bases', bases)
-            if (!bases[0]) throw new Error('No bases found')
+            // TODO move airtable stuff into a class, record when the access / refresh token will expire, and only refresh if needed. move the refresh check into each individual api call, so we don't have to remember to refresh when you make a new call. Also make a cronjob with quirrel to refresh all tokens every 30 days just to make sure never lose the refresh token validity
+            const airtableAuth = await refreshAirtableAuth(org.airtableAuth)
+
+            const bases = await getBasesList(airtableAuth.accessToken)
+            if (!bases || !bases[0]) return null
 
             for (const base of bases) {
-                const tables = await getTablesList(org.airtableAuth.accessToken, base.id)
-                base.tables = tables
+                const tables = await getTablesList(airtableAuth.accessToken, base.id)
+                if (tables) base.tables = tables
             }
 
             // We can switch to parallelized if it's a problem but I think we'd hit the rate limit of 5 req/s
@@ -92,21 +86,11 @@ export const organizationRouter = router({
         .mutation(async ({ ctx, input }) => {
             const { code, codeVerifier, organizationSlug } = input
 
-            const encodedCredentials = Buffer.from(
-                `${clientEnv.NEXT_PUBLIC_AIRTABLE_CLIENT_ID}:${serverEnv.AIRTABLE_CLIENT_SECRET}`,
-            ).toString('base64')
-            const authorizationHeader = `Basic ${encodedCredentials}`
-
-            const headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Authorization: authorizationHeader,
-            }
-
             let airtableResponse: AirtableOAuthResponse
             try {
                 airtableResponse = await fetch(`${clientEnv.NEXT_PUBLIC_AIRTABLE_URL}/oauth2/v1/token`, {
                     method: 'POST',
-                    headers,
+                    headers: airtableAuthHeaders,
                     body: qs.stringify({
                         code_verifier: codeVerifier,
                         redirect_uri: clientEnv.NEXT_PUBLIC_AIRTABLE_REDIRECT_URI,
