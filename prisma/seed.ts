@@ -14,8 +14,8 @@ dotenv.config()
 const prisma = new PrismaClient()
 
 AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.METAGAME_AWS_ACCESS_KEY,
+    secretAccessKey: process.env.METAGAME_AWS_SECRET_ACCESS_KEY,
 })
 
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'

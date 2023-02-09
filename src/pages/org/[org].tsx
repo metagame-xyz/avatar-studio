@@ -7,7 +7,9 @@ import { type NextPage } from 'next'
 import NextError from 'next/error'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSessionStorage } from 'react-use'
+import { airtableAuthUrl, codeVerifierKey, codeVerifierStr } from 'utils/airtable'
 import { trpc } from 'utils/trpc'
 
 const Org: NextPage = () => {
@@ -18,6 +20,22 @@ const Org: NextPage = () => {
 
     const { data: user } = trpc.member.me.useQuery()
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
+    const [, setAirtableAuthCache] = useSessionStorage('airtableAuthCache', {})
+
+    const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
+
+    console.log('bases browser', bases)
+
+    useEffect(() => {
+        if (slug && codeVerifierStr) {
+            setAirtableAuthCache({
+                [codeVerifierKey]: {
+                    codeVerifier: codeVerifierStr,
+                    organizationSlug: slug,
+                },
+            })
+        }
+    }, [slug, setAirtableAuthCache])
 
     // check is user is an org admin
     const isOrgAdmin = user?.organizations?.find((o) => o.id == org?.id)
@@ -28,7 +46,7 @@ const Org: NextPage = () => {
 
     if (status !== 'success') return <Loading />
 
-    const { name, id } = org
+    const { name } = org
 
     const Projects = () => {
         const projects = org.projects || []
@@ -51,7 +69,7 @@ const Org: NextPage = () => {
     const LeftChild = () => {
         return (
             <>
-                <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationId={id} />
+                <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationSlug={slug} />
                 <div className="flex flex-col items-center">
                     <div className="text-4xl font-bold">{name}</div>
                     <div className="self-start">
@@ -65,6 +83,11 @@ const Org: NextPage = () => {
                             >
                                 Create Avatar
                             </button>
+                        )}
+                        {isOrgAdmin && org.airtableAuth?.refreshToken && (
+                            <a className="btn-primary mt-4 w-64 items-center text-center" href={`${airtableAuthUrl}`}>
+                                Link Airtable
+                            </a>
                         )}
                     </div>
                 </div>

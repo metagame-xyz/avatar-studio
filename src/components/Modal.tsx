@@ -1,36 +1,33 @@
 import { Dialog, Transition } from '@headlessui/react'
-import type { Dispatch, SetStateAction } from 'react'
-import { Fragment, useRef, useState } from 'react'
-import { trpc } from 'utils/trpc'
+import react from 'react'
+
+// TODO something about cancelButtonRef makes it focus on the cancel button every time you type a letter
 
 export default function NewProjectModal({
     open,
     setOpen,
-    organizationSlug,
+    title,
+    onClick,
+    onClickText,
+    children,
+    cancelButtonRef,
 }: {
     open: boolean
-    setOpen: Dispatch<SetStateAction<boolean>>
-    organizationSlug: string
+    setOpen: react.Dispatch<react.SetStateAction<boolean>>
+    title: string
+    onClick: () => void
+    onClickText: string
+    children: JSX.Element
+    cancelButtonRef: react.MutableRefObject<null>
 }) {
-    const cancelButtonRef = useRef(null)
-    const [name, setName] = useState('')
-
-    const trpcUtils = trpc.useContext()
-
-    // tRPC mutation that creates a new project using the input from the dialog div
-    const createProject = trpc.project.createNewProject.useMutation({
-        onSuccess: () => {
-            setOpen(false)
-            trpcUtils.org.getBySlug.invalidate()
-            setName('')
-        },
-    })
+    // const cancelButtonRef = useRef(null)
+    // const [name, setName] = useState('')
 
     return (
-        <Transition.Root show={open} as={Fragment}>
+        <Transition.Root show={open} as={react.Fragment}>
             <Dialog as="div" className="relative z-10" initialFocus={cancelButtonRef} onClose={setOpen}>
                 <Transition.Child
-                    as={Fragment}
+                    as={react.Fragment}
                     enter="ease-out duration-300"
                     enterFrom="opacity-0"
                     enterTo="opacity-100"
@@ -44,7 +41,7 @@ export default function NewProjectModal({
                 <div className="fixed inset-0 z-10 overflow-y-auto bg-gray-900/60">
                     <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                         <Transition.Child
-                            as={Fragment}
+                            as={react.Fragment}
                             enter="ease-out duration-300"
                             enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                             enterTo="opacity-100 translate-y-0 sm:scale-100"
@@ -56,43 +53,18 @@ export default function NewProjectModal({
                                 <div>
                                     <div className="mt-3 text-center">
                                         <Dialog.Title as="h3" className="text-lg font-medium leading-6">
-                                            Create New Project
+                                            {title}
                                         </Dialog.Title>
-                                        <div className="mt-2">
-                                            <div className="relative rounded-md border border-gray-300 px-3 py-2 shadow-sm focus-within:border-teal-600 focus-within:ring-1 focus-within:ring-teal-600">
-                                                <label
-                                                    htmlFor="name"
-                                                    className="absolute -top-2 left-2 -mt-px inline-block  px-1 text-xs font-medium"
-                                                >
-                                                    Name
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="name"
-                                                    id="name"
-                                                    className="block w-full border-0 bg-black p-0 text-teal-50 placeholder-gray-500 focus:ring-0 sm:text-sm"
-                                                    placeholder="Haab Goblins Crypto Club"
-                                                    value={name}
-                                                    onChange={(e) => {
-                                                        setName(e.target.value)
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
                                     </div>
+                                    {children}
                                 </div>
                                 <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        onClick={() =>
-                                            createProject.mutate({
-                                                name,
-                                                organizationSlug,
-                                            })
-                                        }
+                                        onClick={onClick}
                                     >
-                                        Create Project
+                                        {onClickText}
                                     </button>
                                     <button
                                         type="button"

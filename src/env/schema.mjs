@@ -8,12 +8,11 @@ import { z } from 'zod'
 export const serverSchema = z.object({
     DATABASE_URL: z.string().url(),
     NODE_ENV: z.enum(['development', 'test', 'production']),
-    DISCORD_CLIENT_ID: z.string(),
-    DISCORD_CLIENT_SECRET: z.string(),
     PRIVY_APP_SECRET: z.string(),
     METAGAME_AWS_ACCESS_KEY: z.string(),
     METAGAME_AWS_SECRET_ACCESS_KEY: z.string(),
     VALIDATOR_PRIVATE_KEY: z.string(),
+    AIRTABLE_CLIENT_SECRET: z.string(),
 })
 
 /**
@@ -25,6 +24,10 @@ export const clientSchema = z.object({
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_PRIVY_APP_ID: z.string(),
     NEXT_PUBLIC_ALCHEMY_PROJECT_ID: z.string(),
+    NEXT_PUBLIC_AIRTABLE_URL: z.string(),
+    NEXT_PUBLIC_AIRTABLE_CLIENT_ID: z.string(),
+    NEXT_PUBLIC_AIRTABLE_REDIRECT_URI: z.string(),
+    NEXT_PUBLIC_AIRTABLE_SCOPE: z.string(),
 })
 
 /**
@@ -36,5 +39,9 @@ export const clientSchema = z.object({
 export const clientEnv = {
     NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
     NEXT_PUBLIC_ALCHEMY_PROJECT_ID: process.env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID,
+    NEXT_PUBLIC_AIRTABLE_URL: process.env.NEXT_PUBLIC_AIRTABLE_URL,
+    NEXT_PUBLIC_AIRTABLE_CLIENT_ID: process.env.NEXT_PUBLIC_AIRTABLE_CLIENT_ID,
+    NEXT_PUBLIC_AIRTABLE_REDIRECT_URI: process.env.NEXT_PUBLIC_AIRTABLE_REDIRECT_URI,
+    NEXT_PUBLIC_AIRTABLE_SCOPE: process.env.NEXT_PUBLIC_AIRTABLE_SCOPE,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 }

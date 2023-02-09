@@ -31,12 +31,12 @@ const isAuthed = t.middleware(({ ctx, next }) => {
 })
 
 const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
-    const isOrgAdminInput = z.object({ organizationId: z.number() })
+    const isOrgAdminInput = z.object({ organizationSlug: z.string() })
     const input = isOrgAdminInput.parse(rawInput)
 
     const organization = await ctx.prisma.organization.findUniqueOrThrow({
         where: {
-            id: input.organizationId,
+            slug: input.organizationSlug,
         },
         include: {
             admins: { include: { member: true } },
