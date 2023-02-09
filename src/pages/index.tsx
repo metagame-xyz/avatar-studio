@@ -53,9 +53,7 @@ const Home: NextPage = () => {
                                 target="_blank"
                             >
                                 <h3 className="text-2xl font-bold">Documentation →</h3>
-                                <div className="text-lg">
-                                    Learn more about Create T3 App, the libraries it uses, and how to deploy it.
-                                </div>
+                                <div className="text-lg">Avatar Studio for everyone</div>
                             </Link>
                         </div>
                         <div className="flex flex-col items-center gap-2">
