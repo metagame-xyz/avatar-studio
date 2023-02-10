@@ -1,6 +1,9 @@
 import type { NftMetadata } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
+import { clientEnv } from 'env/schema.mjs'
+import { providers } from 'ethers'
 import { slugify } from 'utils'
+import Airtable from 'utils/Airtable'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
@@ -141,5 +144,57 @@ export const projectRouter = router({
                     project: { connect: { id: project.id } },
                 },
             })
+        }),
+    getAirtableMembersList: protectedOrgProcedure
+        .input(z.object({ organizationSlug: z.string() })) // for protectedOrgProcedure to work
+        .query(async ({ ctx }) => {
+            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+
+            const project = await ctx.prisma.project.findUniqueOrThrow({
+                where: { slug: ctx.projectSlug },
+                include: {
+                    airtableProject: true,
+                    organization: {
+                        include: {
+                            airtableAuth: true,
+                        },
+                    },
+                },
+            })
+
+            if (!project.airtableProject || !project.organization.airtableAuth) return null
+
+            try {
+                const airtable = new Airtable(project.organization.airtableAuth)
+                const members = await airtable.getMembers(project.airtableProject)
+
+                const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
+
+                async function updateMember(member: any) {
+                    if (member['ens']) {
+                        const address = await provider.resolveName(member['ens'])
+                        member['wallet-address'] = address?.toLowerCase()
+                    }
+
+                    if (member['wallet-address']) {
+                        const ens = await provider.lookupAddress(member['wallet-address'])
+                        member['ens'] = ens
+                    }
+
+                    return member
+                }
+
+                const updatedMembers = await Promise.all(members.map(async (member) => updateMember(member)))
+
+                return updatedMembers
+            } catch (err) {
+                console.log(err)
+            }
+            return null
+        }),
+    syncAirtableMembers: protectedOrgProcedure
+        .input(z.object({ organizationSlug: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
         }),
 })

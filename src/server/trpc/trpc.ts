@@ -34,6 +34,12 @@ const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     const isOrgAdminInput = z.object({ organizationSlug: z.string() })
     const input = isOrgAdminInput.parse(rawInput)
 
+    // TODO calling ctx here creates an issue:
+    // This is caused by either a bug in Node.js or incorrect usage of Node.js internals.
+    // Please open an issue with this stack trace at https://github.com/nodejs/node/issues
+    // console.log('ctx', ctx.organizationSlug)
+    // console.log('input', input)
+
     const organization = await ctx.prisma.organization.findUniqueOrThrow({
         where: {
             slug: input.organizationSlug,

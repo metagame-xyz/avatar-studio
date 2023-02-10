@@ -11,7 +11,7 @@ const Loading: React.FC = () => {
             </Head>
             <>
                 {/* Background color split screen for large screens */}
-                <div className="container relative mx-auto flex min-h-[calc(100vh_-_120px)] items-center justify-center">
+                <div className="container relative mx-auto flex min-h-[100px] items-center justify-center">
                     <Spinner />
                 </div>
             </>

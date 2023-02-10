@@ -78,14 +78,16 @@ model Organization {
 }
 
 model OrganizationAirtableAuth {
-  id                  Int          @id @unique @default(autoincrement())
-  scope               String
-  accessToken         String
-  refreshToken        String
-  organization        Organization @relation(fields: [organizationSlug], references: [slug])
-  organizationSlug    String       @unique
-  accessGrantedUser   User         @relation(fields: [accessGrantedUserId], references: [id])
-  accessGrantedUserId String
+  id                     Int          @id @unique @default(autoincrement())
+  scope                  String
+  accessToken            String
+  accessTokenExpiration  DateTime
+  refreshToken           String
+  refreshTokenExpiration DateTime
+  organization           Organization @relation(fields: [organizationSlug], references: [slug])
+  organizationSlug       String       @unique
+  accessGrantedUser      User         @relation(fields: [accessGrantedUserId], references: [id])
+  accessGrantedUserId    String
 }
 
 model MembersOfOrganizations {

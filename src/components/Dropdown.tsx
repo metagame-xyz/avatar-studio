@@ -19,7 +19,6 @@ export default function Dropdown<T extends { id: number | string; name: string }
     label,
     items,
 }: DropdownProps<T>) {
-    console.log(selected)
     return (
         <Listbox value={selected} onChange={setSelected}>
             {({ open }) => (

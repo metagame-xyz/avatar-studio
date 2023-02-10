@@ -13,7 +13,6 @@ const AirtableOauth = () => {
         state: string
     }
 
-    console.log('state', state)
     const [airtableAuthCache, setAirtableAuthCache] =
         useSessionStorage<Record<string, AirtableAuthCache>>('airtableAuthCache')
     const [hasMutationRun, setHasMutationRun] = useState(false)

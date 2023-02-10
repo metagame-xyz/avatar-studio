@@ -1,42 +1,58 @@
 import { Dialog, Transition } from '@headlessui/react'
+import { UserCircleIcon } from '@heroicons/react/24/solid'
+import { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
-import { Fragment, useEffect, useRef, useState } from 'react'
-import type { AirtableBase, AirtableTable } from 'utils/airtableFrontend'
+import { Fragment, useRef } from 'react'
+import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
-import Dropdown from './Dropdown'
+import Loading from './Loading'
 
 export default function NewProjectModal({
     open,
     setOpen,
     organizationSlug,
-    projectSlug,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
-    projectSlug: string
 }) {
     const cancelButtonRef = useRef(null)
 
-    const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug }, { enabled: !!organizationSlug })
+    const { data: airtableMembers } = trpc.project.getAirtableMembersList.useQuery(
+        { organizationSlug },
+        { enabled: !!organizationSlug },
+    )
 
-    const trpcUtils = trpc.useContext()
+    const AirtableMembersList: React.FC<{ membersList: FieldSet[] }> = ({ membersList }) => {
+        console.log(membersList)
+        const members =
+            membersList.map((member) => ({
+                walletAddress: member['wallet-address'] as string,
+                firstName: member['first-name'] as string,
+                lastName: member['last-name'] as string,
+                ens: member['ens'] as string | undefined,
+            })) || []
 
-    const addAirtableProject = trpc.project.addAirtableProject.useMutation({
-        onSuccess: () => {
-            setOpen(false)
-            trpcUtils.project.getProject.invalidate()
-        },
-    })
+        return members.length > 0 ? (
+            <>
+                {members.map(({ firstName, lastName, walletAddress, ens }) => (
+                    <div className="mt-2 flex items-center" key={walletAddress}>
+                        {/* <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}> */}
+                        <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
+                        {firstName} {lastName} ({ens?.toLowerCase()}) {truncateAddress(walletAddress)}
+                        {/* </Link> */}
+                    </div>
+                ))}
+            </>
+        ) : null
+    }
 
-    const [selectedBase, setSelectedBase] = useState<AirtableBase | null>(bases?.[0] || null)
-    const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(bases?.[0]?.tables?.[0] || null)
-
-    useEffect(() => {
-        if (selectedBase && selectedBase.tables.length > 0) setSelectedTable(selectedBase.tables[0] || null)
-    }, [selectedBase])
-
-    if (!bases) return null
+    // const addAirtableProject = trpc.project.addAirtableProject.useMutation({
+    //     onSuccess: () => {
+    //         setOpen(false)
+    //         trpc.useContext().project.getProject.invalidate()
+    //     },
+    // })
 
     return (
         <Transition.Root show={open} as={Fragment}>
@@ -68,10 +84,15 @@ export default function NewProjectModal({
                                 <div>
                                     <div className="mt-3 text-center">
                                         <Dialog.Title as="h3" className="text-lg font-medium leading-6">
-                                            Configure Airtable
+                                            Members
                                         </Dialog.Title>
+                                        {airtableMembers ? (
+                                            <AirtableMembersList membersList={airtableMembers} />
+                                        ) : (
+                                            <Loading />
+                                        )}
                                         <div className="mt-2">
-                                            <Dropdown
+                                            {/* <Dropdown
                                                 items={bases}
                                                 selected={selectedBase}
                                                 setSelected={setSelectedBase}
@@ -84,7 +105,7 @@ export default function NewProjectModal({
                                                     setSelected={setSelectedTable}
                                                     label="Airtable Table"
                                                 />
-                                            )}
+                                            )} */}
                                         </div>
                                     </div>
                                 </div>
@@ -92,21 +113,21 @@ export default function NewProjectModal({
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        disabled={!selectedTable || !selectedBase}
-                                        onClick={() => {
-                                            if (selectedTable && selectedBase) {
-                                                addAirtableProject.mutate({
-                                                    projectSlug,
-                                                    organizationSlug,
-                                                    baseId: selectedBase.id,
-                                                    tableId: selectedTable.id,
-                                                    baseName: selectedBase.name,
-                                                    tableName: selectedTable.name,
-                                                })
-                                            }
-                                        }}
+                                        // disabled={!selectedTable || !selectedBase}
+                                        // onClick={() => {
+                                        //     if (selectedTable && selectedBase) {
+                                        //         addAirtableProject.mutate({
+                                        //             projectSlug,
+                                        //             organizationSlug,
+                                        //             baseId: selectedBase.id,
+                                        //             tableId: selectedTable.id,
+                                        //             baseName: selectedBase.name,
+                                        //             tableName: selectedTable.name,
+                                        //         })
+                                        //     }
+                                        // }}
                                     >
-                                        Update Airtable link
+                                        Sync Members
                                     </button>
                                     <button
                                         type="button"

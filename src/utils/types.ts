@@ -28,6 +28,8 @@ export type Signature = {
     compact: string
 }
 
+export type MostTypes = string | number | boolean | null | undefined
+
 export const enum Status {
     loading = 'loading',
     success = 'success',

@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSessionStorage } from 'react-use'
-import { airtableAuthUrl, codeVerifierKey, codeVerifierStr } from 'utils/airtable'
+import { airtableAuthUrl, codeVerifierKey, codeVerifierStr } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
 
 const Org: NextPage = () => {
@@ -17,14 +17,16 @@ const Org: NextPage = () => {
     const slug = router.query.org as string
 
     const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
+    const { data: tokenNeedsRefresh } = trpc.org.checkAirtableToken.useQuery(
+        { organizationSlug: slug },
+        { enabled: !!slug },
+    )
 
     const { data: user } = trpc.member.me.useQuery()
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
     const [, setAirtableAuthCache] = useSessionStorage('airtableAuthCache', {})
 
     const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
-
-    console.log('bases browser', bases)
 
     useEffect(() => {
         if (slug && codeVerifierStr) {
@@ -84,7 +86,7 @@ const Org: NextPage = () => {
                                 Create Avatar
                             </button>
                         )}
-                        {isOrgAdmin && org.airtableAuth?.refreshToken && (
+                        {isOrgAdmin && tokenNeedsRefresh && (
                             <a className="btn-primary mt-4 w-64 items-center text-center" href={`${airtableAuthUrl}`}>
                                 Link Airtable
                             </a>

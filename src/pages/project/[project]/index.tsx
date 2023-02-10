@@ -1,3 +1,4 @@
+import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import Loading from 'components/Loading'
 import MembersList from 'components/MembersList'
@@ -12,6 +13,7 @@ const Project: NextPage = () => {
     const { data: user, status: userStatus } = trpc.member.me.useQuery()
 
     const [openAirtableModal, setOpenAirtableModal] = useState(false)
+    const [openAirtableMembersModal, setOpenAirtableMembersModal] = useState(false)
 
     const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.organization?.id)
 
@@ -28,14 +30,18 @@ const Project: NextPage = () => {
     const LeftChild = () => {
         return (
             <>
-                {
-                    <ConfigureAirtableModal
-                        open={openAirtableModal}
-                        setOpen={setOpenAirtableModal}
-                        organizationSlug={project.organization.slug}
-                        projectSlug={project.slug}
-                    />
-                }
+                <ConfigureAirtableModal
+                    open={openAirtableModal}
+                    setOpen={setOpenAirtableModal}
+                    organizationSlug={project.organization.slug}
+                    projectSlug={project.slug}
+                />
+                <ConfigureAirtableMembersModal
+                    open={openAirtableMembersModal}
+                    setOpen={setOpenAirtableMembersModal}
+                    organizationSlug={project.organization.slug}
+                />
+
                 <div className="flex flex-col items-center">
                     <div className="text-4xl font-bold">{name}</div>
                     <div className="items-center">
@@ -46,9 +52,10 @@ const Project: NextPage = () => {
                                     setOpenAirtableModal(true)
                                 }}
                             >
-                                Update Airtable
+                                Update Airtable Table
                             </button>
                         )}
+
                         <div className="flex">
                             <div>Airtable Base: </div> <div>{project.airtableProject?.baseName}</div>
                         </div>
@@ -56,6 +63,16 @@ const Project: NextPage = () => {
                             <div>Airtable Table:</div>
                             <div>{project.airtableProject?.tableName}</div>
                         </div>
+                        {isOrgAdmin && (
+                            <button
+                                className="btn-primary mt-4 self-start text-center"
+                                onClick={() => {
+                                    setOpenAirtableMembersModal(true)
+                                }}
+                            >
+                                Sync Members List
+                            </button>
+                        )}
                         <a
                             className="btn-primary mt-4 w-64 items-center text-center"
                             href={`/project/${slug}/edit-avatar`}
