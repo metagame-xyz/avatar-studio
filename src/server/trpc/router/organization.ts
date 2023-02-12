@@ -43,12 +43,18 @@ export const organizationRouter = router({
 
             const airtable = new Airtable(org.airtableAuth)
 
-            const bases = await airtable.getBasesList()
-            if (!bases || !bases[0]) return null
+            try {
+                const bases = await airtable.getBasesList()
+                if (!bases || !bases[0]) return null
 
-            for (const base of bases) {
-                const tables = await airtable.getTablesList(base.id)
-                base.tables = tables || []
+                for (const base of bases) {
+                    const tables = await airtable.getTablesList(base.id)
+                    base.tables = tables || []
+                }
+                return bases
+            } catch (error) {
+                console.log('error', error)
+                return null
             }
 
             // We can switch to parallelized if it's a problem but I think we'd hit the rate limit of 5 req/s
@@ -68,8 +74,6 @@ export const organizationRouter = router({
 
             // Airtable.configure({ apiKey: org.airtableAuth.accessToken })
             // const base = Airtable.base(bases[0].id)
-
-            return bases
         }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))
@@ -88,7 +92,7 @@ export const organizationRouter = router({
 
             return organizationSlug
         }),
-    checkAirtableToken: protectedOrgProcedure
+    checkAirtableTokenNeedsRefresh: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string() }))
         .query(async ({ ctx, input }) => {
             const org = await ctx.prisma.organization.findUniqueOrThrow({
@@ -100,8 +104,11 @@ export const organizationRouter = router({
                 },
             })
 
+            if (!org.airtableAuth) return true
+
             const airtable = new Airtable(org.airtableAuth)
             const bases = await airtable.getBasesList()
+            console.log('bases', bases)
             return !bases
         }),
 })

@@ -1,7 +1,11 @@
-import { env } from 'env/server.mjs'
+import { PrivyClient, type User as PrivyUser } from '@privy-io/server-auth'
+import { env as clientEnv } from 'env/client.mjs'
+import { env as serverEnv } from 'env/server.mjs'
 import { ethers, Wallet } from 'ethers'
 import { goerli, mainnet } from 'wagmi/chains'
-import type { Signature } from './types'
+import type { NewAirtableMember, Signature } from './types'
+
+export const privy = new PrivyClient(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET)
 
 export const createDomainSeparator = (
     name: string,
@@ -30,7 +34,7 @@ export const createDomainSeparator = (
 }
 
 export const generateSignature = async (address: string, domainSeparator: string) => {
-    const signer = new Wallet(env.VALIDATOR_PRIVATE_KEY)
+    const signer = new Wallet(serverEnv.VALIDATOR_PRIVATE_KEY)
 
     const payloadHash = ethers.utils.defaultAbiCoder.encode(['bytes32', 'address'], [domainSeparator, address])
     const messageHash = ethers.utils.keccak256(payloadHash)
@@ -49,4 +53,77 @@ export const generateMintingSignature = async (
     const domainSeparator = createDomainSeparator(projectSlug, contractAddress, network)
     const signature = await generateSignature(memberAddress, domainSeparator)
     return signature as Signature
+}
+
+export const createAuthHeader = (id: string, secret: string): string => {
+    const token = Buffer.from(`${id}:${secret}`).toString('base64')
+    return `Basic ${token}`
+}
+
+export const privyAddUser = async (newAirtableUser: NewAirtableMember): Promise<PrivyUser> => {
+    const url = 'https://auth.privy.io/api/v1/users'
+
+    const linked_accounts = []
+
+    if (newAirtableUser['wallet-address']) {
+        linked_accounts.push({
+            address: newAirtableUser['wallet-address'],
+            type: 'wallet',
+            chain_type: 'ethereum',
+        })
+    }
+    if (newAirtableUser.email) {
+        linked_accounts.push({
+            address: newAirtableUser.email,
+            type: 'email',
+        })
+    }
+
+    const data = JSON.stringify({ linked_accounts })
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'privy-app-id': clientEnv.NEXT_PUBLIC_PRIVY_APP_ID,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET),
+        },
+        body: data,
+    }
+
+    const user = await fetch(url, options).then((res) => res.json())
+    user.linkedAccounts = user.linked_accounts
+    delete user.linked_accounts
+    return user as PrivyUser
+}
+
+export const privyGetAllUsers = async (): Promise<PrivyUser[]> => {
+    const url = 'https://auth.privy.io/api/v1/users'
+
+    const options = {
+        method: 'GET',
+        headers: {
+            'privy-app-id': clientEnv.NEXT_PUBLIC_PRIVY_APP_ID,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET),
+        },
+    }
+
+    const data = (await fetch(url, options).then((res) => res.json())) as { data: PrivyUser[] }
+    return data.data
+}
+
+export const privyDeleteUser = async (id: string): Promise<void> => {
+    const url = `https://auth.privy.io/api/v1/users/${id}`
+
+    const options = {
+        method: 'DELETE',
+        headers: {
+            'privy-app-id': clientEnv.NEXT_PUBLIC_PRIVY_APP_ID,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET),
+        },
+    }
+
+    await fetch(url, options)
 }

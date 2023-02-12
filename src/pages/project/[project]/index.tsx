@@ -63,7 +63,7 @@ const Project: NextPage = () => {
                             <div>Airtable Table:</div>
                             <div>{project.airtableProject?.tableName}</div>
                         </div>
-                        {isOrgAdmin && (
+                        {isOrgAdmin && project?.airtableProject && (
                             <button
                                 className="btn-primary mt-4 self-start text-center"
                                 onClick={() => {

@@ -17,7 +17,7 @@ const Org: NextPage = () => {
     const slug = router.query.org as string
 
     const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
-    const { data: tokenNeedsRefresh } = trpc.org.checkAirtableToken.useQuery(
+    const { data: tokenNeedsRefresh } = trpc.org.checkAirtableTokenNeedsRefresh.useQuery(
         { organizationSlug: slug },
         { enabled: !!slug },
     )
@@ -26,7 +26,7 @@ const Org: NextPage = () => {
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
     const [, setAirtableAuthCache] = useSessionStorage('airtableAuthCache', {})
 
-    const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
+    // const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
 
     useEffect(() => {
         if (slug && codeVerifierStr) {

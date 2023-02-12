@@ -99,6 +99,15 @@ export const traitWithEarnedBoolSchema = traitSchema.and(
     }),
 )
 
+export const newAirtableMemberSchema = z.object({
+    ['wallet-address']: z.string(),
+    ['first-name']: z.string().optional(),
+    ['last-name']: z.string().optional(),
+    email: z.string().email().optional(),
+})
+
+export type NewAirtableMember = z.infer<typeof newAirtableMemberSchema>
+
 export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
 
 export type MemberWithAProject = User & {

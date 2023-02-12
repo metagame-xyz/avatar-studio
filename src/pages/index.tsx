@@ -12,14 +12,14 @@ const Home: NextPage = () => {
     const router = useRouter()
     const { login, authenticated, ready } = usePrivy()
     const { data: user } = trpc.member.me.useQuery(undefined, { enabled: authenticated })
-
+    // trpc.project.deleteAllMembers.useQuery()
     useEffect(() => {
         const page = pageToLoad(user)
         if (authenticated && user) router.push(page)
     }, [authenticated, router, user])
 
     if (!ready) return <div>Loading...</div>
-
+    console.log('index', user)
     return (
         <>
             <Head>

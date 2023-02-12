@@ -1,6 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { UserCircleIcon } from '@heroicons/react/24/solid'
-import { FieldSet } from 'airtable'
+import type { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
 import { Fragment, useRef } from 'react'
 import { truncateAddress } from 'utils'
@@ -22,6 +22,15 @@ export default function NewProjectModal({
         { organizationSlug },
         { enabled: !!organizationSlug },
     )
+
+    const trpcUtils = trpc.useContext()
+
+    const syncMemberList = trpc.project.syncAirtableMembers.useMutation({
+        onSuccess: () => {
+            setOpen(false)
+            trpcUtils.project.getProject.invalidate()
+        },
+    })
 
     const AirtableMembersList: React.FC<{ membersList: FieldSet[] }> = ({ membersList }) => {
         console.log(membersList)
@@ -113,19 +122,15 @@ export default function NewProjectModal({
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        // disabled={!selectedTable || !selectedBase}
-                                        // onClick={() => {
-                                        //     if (selectedTable && selectedBase) {
-                                        //         addAirtableProject.mutate({
-                                        //             projectSlug,
-                                        //             organizationSlug,
-                                        //             baseId: selectedBase.id,
-                                        //             tableId: selectedTable.id,
-                                        //             baseName: selectedBase.name,
-                                        //             tableName: selectedTable.name,
-                                        //         })
-                                        //     }
-                                        // }}
+                                        disabled={!airtableMembers}
+                                        onClick={() => {
+                                            if (airtableMembers) {
+                                                syncMemberList.mutate({
+                                                    organizationSlug,
+                                                    airtableMembers,
+                                                })
+                                            }
+                                        }}
                                     >
                                         Sync Members
                                     </button>

@@ -4,6 +4,8 @@ import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { slugify } from 'utils'
 import Airtable from 'utils/Airtable'
+import { privyAddUser } from 'utils/backend'
+import { newAirtableMemberSchema } from 'utils/types'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
@@ -192,9 +194,92 @@ export const projectRouter = router({
             }
             return null
         }),
+    deleteAllMembers: publicProcedure.query(async ({ ctx }) => {
+        // const users = await privyGetAllUsers()
+        // await users.map(async (user) => {
+        //     await privyDeleteUser(user.id)
+        // })
+        // console.log(users.map((u) => `${u.id} ${JSON.stringify(u.linked_accounts[0])}`))
+    }),
     syncAirtableMembers: protectedOrgProcedure
-        .input(z.object({ organizationSlug: z.string() }))
+        .input(z.object({ organizationSlug: z.string(), airtableMembers: z.array(newAirtableMemberSchema) }))
         .mutation(async ({ ctx, input }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+
+            // const users = await privyGetAllUsers()
+            // await users.map(async (user) => {
+            //     await privyDeleteUser(user.id)
+            // })
+            // console.log(users.map((u) => `${u.id} ${JSON.stringify(u.linked_accounts[0])}`))
+
+            const users = await Promise.all(
+                input.airtableMembers.map(async (member) => {
+                    const existingUser = await ctx.prisma.user.findUnique({
+                        where: { address: member['wallet-address'] },
+                    })
+                    if (existingUser) {
+                        return existingUser
+                    } else {
+                        const privyUser = await privyAddUser(member)
+                        console.log('privyUser', privyUser)
+
+                        const user = await ctx.prisma.user.create({
+                            data: {
+                                privyDID: privyUser.id,
+                                address: member['wallet-address'],
+                                firstName: member['first-name'],
+                                lastName: member['last-name'],
+                                email: member.email,
+                            },
+                        })
+
+                        const accounts = privyUser.linkedAccounts.map((account) => {
+                            const data = {
+                                userId: user.privyDID,
+                                type: account.type,
+                                address: null as string | null,
+                                chainType: null as string | null,
+                                email: null as string | null,
+                            }
+                            if (account.type === 'email') data.email = account.address
+                            if (account.type === 'wallet') {
+                                data.address = account.address
+                                data.chainType = account.chainType
+                            }
+                            return data
+                        })
+
+                        await ctx.prisma.account.createMany({ data: accounts })
+
+                        return user
+                    }
+                }),
+            )
+
+            const project = await ctx.prisma.project.findUnique({ where: { slug: ctx.projectSlug } })
+            if (!project) {
+                throw new Error('Project not found')
+            }
+
+            await Promise.all(
+                users.map(async (user) => {
+                    await ctx.prisma.membersOfProjects.upsert({
+                        where: {
+                            userId_projectSlug: {
+                                userId: user.id,
+                                projectSlug: project.slug,
+                            },
+                        },
+                        update: {
+                            userId: user.id,
+                            projectSlug: project.slug,
+                        },
+                        create: {
+                            userId: user.id,
+                            projectSlug: project.slug,
+                        },
+                    })
+                }),
+            )
         }),
 })

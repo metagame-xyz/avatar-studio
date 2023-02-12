@@ -1,23 +1,21 @@
 import type { AirtableProject, OrganizationAirtableAuth } from '@prisma/client'
-import AirtableApiClient, { FieldSet } from 'airtable'
+import type { FieldSet } from 'airtable'
+import AirtableApiClient from 'airtable'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 import qs from 'qs'
 import { slugify } from 'utils'
 import { prisma } from '../server/db/client'
 import type { AirtableBase, AirtableOAuthResponse, AirtableTable } from './airtableFrontend'
-import { MostTypes } from './types'
-
-const encodedCredentials = Buffer.from(
-    `${clientEnv.NEXT_PUBLIC_AIRTABLE_CLIENT_ID}:${serverEnv.AIRTABLE_CLIENT_SECRET}`,
-).toString('base64')
+import { createAuthHeader } from './backend'
+import type { MostTypes } from './types'
 
 export default class Airtable {
     private baseUrl = clientEnv.NEXT_PUBLIC_AIRTABLE_URL
     private airtableAuth: OrganizationAirtableAuth | null
     private airtableAuthHeaders = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${encodedCredentials}`,
+        Authorization: createAuthHeader(clientEnv.NEXT_PUBLIC_AIRTABLE_CLIENT_ID, serverEnv.AIRTABLE_CLIENT_SECRET),
     }
 
     constructor(airtableAuth: OrganizationAirtableAuth | null = null) {

@@ -19,14 +19,14 @@ AWS.config.update({
 })
 
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
-const privyDID_1 = 'did:privy:clcqu9l350001m908u2ojo5gc'
+const privyDID_1 = 'did:privy:cle0lx71f0002jr08lrbvsl6j'
 const brennerEmail = 'brenner@themetagame.xyz'
 
 const goerliTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
-const privyDID_2 = 'did:privy:cld99jkny0001jq08q3wrr93p'
+const privyDID_2 = 'did:privy:cle0m1j4w0002mg082n13dhd3'
 
 const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
-const privyDID_3 = 'did:privy:cldcb05ow0007ml08ugao0o7h'
+const privyDID_3 = 'did:privy:cle0m24te0006jr08z4ku9v7p'
 
 const goerliContractAddress = '0x2ba797c234c8fe25847225b11b616bce729b0b53'
 
