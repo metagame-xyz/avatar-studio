@@ -5,7 +5,7 @@ import type { AirtableBase, AirtableTable } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
 import Dropdown from './Dropdown'
 
-export default function NewProjectModal({
+export default function ConfigureAirtableModal({
     open,
     setOpen,
     organizationSlug,

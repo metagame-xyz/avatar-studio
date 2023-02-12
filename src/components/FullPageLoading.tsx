@@ -1,7 +1,7 @@
 import Spinner from 'components/Spinner'
 import Head from 'next/head'
 
-const Loading: React.FC = () => {
+const FullPageLoading: React.FC = () => {
     return (
         <>
             <Head>
@@ -10,7 +10,7 @@ const Loading: React.FC = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <>
-                <div className="flex justify-center p-2">
+                <div className="container relative mx-auto flex min-h-[calc(100vh_-_120px)] items-center justify-center">
                     <Spinner />
                 </div>
             </>
@@ -18,4 +18,4 @@ const Loading: React.FC = () => {
     )
 }
 
-export default Loading
+export default FullPageLoading

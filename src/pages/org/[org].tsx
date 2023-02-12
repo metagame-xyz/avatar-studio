@@ -1,5 +1,5 @@
 import { UserCircleIcon } from '@heroicons/react/24/outline'
-import Loading from 'components/Loading'
+import FullPageLoading from 'components/FullPageLoading'
 import MembersList from 'components/MembersList'
 import NewProjectModal from 'components/NewProjectModal'
 import Shell from 'components/Shell'
@@ -46,7 +46,7 @@ const Org: NextPage = () => {
         return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
 
-    if (status !== 'success') return <Loading />
+    if (status !== 'success') return <FullPageLoading />
 
     const { name } = org
 

@@ -1,9 +1,10 @@
-import type { NftMetadata } from '@prisma/client'
+import type { AchievementType, NftMetadata } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { slugify } from 'utils'
 import Airtable from 'utils/airtable'
+import { airtableFieldSchema } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
 import { newAirtableMemberSchema } from 'utils/types'
 import { z } from 'zod'
@@ -22,6 +23,7 @@ export const projectRouter = router({
                     organization: true,
                     traitCategories: { include: { traits: true } },
                     airtableProject: true,
+                    AchievementCategory: true,
                 },
             })
             return data
@@ -221,8 +223,6 @@ export const projectRouter = router({
                         return existingUser
                     } else {
                         const privyUser = await privyAddUser(member)
-                        console.log('privyUser', privyUser)
-
                         const user = await ctx.prisma.user.create({
                             data: {
                                 privyDID: privyUser.id,
@@ -281,5 +281,78 @@ export const projectRouter = router({
                     })
                 }),
             )
+        }),
+    getAirtableFields: protectedOrgProcedure
+        .input(z.object({ organizationSlug: z.string() })) // for protectedOrgProcedure to work
+        .query(async ({ ctx }) => {
+            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+
+            const project = await ctx.prisma.project.findUniqueOrThrow({
+                where: { slug: ctx.projectSlug },
+                include: {
+                    airtableProject: true,
+                    organization: {
+                        include: {
+                            airtableAuth: true,
+                        },
+                    },
+                },
+            })
+
+            if (!project.airtableProject || !project.organization.airtableAuth) return null
+
+            const airtable = new Airtable(project.organization.airtableAuth)
+            const airtableFields = await airtable.getTableFields(project.airtableProject)
+
+            if (!airtableFields) return null
+
+            const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens']
+
+            const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
+
+            const achievementFields = airtableFields
+                .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
+                .filter((field) => allowedAchievementTypes.includes(field.type))
+
+            return achievementFields
+        }),
+    syncAirtableAchievementCategories: protectedOrgProcedure
+        .input(z.object({ organizationSlug: z.string(), airtableFields: z.array(airtableFieldSchema) })) // for protectedOrgProcedure to work
+        .mutation(async ({ ctx, input }) => {
+            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+
+            const project = await ctx.prisma.project.findUniqueOrThrow({
+                where: { slug: ctx.projectSlug },
+                select: { id: true },
+            })
+
+            const airtableFieldToAchievementCategoryType = (airtableType: string): AchievementType => {
+                switch (airtableType) {
+                    case 'number':
+                        return 'LEVEL'
+                    case 'checkbox':
+                    case 'singleLineText':
+                        return 'SPECIFIC_ACHIEVEMENT'
+                    default:
+                        return 'SPECIFIC_ACHIEVEMENT'
+                }
+            }
+
+            const achievementCategoriesToCreate = input.airtableFields.map((field) => {
+                return {
+                    projectId: project.id,
+                    airtableId: field.id,
+                    name: field.name,
+                    description: field.description,
+                    type: airtableFieldToAchievementCategoryType(field.type),
+                }
+            })
+
+            const createdResponse = await ctx.prisma.achievementCategory.createMany({
+                data: achievementCategoriesToCreate,
+                skipDuplicates: true,
+            })
+
+            return createdResponse
         }),
 })

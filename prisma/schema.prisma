@@ -179,16 +179,18 @@ model Trait {
 }
 
 model AchievementCategory {
-  id           Int           @id @unique @default(autoincrement())
+  id           Int             @id @unique @default(autoincrement())
+  airtableId   String?
   name         String
   description  String?
-  project      Project       @relation(fields: [projectId], references: [id])
+  project      Project         @relation(fields: [projectId], references: [id])
   achievements Achievement[]
-  //   type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
-  type         String        @default("SPECIFIC_ACHIEVEMENT")
+  type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
   traits       Trait[]
 
   projectId Int
+
+  @@unique([projectId, airtableId])
 }
 
 model Achievement {
@@ -250,10 +252,10 @@ model NftMetadata {
 //   LESS_THAN_OR_EQUAL_TO
 // }
 
-// enum AchievementType {
-//   SPECIFIC_ACHIEVEMENT
-//   LEVEL
-// }
+enum AchievementType {
+  SPECIFIC_ACHIEVEMENT
+  LEVEL
+}
 
 // enum OrganizationRole {
 //   ADMIN

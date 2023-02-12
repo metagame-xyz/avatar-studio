@@ -1,4 +1,4 @@
-import Loading from 'components/Loading'
+import FullPageLoading from 'components/FullPageLoading'
 import PfpPreview from 'components/PfpPreview'
 import Shell from 'components/Shell'
 import Title from 'components/Title'
@@ -210,7 +210,7 @@ const EditAvatar = () => {
         return
     }
 
-    if (!assetData || !chain) return <Loading />
+    if (!assetData || !chain) return <FullPageLoading />
 
     // console.log(chain, contractAddress, existingNftMetadata?.tokenId)
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)

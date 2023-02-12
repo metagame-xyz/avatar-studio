@@ -1,6 +1,7 @@
 import base64url from 'base64url'
 import crypto from 'crypto'
 import { env } from 'env/client.mjs'
+import { z } from 'zod'
 
 export const codeVerifierKey = base64url.encode(crypto.randomBytes(100))
 
@@ -70,3 +71,55 @@ export type AirtableView = {
     name: string
     type: string
 }
+
+export const airtableOAuthResponseSchema = z.object({
+    token_type: z.string(),
+    scope: z.string(),
+    access_token: z.string(),
+    expires_in: z.number(),
+    refresh_token: z.string(),
+    refresh_expires_in: z.number(),
+})
+
+export const airtableFieldSchema = z.object({
+    description: z.string().optional(),
+    id: z.string(),
+    name: z.string(),
+    options: z
+        .object({
+            inverseLinkFieldId: z.string().optional(),
+            isReversed: z.boolean().optional(),
+            linkedTableId: z.string().optional(),
+            prefersSingleRecordLink: z.boolean().optional(),
+        })
+        .optional(),
+    type: z.string(),
+})
+
+export const airtableViewSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
+})
+
+export const airtableTableSchema = z.object({
+    description: z.string().optional(),
+    fields: z.array(airtableFieldSchema),
+    id: z.string(),
+    name: z.string(),
+    primaryFieldId: z.string(),
+    views: z.array(airtableViewSchema),
+})
+
+export const airtableBaseSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    permissionLevel: z.union([
+        z.literal('none'),
+        z.literal('read'),
+        z.literal('comment'),
+        z.literal('edit'),
+        z.literal('create'),
+    ]),
+    tables: z.array(airtableTableSchema),
+})

@@ -1,5 +1,5 @@
 import { usePrivy } from '@privy-io/react-auth'
-import Loading from 'components/Loading'
+import FullPageLoading from 'components/FullPageLoading'
 import OldButton, { ButtonType } from 'components/OldButton'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
@@ -29,7 +29,7 @@ const Home: NextPage = () => {
     }
 
     if (status !== 'success') {
-        return <Loading />
+        return <FullPageLoading />
     }
 
     const Invitations = () => {

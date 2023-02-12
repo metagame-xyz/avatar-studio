@@ -6,7 +6,7 @@ import { env as serverEnv } from 'env/server.mjs'
 import qs from 'qs'
 import { slugify } from 'utils'
 import { prisma } from '../server/db/client'
-import type { AirtableBase, AirtableOAuthResponse, AirtableTable } from './airtableFrontend'
+import type { AirtableBase, AirtableField, AirtableOAuthResponse, AirtableTable } from './airtableFrontend'
 import { createAuthHeader } from './backend'
 import type { MostTypes } from './types'
 
@@ -132,6 +132,21 @@ export default class Airtable {
         }).then((res) => res.json())
 
         return data.tables
+    }
+
+    public async getTableFields(airtableProject: AirtableProject): Promise<AirtableField[] | undefined> {
+        if (this.isAccessTokenExpired()) await this.refreshAirtableAuth()
+
+        const url = `https://api.airtable.com/v0/meta/bases/${airtableProject.baseId}/tables`
+        const data = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${this.airtableAuth?.accessToken}`,
+            },
+        }).then((res) => res.json())
+
+        const table = data.tables.find((table: AirtableTable) => table.id === airtableProject.tableId)
+
+        return table?.fields
     }
 
     public async getMembers(airtableProject: AirtableProject): Promise<Record<string, MostTypes>[]> {

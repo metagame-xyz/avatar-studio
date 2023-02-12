@@ -108,7 +108,6 @@ export const organizationRouter = router({
 
             const airtable = new Airtable(org.airtableAuth)
             const bases = await airtable.getBasesList()
-            console.log('bases', bases)
             return !bases
         }),
 })

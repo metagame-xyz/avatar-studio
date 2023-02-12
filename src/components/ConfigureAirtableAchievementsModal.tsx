@@ -1,13 +1,11 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { UserCircleIcon } from '@heroicons/react/24/solid'
-import type { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
 import { Fragment, useRef } from 'react'
-import { truncateAddress } from 'utils'
+import type { AirtableField } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
 import Loading from './Loading'
 
-export default function ConfigureAirtableMembersModal({
+export default function ConfigureAirtableAchievementsModal({
     open,
     setOpen,
     organizationSlug,
@@ -18,42 +16,46 @@ export default function ConfigureAirtableMembersModal({
 }) {
     const cancelButtonRef = useRef(null)
 
-    const { data: airtableMembers } = trpc.project.getAirtableMembersList.useQuery(
+    const { data: airtableFields } = trpc.project.getAirtableFields.useQuery(
         { organizationSlug },
         { enabled: !!organizationSlug },
     )
 
     const trpcUtils = trpc.useContext()
 
-    const syncMemberList = trpc.project.syncAirtableMembers.useMutation({
+    const syncAchievementCategories = trpc.project.syncAirtableAchievementCategories.useMutation({
         onSuccess: () => {
             setOpen(false)
             trpcUtils.project.getProject.invalidate()
         },
     })
 
-    const AirtableMembersList: React.FC<{ membersList: FieldSet[] }> = ({ membersList }) => {
-        const members =
-            membersList.map((member) => ({
-                walletAddress: member['wallet-address'] as string,
-                firstName: member['first-name'] as string,
-                lastName: member['last-name'] as string,
-                ens: member['ens'] as string | undefined,
+    const AirtableAchievementsList: React.FC<{ achievementList: AirtableField[] }> = ({ achievementList }) => {
+        const achievements =
+            achievementList.map(({ description, name, id, type }) => ({
+                id,
+                name,
+                description,
+                type,
             })) || []
 
-        return members.length > 0 ? (
+        return achievements.length > 0 ? (
             <>
-                {members.map(({ firstName, lastName, walletAddress, ens }) => (
-                    <div className="mt-2 flex items-center" key={walletAddress}>
-                        {/* <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}> */}
-                        <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
-                        {firstName} {lastName} ({ens?.toLowerCase()}) {truncateAddress(walletAddress)}
-                        {/* </Link> */}
+                {achievements.map(({ description, name, id, type }) => (
+                    <div className="mt-2 flex items-center" key={id}>
+                        {name} {type} {description} ({id})
                     </div>
                 ))}
             </>
         ) : null
     }
+
+    // const addAirtableProject = trpc.project.addAirtableProject.useMutation({
+    //     onSuccess: () => {
+    //         setOpen(false)
+    //         trpc.useContext().project.getProject.invalidate()
+    //     },
+    // })
 
     return (
         <Transition.Root show={open} as={Fragment}>
@@ -85,10 +87,10 @@ export default function ConfigureAirtableMembersModal({
                                 <div>
                                     <div className="mt-3 text-center">
                                         <Dialog.Title as="h3" className="text-lg font-medium leading-6">
-                                            Members
+                                            Achievements
                                         </Dialog.Title>
-                                        {airtableMembers ? (
-                                            <AirtableMembersList membersList={airtableMembers} />
+                                        {airtableFields ? (
+                                            <AirtableAchievementsList achievementList={airtableFields} />
                                         ) : (
                                             <Loading />
                                         )}
@@ -98,17 +100,17 @@ export default function ConfigureAirtableMembersModal({
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        disabled={!airtableMembers}
+                                        disabled={!airtableFields}
                                         onClick={() => {
-                                            if (airtableMembers) {
-                                                syncMemberList.mutate({
+                                            if (airtableFields) {
+                                                syncAchievementCategories.mutate({
                                                     organizationSlug,
-                                                    airtableMembers,
+                                                    airtableFields,
                                                 })
                                             }
                                         }}
                                     >
-                                        Sync Members
+                                        Sync Achievements
                                     </button>
                                     <button
                                         type="button"

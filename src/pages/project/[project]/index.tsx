@@ -1,6 +1,8 @@
+import AchievementCategoriesList from 'components/AchievementCategoriesList'
+import ConfigureAirtableAchievementsModal from 'components/ConfigureAirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
-import Loading from 'components/Loading'
+import FullPageLoading from 'components/FullPageLoading'
 import MembersList from 'components/MembersList'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
@@ -14,6 +16,7 @@ const Project: NextPage = () => {
 
     const [openAirtableModal, setOpenAirtableModal] = useState(false)
     const [openAirtableMembersModal, setOpenAirtableMembersModal] = useState(false)
+    const [openAirtableAchievementsModal, setOpenAirtableAchievementsModal] = useState(false)
 
     const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.organization?.id)
 
@@ -22,7 +25,7 @@ const Project: NextPage = () => {
 
     if (error) <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
 
-    if (status !== 'success' || userStatus !== 'success') return <Loading />
+    if (status !== 'success' || userStatus !== 'success') return <FullPageLoading />
 
     const { name, slug } = project
     const hasMinted = user.nftMetadata.length > 0
@@ -42,9 +45,15 @@ const Project: NextPage = () => {
                     organizationSlug={project.organization.slug}
                 />
 
+                <ConfigureAirtableAchievementsModal
+                    open={openAirtableAchievementsModal}
+                    setOpen={setOpenAirtableAchievementsModal}
+                    organizationSlug={project.organization.slug}
+                />
+
                 <div className="flex flex-col items-center">
                     <div className="text-4xl font-bold">{name}</div>
-                    <div className="items-center">
+                    <div className="flex-col items-center">
                         {isOrgAdmin && (
                             <button
                                 className="btn-primary mt-4 self-start text-center"
@@ -55,7 +64,6 @@ const Project: NextPage = () => {
                                 Update Airtable Table
                             </button>
                         )}
-
                         <div className="flex">
                             <div>Airtable Base: </div> <div>{project.airtableProject?.baseName}</div>
                         </div>
@@ -64,21 +72,34 @@ const Project: NextPage = () => {
                             <div>{project.airtableProject?.tableName}</div>
                         </div>
                         {isOrgAdmin && project?.airtableProject && (
-                            <button
-                                className="btn-primary mt-4 self-start text-center"
-                                onClick={() => {
-                                    setOpenAirtableMembersModal(true)
-                                }}
-                            >
-                                Sync Members List
-                            </button>
+                            <div>
+                                <button
+                                    className="btn-primary mt-4 self-start text-center"
+                                    onClick={() => {
+                                        setOpenAirtableMembersModal(true)
+                                    }}
+                                >
+                                    Sync Members
+                                </button>
+                            </div>
                         )}
-                        <a
-                            className="btn-primary mt-4 w-64 items-center text-center"
-                            href={`/project/${slug}/edit-avatar`}
-                        >
-                            {hasMinted ? `Update Avatar` : `Mint Avatar`}
-                        </a>
+                        {isOrgAdmin && project?.airtableProject && (
+                            <div>
+                                <button
+                                    className="btn-primary mt-4 self-start text-center"
+                                    onClick={() => {
+                                        setOpenAirtableAchievementsModal(true)
+                                    }}
+                                >
+                                    Sync Achievements
+                                </button>
+                            </div>
+                        )}
+                        <div>
+                            <a className="btn-primary mt-4 w-64 text-center" href={`/project/${slug}/edit-avatar`}>
+                                {hasMinted ? `Update Avatar` : `Mint Avatar`}
+                            </a>
+                        </div>
                     </div>
                 </div>
             </>
@@ -90,6 +111,12 @@ const Project: NextPage = () => {
             <>
                 <div className="text-4xl font-bold">Members</div>
                 <MembersList membersList={project.members} />
+                {project?.AchievementCategory?.length > 0 && (
+                    <>
+                        <div className="text-4xl font-bold">Achievements</div>
+                        <AchievementCategoriesList achievementCategories={project.AchievementCategory} />
+                    </>
+                )}
             </>
         )
     }
