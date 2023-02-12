@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server'
-import Airtable from 'utils/Airtable'
+import Airtable from 'utils/airtable'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
