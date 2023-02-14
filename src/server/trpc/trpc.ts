@@ -2,6 +2,7 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { z } from 'zod'
 
+import { UserRole } from '@prisma/client'
 import { env } from 'env/server.mjs'
 import { type Context } from './context'
 
@@ -98,6 +99,24 @@ const getNetwork = t.middleware(async ({ ctx, next, rawInput }) => {
     })
 })
 
+const isMetagameAdmin = t.middleware(async ({ ctx, next }) => {
+    if (!ctx.session || !ctx.session.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    const user = await ctx.prisma.user.findUniqueOrThrow({
+        where: {
+            privyDID: ctx.session.userId,
+        },
+    })
+
+    if (!(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    return next({ ctx })
+})
+
 /**
  * Unprotected procedure
  **/
@@ -108,3 +127,4 @@ export const publicProcedure = t.procedure.use(getNetwork)
 export const protectedProcedure = t.procedure.use(getNetwork).use(isAuthed)
 export const protectedOrgProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isOrgAdmin)
 export const protectedProjectProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isProjectOrgAdmin)
+export const protectedMetagameAdminProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isMetagameAdmin)

@@ -1,5 +1,4 @@
-import type { Achievement, TraitCategory } from '@prisma/client'
-import { PrismaClient } from '@prisma/client'
+import { Achievement, PrismaClient, TraitCategory, UserRole } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import * as dotenv from 'dotenv'
 import { objectToCamel } from 'ts-case-convert'
@@ -82,6 +81,7 @@ async function main() {
             },
             firstName: 'Metagame',
             lastName: 'Admin',
+            role: UserRole.METAGAME_OWNER,
         },
     })
 

@@ -1,7 +1,8 @@
 import { TRPCError } from '@trpc/server'
+import { slugify } from 'utils'
 import airtable from 'utils/airtable'
 import { z } from 'zod'
-import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
+import { protectedMetagameAdminProcedure, protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
 export const organizationRouter = router({
     getBySlug: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -24,6 +25,14 @@ export const organizationRouter = router({
                 message: 'Organization not found',
             })
         }
+    }),
+    createNewOrg: protectedMetagameAdminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+        return ctx.prisma.organization.create({
+            data: {
+                name: input,
+                slug: slugify(input),
+            },
+        })
     }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))

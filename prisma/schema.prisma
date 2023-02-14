@@ -43,8 +43,7 @@ model User {
   achievements          MemberAchievements[]
   organizations         MembersOfOrganizations[]
   invitations           OrganizationInvitation[]
-  //   role          UserRole?
-  role                  String?
+  role                  UserRole?
   nftMetadata           NftMetadata[]
   airtableAccessGranted OrganizationAirtableAuth[]
 }
@@ -267,7 +266,7 @@ enum AchievementType {
 //   OWNER
 // }
 
-// enum UserRole {
-//   METAGAME_ADMIN
-//   METAGAME_OWNER
-// }
+enum UserRole {
+  METAGAME_ADMIN
+  METAGAME_OWNER
+}

@@ -62,7 +62,7 @@ export default function NewProjectModal({
                                             <div className="relative rounded-md border border-gray-300 px-3 py-2 shadow-sm focus-within:border-teal-600 focus-within:ring-1 focus-within:ring-teal-600">
                                                 <label
                                                     htmlFor="name"
-                                                    className="absolute -top-2 left-2 -mt-px inline-block  px-1 text-xs font-medium"
+                                                    className="absolute -top-2 left-2 -mt-px inline-block bg-black  px-1 text-xs font-medium"
                                                 >
                                                     Name
                                                 </label>
