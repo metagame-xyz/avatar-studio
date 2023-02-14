@@ -5,20 +5,21 @@ import type { Dispatch, SetStateAction } from 'react'
 import { Fragment, useRef } from 'react'
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
+import { newAirtableMemberSchema } from 'utils/types'
 import Loading from './Loading'
 
 export default function ConfigureAirtableMembersModal({
     open,
     setOpen,
     organizationSlug,
+    members,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
+    members: FieldSet[]
 }) {
     const cancelButtonRef = useRef(null)
-
-    const { data } = trpc.project.getAirtableMembersList.useQuery({ organizationSlug }, { enabled: !!organizationSlug })
 
     const trpcUtils = trpc.useContext()
 
@@ -52,13 +53,9 @@ export default function ConfigureAirtableMembersModal({
         ) : null
     }
 
-    if (!data) return null
+    const airtableMembers = members.map((m) => newAirtableMemberSchema.parse(m))
 
-    console.log(data.error)
-
-    if (data.error) return null
-
-    const airtableMembers = data.members
+    if (!members) return null
 
     return (
         <Transition.Root show={open} as={Fragment}>
@@ -92,20 +89,16 @@ export default function ConfigureAirtableMembersModal({
                                         <Dialog.Title as="h3" className="text-lg font-medium leading-6">
                                             Members
                                         </Dialog.Title>
-                                        {airtableMembers ? (
-                                            <AirtableMembersList membersList={airtableMembers} />
-                                        ) : (
-                                            <Loading />
-                                        )}
+                                        {members ? <AirtableMembersList membersList={members} /> : <Loading />}
                                     </div>
                                 </div>
                                 <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        disabled={!airtableMembers}
+                                        disabled={!members}
                                         onClick={() => {
-                                            if (airtableMembers) {
+                                            if (members) {
                                                 syncMemberList.mutate({
                                                     organizationSlug,
                                                     airtableMembers,

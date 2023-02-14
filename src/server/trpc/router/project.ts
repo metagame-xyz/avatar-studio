@@ -1,11 +1,13 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
+import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { slugify } from 'utils'
 import airtable, { airtableAuthErrorObj, airtableLockErrorObj } from 'utils/airtable'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
+import type { MostTypes } from 'utils/types'
 import { newAirtableMemberSchema } from 'utils/types'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
@@ -149,7 +151,7 @@ export const projectRouter = router({
                 },
             })
         }),
-    getAirtableMembersList: protectedOrgProcedure
+    getAllAirtableData: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string() })) // for protectedOrgProcedure to work
         .query(async ({ ctx }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
@@ -167,39 +169,60 @@ export const projectRouter = router({
             })
 
             if (!project.airtableProject || !project.organization.airtableAuth)
-                return { members: [], error: airtableAuthErrorObj }
+                return { bases: null, members: null, achievementFields: null, error: airtableAuthErrorObj }
 
             try {
-                airtable.setOrg(project.organization.slug)
+                await airtable.setOrg(project.organization.slug, 'getAllAirtableData')
+
+                let bases = await airtable.getBasesList()
+                bases = !bases || !bases[0] ? [] : bases
+
+                for (const base of bases) {
+                    const tables = await airtable.getTablesList(base.id)
+                    base.tables = tables || []
+                }
+
                 const members = await airtable.getMembers(project.airtableProject)
 
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
 
-                async function updateMember(member: any) {
-                    if (member['ens']) {
+                async function updateMember(member: Record<string, MostTypes>) {
+                    if (member['ens'] && typeof member['ens'] === 'string') {
                         const address = await provider.resolveName(member['ens'])
                         member['wallet-address'] = address?.toLowerCase()
                     }
 
-                    if (member['wallet-address']) {
+                    if (member['wallet-address'] && typeof member['wallet-address'] === 'string') {
                         const ens = await provider.lookupAddress(member['wallet-address'])
                         member['ens'] = ens
                     }
 
-                    return member
+                    return member as FieldSet
                 }
 
                 const updatedMembers = await Promise.all(members.map(async (member) => updateMember(member)))
 
-                return { members: updatedMembers, error: null }
+                let airtableFields = await airtable.getTableFields(project.airtableProject)
+                airtableFields = airtableFields || []
+                const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens']
+
+                const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
+
+                const achievementFields = airtableFields
+                    .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
+                    .filter((field) => allowedAchievementTypes.includes(field.type))
+
+                return { bases, members: updatedMembers, achievementFields, error: null }
             } catch (err) {
                 if (err instanceof AirtableAuthError) {
-                    return { members: [], error: airtableAuthErrorObj }
+                    return { bases: null, members: null, achievementFields: null, error: airtableAuthErrorObj }
                 } else if (err instanceof AirtableLockError) {
-                    return { members: [], error: airtableLockErrorObj }
+                    return { bases: null, members: null, achievementFields: null, error: airtableLockErrorObj }
                 } else {
                     throw err
                 }
+            } finally {
+                airtable.postCallCleanup('getAllAirtableData')
             }
         }),
     deleteAllMembers: publicProcedure.query(async ({ ctx }) => {
@@ -287,44 +310,6 @@ export const projectRouter = router({
                     })
                 }),
             )
-        }),
-    getAirtableFields: protectedOrgProcedure
-        .input(z.object({ organizationSlug: z.string() })) // for protectedOrgProcedure to work
-        .query(async ({ ctx }) => {
-            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
-
-            const project = await ctx.prisma.project.findUniqueOrThrow({
-                where: { slug: ctx.projectSlug },
-                include: {
-                    airtableProject: true,
-                    organization: {
-                        include: {
-                            airtableAuth: true,
-                        },
-                    },
-                },
-            })
-
-            if (!project.airtableProject || !project.organization.airtableAuth) return null
-
-            airtable.setOrg(project.organization.slug)
-
-            try {
-                const airtableFields = await airtable.getTableFields(project.airtableProject)
-                if (!airtableFields) return null
-                const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens']
-
-                const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
-
-                const achievementFields = airtableFields
-                    .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
-                    .filter((field) => allowedAchievementTypes.includes(field.type))
-
-                return achievementFields
-            } catch (err) {
-                throw err
-            }
-            return null
         }),
     syncAirtableAchievementCategories: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string(), airtableFields: z.array(airtableFieldSchema) })) // for protectedOrgProcedure to work

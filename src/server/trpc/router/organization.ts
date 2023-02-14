@@ -1,6 +1,5 @@
 import { TRPCError } from '@trpc/server'
-import airtable, { airtableAuthErrorObj, airtableLockErrorObj } from 'utils/airtable'
-import { AirtableAuthError, AirtableLockError } from 'utils/airtableFrontend'
+import airtable from 'utils/airtable'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
@@ -26,62 +25,6 @@ export const organizationRouter = router({
             })
         }
     }),
-    getAirtableBases: protectedOrgProcedure
-        .input(z.object({ organizationSlug: z.string() }))
-        .query(async ({ ctx, input }) => {
-            const org = await ctx.prisma.organization.findUniqueOrThrow({
-                where: {
-                    slug: input.organizationSlug,
-                },
-                include: {
-                    admins: { include: { member: true } },
-                    projects: true,
-                    airtableAuth: true,
-                },
-            })
-
-            if (!org.airtableAuth) {
-                return { bases: null, error: airtableAuthErrorObj }
-            }
-
-            airtable.setOrg(org.slug)
-
-            try {
-                const bases = await airtable.getBasesList()
-                if (!bases || !bases[0]) return { bases: [], error: null }
-
-                for (const base of bases) {
-                    const tables = await airtable.getTablesList(base.id)
-                    base.tables = tables || []
-                }
-                return { bases, error: null }
-            } catch (err) {
-                if (err instanceof AirtableAuthError) {
-                    return { bases: null, error: airtableAuthErrorObj }
-                } else if (err instanceof AirtableLockError) {
-                    return { bases: null, error: airtableLockErrorObj }
-                } else {
-                    throw err
-                }
-            }
-            // We can switch to parallelized if it's a problem but I think we'd hit the rate limit of 5 req/s
-            // const getTablesLists = async (accessToken: string, baseIds: string[]) => {
-            //     const promises = baseIds.map(async (baseId) => {
-            //         const tables = await getTablesList(accessToken, baseId)
-            //         return { id: baseId, tables }
-            //     })
-            //     return Promise.all(promises)
-            // }
-            // const baseIds = bases.map((base) => base.id)
-            // const updatedBases = await getTablesLists(org.airtableAuth.accessToken, baseIds)
-            // updatedBases.forEach((updatedBase) => {
-            //     const base = bases.find((base) => base.id === updatedBase.id) as AirtableBase
-            //     base.tables = updatedBase.tables
-            // })
-
-            // Airtable.configure({ apiKey: org.airtableAuth.accessToken })
-            // const base = Airtable.base(bases[0].id)
-        }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))
         .mutation(async ({ ctx, input }) => {
@@ -101,8 +44,14 @@ export const organizationRouter = router({
     doesTokenNeedRefresh: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string() }))
         .query(async ({ input }) => {
-            airtable.setOrg(input.organizationSlug)
-            return airtable.doesTokenNeedRefresh()
+            try {
+                await airtable.setOrg(input.organizationSlug, 'doesTokenNeedRefresh')
+                return true
+            } catch (err) {
+                false
+            } finally {
+                await airtable.postCallCleanup('doesTokenNeedRefresh')
+            }
         }),
 })
 // export const organizationRouter = router({

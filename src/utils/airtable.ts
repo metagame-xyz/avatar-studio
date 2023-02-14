@@ -39,8 +39,9 @@ class Airtable {
         this.organizationSlug = organizationSlug
     }
 
-    public setOrg(organizationSlug: string): void {
+    public async setOrg(organizationSlug: string, caller = 'unknown'): Promise<void> {
         this.organizationSlug = organizationSlug
+        await this.preCallChecks(caller)
     }
 
     private async getOrgAirtableAuth(): Promise<OrganizationAirtableAuth> {
@@ -131,6 +132,8 @@ class Airtable {
                 data: {
                     accessToken: airtableResponse.access_token,
                     refreshToken: airtableResponse.refresh_token,
+                    accessTokenExpiration: new Date(Date.now() + airtableResponse.expires_in * 1000),
+                    refreshTokenExpiration: new Date(Date.now() + airtableResponse.refresh_expires_in * 1000),
                     scope: airtableResponse.scope,
                 },
             })
@@ -142,23 +145,21 @@ class Airtable {
         }
     }
 
-    private async preCallChecks(caller = 'unknown'): Promise<OrganizationAirtableAuth> {
+    public async preCallChecks(caller = 'unknown'): Promise<OrganizationAirtableAuth> {
         if (!this.organizationSlug) {
             throw new Error('No Org Slug yet')
         }
-        try {
-            await this.acquireLock(caller)
-            this.airtableAuth = await this.getOrgAirtableAuth()
-            if (new Date(Date.now()) > this.airtableAuth.accessTokenExpiration) {
-                await this.refreshAirtableAuth()
-            }
-            return this.airtableAuth
-        } catch (error) {
-            throw error
+        await this.acquireLock(caller)
+        this.airtableAuth = await this.getOrgAirtableAuth()
+        console.log(new Date(Date.now()))
+        console.log(this.airtableAuth.accessTokenExpiration)
+        if (new Date(Date.now()) > this.airtableAuth.accessTokenExpiration) {
+            await this.refreshAirtableAuth()
         }
+        return this.airtableAuth
     }
 
-    private async postCallCleanup(caller = 'unknown'): Promise<void> {
+    public async postCallCleanup(caller = 'unknown'): Promise<void> {
         try {
             await this.releaseLock(caller)
         } catch (error) {}
@@ -212,104 +213,66 @@ class Airtable {
     }
 
     public async getBasesList(): Promise<AirtableBase[]> {
+        if (!this.airtableAuth) throw new Error('No Airtable Auth yet')
         const url = 'https://api.airtable.com/v0/meta/bases'
-        let airtableAuth: OrganizationAirtableAuth | undefined = undefined
-        try {
-            airtableAuth = await this.preCallChecks('getBasesList')
-            const data = await fetch(url, {
-                headers: {
-                    Authorization: `Bearer ${airtableAuth.accessToken}`,
-                },
-            }).then((res) => res.json())
+        const data = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+            },
+        }).then((res) => res.json())
 
-            return data.bases
-        } catch (error) {
-            throw error
-        } finally {
-            await this.postCallCleanup('getBasesList')
-        }
+        return data.bases
     }
 
     public async getTablesList(baseId: string): Promise<AirtableTable[]> {
+        if (!this.airtableAuth) throw new Error('No Airtable Auth yet')
         const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
-        try {
-            const airtableAuth = await this.preCallChecks('getTablesList')
-            const data = await fetch(url, {
-                headers: {
-                    Authorization: `Bearer ${airtableAuth.accessToken}`,
-                },
-            }).then((res) => res.json())
+        const data = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+            },
+        }).then((res) => res.json())
 
-            return data.tables
-        } catch (error) {
-            throw error
-        } finally {
-            await this.postCallCleanup('getTablesList')
-        }
+        return data.tables
     }
 
     public async getTableFields(airtableProject: AirtableProject): Promise<AirtableField[]> {
+        if (!this.airtableAuth) throw new Error('No Airtable Auth yet')
         const url = `https://api.airtable.com/v0/meta/bases/${airtableProject.baseId}/tables`
-        try {
-            const airtableAuth = await this.preCallChecks('getTableFields')
-            const data = await fetch(url, {
-                headers: {
-                    Authorization: `Bearer ${airtableAuth.accessToken}`,
-                },
-            }).then((res) => res.json())
+        const data = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+            },
+        }).then((res) => res.json())
 
-            if (!data.tables) return []
+        if (!data.tables) return []
 
-            const table = data.tables.find((table: AirtableTable) => table.id === airtableProject.tableId)
+        const table = data.tables.find((table: AirtableTable) => table.id === airtableProject.tableId)
 
-            return table?.fields
-        } catch (error) {
-            console.log('getTableFields error')
-            throw error
-        } finally {
-            await this.postCallCleanup('getTableFields')
-        }
+        return table?.fields
     }
 
     public async getMembers(airtableProject: AirtableProject): Promise<Record<string, MostTypes>[]> {
-        try {
-            const airtableAuth = await this.preCallChecks('getMembers')
-            const membersTable = new AirtableApiClient({ apiKey: airtableAuth.accessToken }).base(
-                airtableProject.baseId,
-            )(airtableProject.tableId)
-            const memberRecords = await membersTable.select({}).all()
-            const members = memberRecords.map((record) => record.fields)
+        if (!this.airtableAuth) throw new Error('No Airtable Auth yet')
+        const membersTable = new AirtableApiClient({ apiKey: this.airtableAuth.accessToken }).base(
+            airtableProject.baseId,
+        )(airtableProject.tableId)
+        const memberRecords = await membersTable.select({}).all()
+        const members = memberRecords.map((record) => record.fields)
 
-            const slugifyKeys = (arr: Record<string, MostTypes>[] | FieldSet[]): Record<string, MostTypes>[] => {
-                return arr.map((obj) => {
-                    const transformedObj: Record<string, MostTypes> = {}
-                    Object.keys(obj).forEach((key) => {
-                        const value = obj[key]
-                        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-                            transformedObj[slugify(key)] = value
-                        }
-                    })
-                    return transformedObj
+        const slugifyKeys = (arr: Record<string, MostTypes>[] | FieldSet[]): Record<string, MostTypes>[] => {
+            return arr.map((obj) => {
+                const transformedObj: Record<string, MostTypes> = {}
+                Object.keys(obj).forEach((key) => {
+                    const value = obj[key]
+                    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                        transformedObj[slugify(key)] = value
+                    }
                 })
-            }
-            return slugifyKeys(members)
-        } catch (error) {
-            console.log('getMembers error')
-            throw error
-        } finally {
-            await this.postCallCleanup('getMembers')
+                return transformedObj
+            })
         }
-    }
-
-    public async doesTokenNeedRefresh(): Promise<boolean> {
-        try {
-            await this.preCallChecks('checkToken')
-            return false
-        } catch (error) {
-            return true
-        } finally {
-            await this.postCallCleanup('checkToken')
-        }
+        return slugifyKeys(members)
     }
 }
 

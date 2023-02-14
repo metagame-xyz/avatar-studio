@@ -9,17 +9,14 @@ export default function ConfigureAirtableAchievementsModal({
     open,
     setOpen,
     organizationSlug,
+    airtableFields,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
+    airtableFields: AirtableField[]
 }) {
     const cancelButtonRef = useRef(null)
-
-    const { data: airtableFields } = trpc.project.getAirtableFields.useQuery(
-        { organizationSlug },
-        { enabled: !!organizationSlug },
-    )
 
     const trpcUtils = trpc.useContext()
 

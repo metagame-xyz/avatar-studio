@@ -1,4 +1,5 @@
 import AchievementCategoriesList from 'components/AchievementCategoriesList'
+import ConfigureAirtableAchievementsModal from 'components/ConfigureAirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
@@ -7,7 +8,7 @@ import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
@@ -20,6 +21,16 @@ const Project: NextPage = () => {
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
     const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.organization?.id)
+    const organizationSlug = project?.organization?.slug as string
+
+    const { data } = trpc.project.getAllAirtableData.useQuery(
+        { organizationSlug },
+        { enabled: !!organizationSlug && !!isOrgAdmin },
+    )
+
+    useEffect(() => {
+        if (data?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkAirtableModal(true)
+    }, [data, setOpenRelinkAirtableModal])
 
     // check is user is an org admin
     // const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.id)
@@ -34,30 +45,35 @@ const Project: NextPage = () => {
     const LeftChild = () => {
         return (
             <>
-                <ConfigureAirtableModal
-                    open={openAirtableModal}
-                    setOpen={setOpenAirtableModal}
-                    organizationSlug={project.organization.slug}
-                    projectSlug={project.slug}
-                    setOpenRelinkModal={setOpenRelinkAirtableModal}
-                />
-                <ConfigureAirtableMembersModal
-                    open={openAirtableMembersModal}
-                    setOpen={setOpenAirtableMembersModal}
-                    organizationSlug={project.organization.slug}
-                />
+                {isOrgAdmin && data && !data.error && (
+                    <>
+                        <ConfigureAirtableModal
+                            open={openAirtableModal}
+                            setOpen={setOpenAirtableModal}
+                            organizationSlug={project.organization.slug}
+                            projectSlug={project.slug}
+                            bases={data.bases}
+                        />
+                        <ConfigureAirtableMembersModal
+                            open={openAirtableMembersModal}
+                            setOpen={setOpenAirtableMembersModal}
+                            organizationSlug={project.organization.slug}
+                            members={data.members}
+                        />
 
-                {/* <ConfigureAirtableAchievementsModal
-                    open={openAirtableAchievementsModal}
-                    setOpen={setOpenAirtableAchievementsModal}
-                    organizationSlug={project.organization.slug}
-                /> */}
-                {isOrgAdmin && (
-                    <RelinkAirtableAuthModal
-                        open={openRelinkAirtableModal}
-                        setOpen={setOpenRelinkAirtableModal}
-                        organizationSlug={project.organization.slug}
-                    />
+                        <ConfigureAirtableAchievementsModal
+                            open={openAirtableAchievementsModal}
+                            setOpen={setOpenAirtableAchievementsModal}
+                            organizationSlug={project.organization.slug}
+                            airtableFields={data.achievementFields}
+                        />
+
+                        <RelinkAirtableAuthModal
+                            open={openRelinkAirtableModal}
+                            setOpen={setOpenRelinkAirtableModal}
+                            organizationSlug={project.organization.slug}
+                        />
+                    </>
                 )}
 
                 <div className="flex flex-col items-center">
