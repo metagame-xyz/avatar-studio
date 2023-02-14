@@ -65,20 +65,20 @@ export default function Navbar() {
                             </div>
                             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                                 <div className="flex flex-shrink-0 items-center">
-                                    <div className="h-8 w-8">
+                                    <div className="block h-8 w-auto lg:hidden">
                                         <Image
                                             className="block lg:hidden"
                                             src="/logo.png"
-                                            alt="Your Company"
+                                            alt="Metagame"
                                             width={32}
                                             height={32}
                                         />
                                     </div>
-                                    <div className="h-8 w-8">
+                                    <div className="hidden h-8 w-auto lg:block">
                                         <Image
                                             className="hidden lg:block"
                                             src="/logo.png"
-                                            alt="Your Company"
+                                            alt="Metagame"
                                             width={32}
                                             height={32}
                                         />

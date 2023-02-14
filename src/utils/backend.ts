@@ -97,15 +97,20 @@ export const privyAddUser = async (newAirtableUser: NewAirtableMember): Promise<
     return user as PrivyUser
 }
 
-export const privyGetAllUsers = async (): Promise<PrivyUser[]> => {
+export const privyGetAllUsers = async (
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<PrivyUser[]> => {
     const url = 'https://auth.privy.io/api/v1/users'
 
+    const app = appId || clientEnv.NEXT_PUBLIC_PRIVY_APP_ID
+    const secret = appSecret || serverEnv.PRIVY_APP_SECRET
     const options = {
         method: 'GET',
         headers: {
-            'privy-app-id': clientEnv.NEXT_PUBLIC_PRIVY_APP_ID,
+            'privy-app-id': app,
             'Content-Type': 'application/json',
-            Authorization: createAuthHeader(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET),
+            Authorization: createAuthHeader(app, secret),
         },
     }
 

@@ -225,13 +225,13 @@ export const projectRouter = router({
                 airtable.postCallCleanup('getAllAirtableData')
             }
         }),
-    deleteAllMembers: publicProcedure.query(async ({ ctx }) => {
-        // const users = await privyGetAllUsers()
-        // await users.map(async (user) => {
-        //     await privyDeleteUser(user.id)
-        // })
-        // console.log(users.map((u) => `${u.id} ${JSON.stringify(u.linked_accounts[0])}`))
-    }),
+    // deleteAllMembers: publicProcedure.query(async ({ ctx }) => {
+    // const users = await privyGetAllUsers()
+    // await users.map(async (user) => {
+    //     await privyDeleteUser(user.id)
+    // })
+    // console.log(users.map((u) => `${u.id} ${JSON.stringify(u.linked_accounts[0])}`))
+    // }),
     syncAirtableMembers: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string(), airtableMembers: z.array(newAirtableMemberSchema) }))
         .mutation(async ({ ctx, input }) => {

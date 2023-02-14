@@ -1,13 +1,12 @@
 import type { Achievement, TraitCategory } from '@prisma/client'
 import { PrismaClient } from '@prisma/client'
-import { hashTraits } from '../src/utils'
-import { getFromS3 } from '../src/utils/s3'
-import type { TraitWithEarnedBool } from '../src/utils/types'
-import { LlamaTier } from '../src/utils/types'
-// import { prisma } from '../src/server/db/client'
 import * as AWS from 'aws-sdk'
-
 import * as dotenv from 'dotenv'
+import { objectToCamel } from 'ts-case-convert'
+import { hashTraits } from 'utils'
+import { getFromS3 } from 'utils/s3'
+import type { TraitWithEarnedBool } from 'utils/types'
+import { LlamaTier } from 'utils/types'
 
 dotenv.config()
 
@@ -18,24 +17,54 @@ AWS.config.update({
     secretAccessKey: process.env.METAGAME_AWS_SECRET_ACCESS_KEY,
 })
 
+const createAuthHeader = (id: string, secret: string): string => {
+    const token = Buffer.from(`${id}:${secret}`).toString('base64')
+    return `Basic ${token}`
+}
+const privyGetAllUsers = async (
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<any[]> => {
+    const url = 'https://auth.privy.io/api/v1/users'
+
+    const app = appId || ''
+    const secret = appSecret || ''
+    const options = {
+        method: 'GET',
+        headers: {
+            'privy-app-id': app,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(app, secret),
+        },
+    }
+
+    const data = await fetch(url, options).then((res) => res.json())
+    const users = data.data.map((user: any) => {
+        return objectToCamel(user)
+    })
+
+    const remappedUsers = users.map((user: any) => ({
+        ...user,
+        address: user.linkedAccounts[0]?.address.toLowerCase(),
+    }))
+    return remappedUsers
+}
+
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
-const privyDID_1 = 'did:privy:cle0lx71f0002jr08lrbvsl6j'
 const brennerEmail = 'brenner@themetagame.xyz'
-
 const goerliTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
-const privyDID_2 = 'did:privy:cle0m1j4w0002mg082n13dhd3'
-
 const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
-const privyDID_3 = 'did:privy:cle0m24te0006jr08z4ku9v7p'
 
 const goerliContractAddress = '0x2ba797c234c8fe25847225b11b616bce729b0b53'
 
 async function main() {
-    const brenner = await prisma.user.create({
+    const privyUsers = await privyGetAllUsers(process.env.NEXT_PUBLIC_PRIVY_APP_ID, process.env.PRIVY_APP_SECRET)
+
+    const metagameAdmin = await prisma.user.create({
         data: {
             address: metagameAddress,
             email: brennerEmail,
-            privyDID: privyDID_1,
+            privyDID: privyUsers.find((user) => user.address === metagameAddress)?.id,
             accounts: {
                 create: [
                     {
@@ -51,15 +80,15 @@ async function main() {
                     },
                 ],
             },
-            firstName: 'Brenner',
-            lastName: 'Spear',
+            firstName: 'Metagame',
+            lastName: 'Admin',
         },
     })
 
-    const nir = await prisma.user.create({
+    const goerli = await prisma.user.create({
         data: {
             address: goerliTestAddress,
-            privyDID: privyDID_2,
+            privyDID: privyUsers.find((user) => user.address === goerliTestAddress)?.id,
             accounts: {
                 create: [
                     {
@@ -70,15 +99,15 @@ async function main() {
                     },
                 ],
             },
-            firstName: 'Nir',
-            lastName: 'Kabessa',
+            firstName: 'Goerli',
+            lastName: 'Test',
         },
     })
 
-    const jon = await prisma.user.create({
+    const rinkeby = await prisma.user.create({
         data: {
             address: rinkebyTestAddress,
-            privyDID: privyDID_3,
+            privyDID: privyUsers.find((user) => user.address === rinkebyTestAddress)?.id,
             accounts: {
                 create: [
                     {
@@ -89,8 +118,8 @@ async function main() {
                     },
                 ],
             },
-            firstName: 'Jon',
-            lastName: 'Wu',
+            firstName: 'Rinkeby',
+            lastName: 'Test',
         },
     })
 
@@ -132,7 +161,7 @@ async function main() {
             organizationId: haabGoblins.id,
             inviteeAddress: metagameAddress,
             role: 'OWNER',
-            issuedById: brenner.id,
+            issuedById: metagameAdmin.id,
         },
     })
     const acceptedInvitation = await prisma.organizationInvitation.create({
@@ -140,7 +169,7 @@ async function main() {
             organizationId: brassFactory.id,
             inviteeAddress: metagameAddress,
             role: 'OWNER',
-            issuedById: brenner.id,
+            issuedById: metagameAdmin.id,
             status: 'ACCEPTED',
         },
     })
@@ -165,7 +194,7 @@ async function main() {
         },
     })
 
-    for (const member of [brenner, nir, jon]) {
+    for (const member of [metagameAdmin, goerli, rinkeby]) {
         await prisma.membersOfProjects.create({
             data: {
                 projectSlug: llamaPfp.slug,
@@ -211,14 +240,14 @@ async function main() {
 
     await prisma.memberAchievements.create({
         data: {
-            userId: brenner.id,
+            userId: metagameAdmin.id,
             achievementId: (achievements[1] as Achievement).id,
             status: true,
         },
     })
     await prisma.memberAchievements.create({
         data: {
-            userId: nir.id,
+            userId: goerli.id,
             achievementId: (achievements[2] as Achievement).id,
             status: true,
         },
@@ -344,7 +373,7 @@ async function main() {
     const traitsToConnectArr = [traitsToConnect, traitsToConnect2, traitsToConnect3, traitsToConnect4]
 
     for (const [i, traits] of traitsToConnectArr.entries()) {
-        const member = i % 2 === 0 ? brenner : nir
+        const member = i % 2 === 0 ? metagameAdmin : goerli
         const traitsWithEarnedBool = traits?.map((t) => {
             return {
                 ...t,

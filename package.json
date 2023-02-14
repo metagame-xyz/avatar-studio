@@ -14,7 +14,7 @@
         "refresh-dev-db": "cross-env DATABASE_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma migrate reset"
     },
     "prisma": {
-        "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+        "seed": "ts-node -r tsconfig-paths/register --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
     },
     "dependencies": {
         "@headlessui/react": "^1.7.7",
@@ -48,6 +48,7 @@
         "siwe": "^2.1.3",
         "slugify": "^1.6.5",
         "superjson": "1.9.1",
+        "ts-case-convert": "^2.0.2",
         "wagmi": "^0.10.10",
         "zod": "^3.18.0"
     },
