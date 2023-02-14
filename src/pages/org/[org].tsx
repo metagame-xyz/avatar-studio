@@ -17,7 +17,7 @@ const Org: NextPage = () => {
     const slug = router.query.org as string
 
     const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
-    const { data: tokenNeedsRefresh } = trpc.org.checkAirtableTokenNeedsRefresh.useQuery(
+    const { data: tokenNeedsRefresh } = trpc.org.doesTokenNeedRefresh.useQuery(
         { organizationSlug: slug },
         { enabled: !!slug },
     )

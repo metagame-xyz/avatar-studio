@@ -3,8 +3,8 @@ import { TRPCError } from '@trpc/server'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { slugify } from 'utils'
-import Airtable from 'utils/airtable'
-import { airtableFieldSchema } from 'utils/airtableFrontend'
+import airtable, { airtableAuthErrorObj, airtableLockErrorObj } from 'utils/airtable'
+import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
 import { newAirtableMemberSchema } from 'utils/types'
 import { z } from 'zod'
@@ -166,10 +166,11 @@ export const projectRouter = router({
                 },
             })
 
-            if (!project.airtableProject || !project.organization.airtableAuth) return null
+            if (!project.airtableProject || !project.organization.airtableAuth)
+                return { members: [], error: airtableAuthErrorObj }
 
             try {
-                const airtable = new Airtable(project.organization.airtableAuth)
+                airtable.setOrg(project.organization.slug)
                 const members = await airtable.getMembers(project.airtableProject)
 
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
@@ -190,11 +191,16 @@ export const projectRouter = router({
 
                 const updatedMembers = await Promise.all(members.map(async (member) => updateMember(member)))
 
-                return updatedMembers
+                return { members: updatedMembers, error: null }
             } catch (err) {
-                console.log(err)
+                if (err instanceof AirtableAuthError) {
+                    return { members: [], error: airtableAuthErrorObj }
+                } else if (err instanceof AirtableLockError) {
+                    return { members: [], error: airtableLockErrorObj }
+                } else {
+                    throw err
+                }
             }
-            return null
         }),
     deleteAllMembers: publicProcedure.query(async ({ ctx }) => {
         // const users = await privyGetAllUsers()
@@ -301,20 +307,24 @@ export const projectRouter = router({
 
             if (!project.airtableProject || !project.organization.airtableAuth) return null
 
-            const airtable = new Airtable(project.organization.airtableAuth)
-            const airtableFields = await airtable.getTableFields(project.airtableProject)
+            airtable.setOrg(project.organization.slug)
 
-            if (!airtableFields) return null
+            try {
+                const airtableFields = await airtable.getTableFields(project.airtableProject)
+                if (!airtableFields) return null
+                const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens']
 
-            const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens']
+                const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
 
-            const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
+                const achievementFields = airtableFields
+                    .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
+                    .filter((field) => allowedAchievementTypes.includes(field.type))
 
-            const achievementFields = airtableFields
-                .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
-                .filter((field) => allowedAchievementTypes.includes(field.type))
-
-            return achievementFields
+                return achievementFields
+            } catch (err) {
+                throw err
+            }
+            return null
         }),
     syncAirtableAchievementCategories: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string(), airtableFields: z.array(airtableFieldSchema) })) // for protectedOrgProcedure to work

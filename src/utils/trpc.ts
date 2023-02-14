@@ -39,6 +39,13 @@ const getChain = (): string => {
 //     return chainId // returns as 0x5
 // }
 
+export class AirtableAuthError extends Error {
+    constructor(message: string) {
+        super(message)
+        this.name = 'AirtableAuthError'
+    }
+}
+
 export const trpc = createTRPCNext<AppRouter>({
     config() {
         return {
@@ -74,6 +81,12 @@ export const trpc = createTRPCNext<AppRouter>({
                             if (error instanceof TRPCClientError) {
                                 if (rerouteCodes.includes(error.data.code)) Router.push('/')
                             }
+
+                            if (error instanceof AirtableAuthError) {
+                                // dont retry,
+                                return false
+                            }
+                            // console.log('failureCount', failureCount)
                             return failureCount < 3
                         },
                     },

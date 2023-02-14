@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls"]
+  previewFeatures = ["orderByNulls", "extendedWhereUnique"]
 }
 
 datasource db {
@@ -88,6 +88,11 @@ model OrganizationAirtableAuth {
   organizationSlug       String       @unique
   accessGrantedUser      User         @relation(fields: [accessGrantedUserId], references: [id])
   accessGrantedUserId    String
+}
+
+model Lock {
+  id    String @id @unique
+  owner String
 }
 
 model MembersOfOrganizations {

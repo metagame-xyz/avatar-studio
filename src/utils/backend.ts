@@ -127,3 +127,7 @@ export const privyDeleteUser = async (id: string): Promise<void> => {
 
     await fetch(url, options)
 }
+
+export const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}

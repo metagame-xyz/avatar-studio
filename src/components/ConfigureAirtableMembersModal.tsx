@@ -18,10 +18,7 @@ export default function ConfigureAirtableMembersModal({
 }) {
     const cancelButtonRef = useRef(null)
 
-    const { data: airtableMembers } = trpc.project.getAirtableMembersList.useQuery(
-        { organizationSlug },
-        { enabled: !!organizationSlug },
-    )
+    const { data } = trpc.project.getAirtableMembersList.useQuery({ organizationSlug }, { enabled: !!organizationSlug })
 
     const trpcUtils = trpc.useContext()
 
@@ -54,6 +51,14 @@ export default function ConfigureAirtableMembersModal({
             </>
         ) : null
     }
+
+    if (!data) return null
+
+    console.log(data.error)
+
+    if (data.error) return null
+
+    const airtableMembers = data.members
 
     return (
         <Transition.Root show={open} as={Fragment}>

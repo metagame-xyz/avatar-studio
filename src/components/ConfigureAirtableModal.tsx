@@ -10,15 +10,17 @@ export default function ConfigureAirtableModal({
     setOpen,
     organizationSlug,
     projectSlug,
+    setOpenRelinkModal,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
     projectSlug: string
+    setOpenRelinkModal: Dispatch<SetStateAction<boolean>>
 }) {
     const cancelButtonRef = useRef(null)
 
-    const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug }, { enabled: !!organizationSlug })
+    const { data } = trpc.org.getAirtableBases.useQuery({ organizationSlug }, { enabled: !!organizationSlug })
 
     const trpcUtils = trpc.useContext()
 
@@ -29,14 +31,19 @@ export default function ConfigureAirtableModal({
         },
     })
 
-    const [selectedBase, setSelectedBase] = useState<AirtableBase | null>(bases?.[0] || null)
-    const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(bases?.[0]?.tables?.[0] || null)
+    const [selectedBase, setSelectedBase] = useState<AirtableBase | null>(data?.bases?.[0] || null)
+    const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(data?.bases?.[0]?.tables?.[0] || null)
 
     useEffect(() => {
         if (selectedBase && selectedBase.tables.length > 0) setSelectedTable(selectedBase.tables[0] || null)
     }, [selectedBase])
 
-    if (!bases) return null
+    useEffect(() => {
+        if (data?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkModal(true)
+    }, [data, setOpenRelinkModal])
+
+    if (!data) return null
+    if (data.error) return null
 
     return (
         <Transition.Root show={open} as={Fragment}>
@@ -72,7 +79,7 @@ export default function ConfigureAirtableModal({
                                         </Dialog.Title>
                                         <div className="mt-2">
                                             <Dropdown
-                                                items={bases}
+                                                items={data.bases}
                                                 selected={selectedBase}
                                                 setSelected={setSelectedBase}
                                                 label="Airtable Base"

@@ -37,6 +37,11 @@ export type AirtableOAuthResponse = {
     refresh_expires_in: number
 }
 
+export type AirtableOAuthError = {
+    error: 'invalid_request' | 'invalid_client' | 'invalid_grant' | 'unsupported_grant_type'
+    error_description: string
+}
+
 export type AirtableBase = {
     id: string
     name: string
@@ -70,6 +75,19 @@ export type AirtableView = {
     id: string
     name: string
     type: string
+}
+
+export class AirtableAuthError extends Error {
+    constructor(message: string) {
+        super(message)
+        this.name = 'AirtableAuthError'
+    }
+}
+export class AirtableLockError extends Error {
+    constructor(message: string) {
+        super(message)
+        this.name = 'AirtableLockError'
+    }
 }
 
 export const airtableOAuthResponseSchema = z.object({

@@ -1,9 +1,9 @@
 import AchievementCategoriesList from 'components/AchievementCategoriesList'
-import ConfigureAirtableAchievementsModal from 'components/ConfigureAirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
 import MembersList from 'components/MembersList'
+import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
@@ -17,6 +17,7 @@ const Project: NextPage = () => {
     const [openAirtableModal, setOpenAirtableModal] = useState(false)
     const [openAirtableMembersModal, setOpenAirtableMembersModal] = useState(false)
     const [openAirtableAchievementsModal, setOpenAirtableAchievementsModal] = useState(false)
+    const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
     const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.organization?.id)
 
@@ -38,6 +39,7 @@ const Project: NextPage = () => {
                     setOpen={setOpenAirtableModal}
                     organizationSlug={project.organization.slug}
                     projectSlug={project.slug}
+                    setOpenRelinkModal={setOpenRelinkAirtableModal}
                 />
                 <ConfigureAirtableMembersModal
                     open={openAirtableMembersModal}
@@ -45,11 +47,18 @@ const Project: NextPage = () => {
                     organizationSlug={project.organization.slug}
                 />
 
-                <ConfigureAirtableAchievementsModal
+                {/* <ConfigureAirtableAchievementsModal
                     open={openAirtableAchievementsModal}
                     setOpen={setOpenAirtableAchievementsModal}
                     organizationSlug={project.organization.slug}
-                />
+                /> */}
+                {isOrgAdmin && (
+                    <RelinkAirtableAuthModal
+                        open={openRelinkAirtableModal}
+                        setOpen={setOpenRelinkAirtableModal}
+                        organizationSlug={project.organization.slug}
+                    />
+                )}
 
                 <div className="flex flex-col items-center">
                     <div className="text-4xl font-bold">{name}</div>
@@ -109,14 +118,14 @@ const Project: NextPage = () => {
     const RightChild = () => {
         return (
             <>
-                <div className="text-4xl font-bold">Members</div>
-                <MembersList membersList={project.members} />
                 {project?.AchievementCategory?.length > 0 && (
-                    <>
+                    <div className="mb-4">
                         <div className="text-4xl font-bold">Achievements</div>
                         <AchievementCategoriesList achievementCategories={project.AchievementCategory} />
-                    </>
+                    </div>
                 )}
+                <div className="text-4xl font-bold">Members</div>
+                <MembersList membersList={project.members} />
             </>
         )
     }
