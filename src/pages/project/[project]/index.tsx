@@ -79,15 +79,27 @@ const Project: NextPage = () => {
                 <div className="flex flex-col items-center">
                     <div className="text-4xl font-bold">{name}</div>
                     <div className="flex-col items-center">
-                        {isOrgAdmin && (
-                            <button
-                                className="btn-primary mt-4 self-start text-center"
-                                onClick={() => {
-                                    setOpenAirtableModal(true)
-                                }}
+                        <div>
+                            <a
+                                className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
+                                href={`/project/${slug}/edit-avatar`}
                             >
-                                Update Airtable Table
-                            </button>
+                                {hasMinted ? `Update Avatar` : `Mint Avatar`}
+                            </a>
+                        </div>
+
+                        {isOrgAdmin && (
+                            <>
+                                <div className="mt-8 text-center text-2xl font-bold">Admin Actions</div>
+                                <button
+                                    className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
+                                    onClick={() => {
+                                        setOpenAirtableModal(true)
+                                    }}
+                                >
+                                    Update Airtable Table
+                                </button>
+                            </>
                         )}
                         <div className="flex">
                             <div>Airtable Base: </div> <div>{project.airtableProject?.baseName}</div>
@@ -99,7 +111,7 @@ const Project: NextPage = () => {
                         {isOrgAdmin && project?.airtableProject && (
                             <div>
                                 <button
-                                    className="btn-primary mt-4 self-start text-center"
+                                    className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
                                     onClick={() => {
                                         setOpenAirtableMembersModal(true)
                                     }}
@@ -111,7 +123,7 @@ const Project: NextPage = () => {
                         {isOrgAdmin && project?.airtableProject && (
                             <div>
                                 <button
-                                    className="btn-primary mt-4 self-start text-center"
+                                    className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
                                     onClick={() => {
                                         setOpenAirtableAchievementsModal(true)
                                     }}
@@ -120,11 +132,6 @@ const Project: NextPage = () => {
                                 </button>
                             </div>
                         )}
-                        <div>
-                            <a className="btn-primary mt-4 w-64 text-center" href={`/project/${slug}/edit-avatar`}>
-                                {hasMinted ? `Update Avatar` : `Mint Avatar`}
-                            </a>
-                        </div>
                     </div>
                 </div>
             </>
