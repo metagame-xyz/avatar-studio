@@ -34,6 +34,15 @@ export const organizationRouter = router({
             },
         })
     }),
+    getAllOrgs: protectedMetagameAdminProcedure.query(async ({ ctx }) => {
+        return ctx.prisma.organization.findMany({
+            include: {
+                admins: { include: { member: true } },
+                projects: true,
+                invitations: true,
+            },
+        })
+    }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))
         .mutation(async ({ ctx, input }) => {

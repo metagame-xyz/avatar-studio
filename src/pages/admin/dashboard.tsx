@@ -3,14 +3,17 @@ import { type NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { trpc } from 'utils/trpc'
+import { ArrayElement } from 'utils/types'
 
 const AdminDashboard: NextPage = () => {
     const router = useRouter()
 
     const { data: user } = trpc.member.me.useQuery()
 
-    const { data } = trpc.trait.getFromS3.useQuery('llama-pfp')
-    const copyS3Files = trpc.trait.createFromS3.useMutation()
+    // const { data } = trpc.trait.getFromS3.useQuery('llama-pfp')
+    // const copyS3Files = trpc.trait.createFromS3.useMutation()
+
+    const { data: orgs } = trpc.org.getAllOrgs.useQuery()
 
     const createOrg = trpc.org.createNewOrg.useMutation({
         onSuccess: (data) => {
@@ -20,6 +23,29 @@ const AdminDashboard: NextPage = () => {
             console.log('error', error)
         },
     })
+
+    const [newOrgName, setNewOrgName] = useState('')
+    const [selectedOrg, setSelectedOrg] = useState<ArrayElement<typeof orgs> | null>(null)
+
+    const Orgs = () => {
+        return orgs && orgs.length > 0 ? (
+            <div>
+                {orgs.map((org) => (
+                    <span onClick={() => setSelectedOrg(org)} key={org.name}>
+                        <div
+                            className={`mt-2 text-2xl hover:cursor-pointer hover:text-teal-200${
+                                org.slug === selectedOrg?.slug ? ' text-teal-300' : ''
+                            }`}
+                        >
+                            {org.name}
+                        </div>
+                    </span>
+                ))}
+            </div>
+        ) : (
+            <></>
+        )
+    }
 
     // const Projects = () => {
     //     const projects = org.projects || []
@@ -41,14 +67,13 @@ const AdminDashboard: NextPage = () => {
     //         <></>
     //     )
     // }
-    const [newOrgName, setNewOrgName] = useState('')
 
     return (
         <Shell pageTitle="Admin Dashboard">
             <>
                 <div className="flex flex-col">
                     <div className="text-4xl font-bold">Admin</div>
-                    <div className="mt-4 mb-2 text-3xl font-bold">things</div>
+                    <div className="mt-4 mb-2 text-3xl font-bold">Create New Org</div>
                     {/* <Projects /> */}
                     <div className="mt-2">
                         <div className="relative rounded-md border border-gray-300 px-3 py-2 shadow-sm focus-within:border-teal-600 focus-within:ring-1 focus-within:ring-teal-600">
@@ -79,19 +104,24 @@ const AdminDashboard: NextPage = () => {
                             Create
                         </button>
                     </div>
-                    <button
-                        // onClick={() =>
-                        //     copyS3Files.mutateAsync({
-                        //         projectSlug: 'llama-pfp',
-                        //     })
-                        // }
+                    <div className="mt-4 mb-2 text-3xl font-bold">Orgs</div>
+                    <Orgs />
+
+                    {/* <button
+                        onClick={() =>
+                            copyS3Files.mutateAsync({
+                                projectSlug: 'llama-pfp',
+                            })
+                        }
                         className="btn-primary mt-4"
                     >
                         upload files
-                    </button>
+                    </button> */}
                 </div>
             </>
-            <div className="text-4xl font-bold">Members</div>
+            <>
+                <div className="text-4xl font-bold">Members</div>
+            </>
         </Shell>
     )
 }

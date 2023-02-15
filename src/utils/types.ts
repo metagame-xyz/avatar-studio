@@ -30,6 +30,8 @@ export type Signature = {
 
 export type MostTypes = string | number | boolean | null | undefined
 
+export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never
+
 export const enum Status {
     loading = 'loading',
     success = 'success',
