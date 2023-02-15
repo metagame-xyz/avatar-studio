@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { protectedProjectProcedure, publicProcedure, router } from '../trpc'
 
 import * as AWS from 'aws-sdk'
+import { traitCategorySchema } from 'utils/types'
 
 AWS.config.update({
     accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
@@ -19,8 +20,24 @@ export const traitRouter = router({
         .mutation(async ({ ctx, input }) => {
             const { projectSlug } = input
 
-            await getFromS3(AWS, ctx.prisma, projectSlug)
+            return getFromS3(AWS, ctx.prisma, projectSlug)
+        }),
+    updateTraitCategory: protectedProjectProcedure
+        .input(z.object({ traitCategory: traitCategorySchema, projectSlug: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            const { traitCategory: tc } = input
 
-            // return traits
+            return ctx.prisma.traitCategory.update({
+                where: {
+                    projectId_name: {
+                        projectId: tc.projectId,
+                        name: tc.name,
+                    },
+                },
+                data: {
+                    zIndex: tc.zIndex,
+                    isDefaultAchieved: tc.isDefaultAchieved,
+                },
+            })
         }),
 })

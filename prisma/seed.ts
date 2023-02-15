@@ -1,13 +1,21 @@
-import { Achievement, PrismaClient, TraitCategory, UserRole } from '@prisma/client'
+import type { Achievement, TraitCategory } from '@prisma/client'
+import { PrismaClient, UserRole } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import * as dotenv from 'dotenv'
 import { objectToCamel } from 'ts-case-convert'
 import { hashTraits } from 'utils'
 import { getFromS3 } from 'utils/s3'
-import type { TraitWithEarnedBool } from 'utils/types'
+import type { NewAirtableMember, TraitWithEarnedBool } from 'utils/types'
 import { LlamaTier } from 'utils/types'
 
 dotenv.config()
+
+const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+const privyAppSecret = process.env.PRIVY_APP_SECRET
 
 const prisma = new PrismaClient()
 
@@ -46,7 +54,80 @@ const privyGetAllUsers = async (
         ...user,
         address: user.linkedAccounts[0]?.address.toLowerCase(),
     }))
+
     return remappedUsers
+}
+
+export const privyDeleteUser = async (
+    id: string,
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<void> => {
+    const url = `https://auth.privy.io/api/v1/users/${id}`
+
+    const app = appId || ''
+    const secret = appSecret || ''
+
+    const options = {
+        method: 'DELETE',
+        headers: {
+            'privy-app-id': app,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(app, secret),
+        },
+    }
+
+    await fetch(url, options)
+}
+
+export const privyAddUser = async (
+    newAirtableUser: NewAirtableMember,
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<any> => {
+    const url = 'https://auth.privy.io/api/v1/users'
+
+    const app = appId || ''
+    const secret = appSecret || ''
+
+    const linked_accounts = []
+
+    if (newAirtableUser['wallet-address']) {
+        linked_accounts.push({
+            address: newAirtableUser['wallet-address'],
+            type: 'wallet',
+            chain_type: 'ethereum',
+        })
+    }
+    if (newAirtableUser.email) {
+        linked_accounts.push({
+            address: newAirtableUser.email,
+            type: 'email',
+        })
+    }
+
+    const data = JSON.stringify({ linked_accounts })
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'privy-app-id': app,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(app, secret),
+        },
+        body: data,
+    }
+
+    const user = await fetch(url, options).then((res) => res.json())
+
+    const camelUser = objectToCamel(user) as any
+
+    const remappedUser = {
+        ...camelUser,
+        address: camelUser.linkedAccounts.find((acc: any) => acc.type === 'wallet')?.address.toLowerCase(),
+    }
+
+    return remappedUser
 }
 
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
@@ -56,8 +137,37 @@ const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
 
 const goerliContractAddress = '0x2ba797c234c8fe25847225b11b616bce729b0b53'
 
+const metagameAdmin = {
+    ['wallet-address']: metagameAddress,
+    email: brennerEmail,
+    ['first-name']: 'Metagame',
+    ['last-name']: 'Admin',
+}
+
+const goerliTestUser = {
+    ['wallet-address']: goerliTestAddress,
+    ['first-name']: 'Goerli',
+    ['last-name']: 'Test',
+}
+
+const rinkebyTestUser = {
+    ['wallet-address']: rinkebyTestAddress,
+    ['first-name']: 'Rinkeby',
+    ['last-name']: 'Test',
+}
+
+const seedMembers = [metagameAdmin, goerliTestUser, rinkebyTestUser]
+
 async function main() {
-    const privyUsers = await privyGetAllUsers(process.env.NEXT_PUBLIC_PRIVY_APP_ID, process.env.PRIVY_APP_SECRET)
+    const oldPrivyUsers = await privyGetAllUsers(privyAppId, privyAppSecret)
+
+    await Promise.all(
+        oldPrivyUsers.map((user) => {
+            privyDeleteUser(user.id, privyAppId, privyAppSecret)
+        }),
+    )
+    await sleep(1000)
+    const privyUsers = await Promise.all(seedMembers.map((member) => privyAddUser(member, privyAppId, privyAppSecret)))
 
     const metagameAdmin = await prisma.user.create({
         data: {

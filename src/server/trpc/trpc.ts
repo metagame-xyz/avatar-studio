@@ -54,7 +54,16 @@ const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     const admins = organization.admins.map((admin) => admin.member)
 
     if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
-        throw new TRPCError({ code: 'UNAUTHORIZED' })
+        // then check for metagame admin only if the user is not an org admin to save a
+        const user = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session?.userId,
+            },
+        })
+
+        if (!user || !(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' })
+        }
     }
 
     return next({ ctx })
@@ -80,8 +89,18 @@ const isProjectOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
 
     const admins = project.organization.admins.map((admin) => admin.member)
 
+    // first check for org admin
     if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
-        throw new TRPCError({ code: 'UNAUTHORIZED' })
+        // then check for metagame admin only if the user is not an org admin to save a
+        const user = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session?.userId,
+            },
+        })
+
+        if (!user || !(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' })
+        }
     }
 
     return next({ ctx })

@@ -80,6 +80,14 @@ export const enum LlamaTier {
     Rancher = 'Rancher',
 }
 
+export const traitCategorySchema = z.object({
+    name: z.string(),
+    zIndex: z.number(),
+    isModifiable: z.boolean(),
+    isDefaultAchieved: z.boolean(),
+    projectId: z.number(),
+})
+
 export const traitSchema = z.object({
     id: z.number(),
     name: z.string(),

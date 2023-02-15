@@ -40,7 +40,7 @@ export const organizationRouter = router({
         return ctx.prisma.organization.findMany({
             include: {
                 admins: { include: { member: true } },
-                projects: true,
+                projects: { include: { traitCategories: true } },
                 invitations: true,
             },
         })

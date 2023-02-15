@@ -7,6 +7,7 @@ import { z } from 'zod'
  */
 export const serverSchema = z.object({
     DATABASE_URL: z.string().url(),
+    DIRECT_URL: z.string().url(),
     NODE_ENV: z.enum(['development', 'test', 'production']),
     PRIVY_APP_SECRET: z.string(),
     METAGAME_AWS_ACCESS_KEY: z.string(),

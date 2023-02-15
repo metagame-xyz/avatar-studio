@@ -20,7 +20,7 @@ const Project: NextPage = () => {
     const [openAirtableAchievementsModal, setOpenAirtableAchievementsModal] = useState(false)
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
-    const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.organization?.id)
+    const isOrgAdmin = true || user?.organizations?.find((o) => o.id == project?.organization?.id)
     const organizationSlug = project?.organization?.slug as string
 
     const { data } = trpc.project.getAllAirtableData.useQuery(

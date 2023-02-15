@@ -22,14 +22,14 @@ export async function getTraitCategoriesAndNames(aws: typeof AWS, projectSlug: s
 
     files?.forEach((file) => {
         // get the file name
-        const traitName = file.Key?.split('/').pop()?.split('.')[0] as string
+        const fileName = file.Key?.split('/').pop() as string
         // take the last folder name as the key
         const traitCategory = file.Key?.split('/').slice(-2)[0] as string
 
         if (!result[traitCategory]) {
-            result[traitCategory] = [traitName]
+            result[traitCategory] = [fileName]
         } else {
-            result[traitCategory]?.push(traitName)
+            result[traitCategory]?.push(fileName)
         }
     })
     return result
@@ -70,7 +70,7 @@ export const getFromS3 = async (
     const traitCategories: TraitCategory[] = []
     const traits: TraitWithCategory[] = []
 
-    for (const [traitCategoryData, traitNameList] of Object.entries(traitCategoriesData)) {
+    for (const [traitCategoryData, fileNameList] of Object.entries(traitCategoriesData)) {
         // create trait category
         const traitCategory = await prisma.traitCategory.upsert({
             create: {
@@ -96,8 +96,9 @@ export const getFromS3 = async (
         traitCategories.push(traitCategory)
 
         // create traits
-        for (const traitName of traitNameList) {
-            const pngUrl = s3FolderUrl + traitCategory.name + '/' + traitName + '.png'
+        for (const fileName of fileNameList) {
+            const pngUrl = s3FolderUrl + traitCategory.name + '/' + fileName
+            const traitName = fileName.split('.')[0] as string
 
             const trait = await prisma.trait.upsert({
                 create: {
