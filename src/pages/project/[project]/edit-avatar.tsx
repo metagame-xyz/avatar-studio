@@ -230,8 +230,9 @@ const EditAvatar = () => {
             </>
         )
     }
-    const LeftChild = () => {
-        return (
+
+    return (
+        <Shell Header={<Header />} pageTitle="edit avatar" leftWidth="half">
             <motion.div layout transition={springAnimation} className="">
                 <PfpPreview
                     pfpState={pfpState}
@@ -240,11 +241,6 @@ const EditAvatar = () => {
                     openSeaUrl={openseaUrl}
                 />
             </motion.div>
-        )
-    }
-
-    const RightChild = () => {
-        return (
             <motion.div transition={springAnimation}>
                 <TraitSelectionPanel
                     pfpState={pfpState}
@@ -260,17 +256,7 @@ const EditAvatar = () => {
                     mintStatus={mintStatus as Status}
                 />
             </motion.div>
-        )
-    }
-
-    return (
-        <Shell
-            LeftChild={<LeftChild />}
-            RightChild={<RightChild />}
-            Header={<Header />}
-            pageTitle="edit avatar"
-            leftWidth="half"
-        />
+        </Shell>
     )
 }
 

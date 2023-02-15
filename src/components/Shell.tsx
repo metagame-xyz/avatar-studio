@@ -1,14 +1,15 @@
 import Head from 'next/head'
+import React from 'react'
 
 type ShellProps = {
-    LeftChild: JSX.Element
-    RightChild: JSX.Element
+    children?: React.ReactNode
     Header?: JSX.Element
     pageTitle: string
     leftWidth?: 'third' | 'half'
 }
 
-const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, Header, pageTitle, leftWidth = 'third' }) => {
+const Shell: React.FC<ShellProps> = ({ children, Header, pageTitle, leftWidth = 'third' }) => {
+    const [LeftChild, RightChild] = React.Children.toArray(children)
     const width = leftWidth === 'third' ? 'md:w-4/12' : 'md:w-6/12'
     return (
         <>

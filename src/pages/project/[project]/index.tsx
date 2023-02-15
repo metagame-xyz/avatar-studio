@@ -42,8 +42,8 @@ const Project: NextPage = () => {
     const { name, slug } = project
     const hasMinted = user.nftMetadata.length > 0
 
-    const LeftChild = () => {
-        return (
+    return (
+        <Shell pageTitle={name}>
             <>
                 {isOrgAdmin && data && !data.error && (
                     <>
@@ -135,11 +135,7 @@ const Project: NextPage = () => {
                     </div>
                 </div>
             </>
-        )
-    }
 
-    const RightChild = () => {
-        return (
             <>
                 {project?.AchievementCategory?.length > 0 && (
                     <div className="mb-4">
@@ -150,10 +146,8 @@ const Project: NextPage = () => {
                 <div className="text-4xl font-bold">Members</div>
                 <MembersList membersList={project.members} />
             </>
-        )
-    }
-
-    return <Shell LeftChild={<LeftChild />} RightChild={<RightChild />} pageTitle={name} />
+        </Shell>
+    )
 }
 
 export default Project

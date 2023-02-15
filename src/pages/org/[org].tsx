@@ -68,8 +68,8 @@ const Org: NextPage = () => {
         )
     }
 
-    const LeftChild = () => {
-        return (
+    return (
+        <Shell pageTitle={name}>
             <>
                 <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationSlug={slug} />
                 <div className="flex flex-col items-center">
@@ -94,19 +94,12 @@ const Org: NextPage = () => {
                     </div>
                 </div>
             </>
-        )
-    }
-
-    const RightChild = () => {
-        return (
             <>
                 <div className="text-4xl font-bold">Admins</div>
                 <MembersList membersList={org.admins} />
             </>
-        )
-    }
-
-    return <Shell LeftChild={<LeftChild />} RightChild={<RightChild />} pageTitle={name} />
+        </Shell>
+    )
 }
 
 export default Org
