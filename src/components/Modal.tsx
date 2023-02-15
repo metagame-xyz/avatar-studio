@@ -3,7 +3,7 @@ import react from 'react'
 
 // TODO something about cancelButtonRef makes it focus on the cancel button every time you type a letter
 
-export default function NewProjectModal({
+export default function Modal({
     open,
     setOpen,
     title,
