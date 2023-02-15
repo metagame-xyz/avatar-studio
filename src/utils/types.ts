@@ -137,3 +137,5 @@ export type AirtableAuthCache = {
     codeVerifier: string
     organizationSlug: string
 }
+
+export const organizationRoleZod = z.enum(['ADMIN', 'OWNER'])

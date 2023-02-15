@@ -1,3 +1,5 @@
+import { OrganizationRole } from '@prisma/client'
+import Input from 'components/Input'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import { useRouter } from 'next/router'
@@ -24,8 +26,20 @@ const AdminDashboard: NextPage = () => {
         },
     })
 
+    // TODO add dropdown for admin / owner
+    const createInvite = trpc.org.sendOrgAdminInvite.useMutation({
+        onSuccess: (data) => {
+            console.log('success', data)
+        },
+        onError: (error) => {
+            console.log('error', error)
+        },
+    })
+
     const [newOrgName, setNewOrgName] = useState('')
     const [selectedOrg, setSelectedOrg] = useState<ArrayElement<typeof orgs> | null>(null)
+
+    const [inviteAddress, setInviteAddress] = useState('')
 
     const Orgs = () => {
         return orgs && orgs.length > 0 ? (
@@ -76,25 +90,14 @@ const AdminDashboard: NextPage = () => {
                     <div className="mt-4 mb-2 text-3xl font-bold">Create New Org</div>
                     {/* <Projects /> */}
                     <div className="mt-2">
-                        <div className="relative rounded-md border border-gray-300 px-3 py-2 shadow-sm focus-within:border-teal-600 focus-within:ring-1 focus-within:ring-teal-600">
-                            <label
-                                htmlFor="new-org-name"
-                                className="absolute -top-2 left-2 -mt-px inline-block bg-black  px-1 text-xs font-medium"
-                            >
-                                New Org Name
-                            </label>
-                            <input
-                                type="text"
-                                name="new-org-name"
-                                id="new-org-name"
-                                className="block w-full border-0 bg-black p-0 text-teal-50 placeholder-gray-500 focus:ring-0 sm:text-sm"
-                                placeholder="Haab Goblins Crypto Club"
-                                value={newOrgName}
-                                onChange={(e) => {
-                                    setNewOrgName(e.target.value)
-                                }}
-                            />
-                        </div>
+                        <Input
+                            label="New Org Name"
+                            placeholder="Haab Goblins Crypto Club"
+                            value={newOrgName}
+                            onChange={(e) => {
+                                setNewOrgName(e.target.value)
+                            }}
+                        />
                         <button
                             className="btn-primary mt-2"
                             onClick={() => {
@@ -120,7 +123,35 @@ const AdminDashboard: NextPage = () => {
                 </div>
             </>
             <>
-                <div className="text-4xl font-bold">Members</div>
+                {selectedOrg && (
+                    <>
+                        <div className="text-4xl font-bold">{`${selectedOrg.name}`}</div>
+                        <div className="mt-8 text-3xl font-bold">Send Admin Invite</div>
+                        <div className="mt-4 flex gap-2">
+                            <Input
+                                label="ENS or Wallet Address"
+                                placeholder="brenner.eth"
+                                value={inviteAddress}
+                                onChange={(e) => {
+                                    setInviteAddress(e.target.value)
+                                }}
+                                className="w-64 pt-2"
+                            />
+                            <button
+                                className="btn-primary"
+                                onClick={() => {
+                                    createInvite.mutate({
+                                        organizationId: selectedOrg.id,
+                                        ensOrWalletAddress: inviteAddress,
+                                        role: OrganizationRole.ADMIN,
+                                    })
+                                }}
+                            >
+                                Send Invite
+                            </button>
+                        </div>
+                    </>
+                )}
             </>
         </Shell>
     )

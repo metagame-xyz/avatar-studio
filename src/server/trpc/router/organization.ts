@@ -1,6 +1,8 @@
+import { OrganizationRole } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
-import { slugify } from 'utils'
+import { getAddressFromString, slugify } from 'utils'
 import airtable from 'utils/airtable'
+import { organizationRoleZod } from 'utils/types'
 import { z } from 'zod'
 import { protectedMetagameAdminProcedure, protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
@@ -43,6 +45,35 @@ export const organizationRouter = router({
             },
         })
     }),
+    sendOrgAdminInvite: protectedMetagameAdminProcedure
+        .input(
+            z.object({
+                ensOrWalletAddress: z.string(),
+                organizationId: z.number(),
+                role: organizationRoleZod,
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const issuer = await ctx.prisma.user.findUniqueOrThrow({
+                where: {
+                    privyDID: ctx.session?.userId,
+                },
+                select: {
+                    id: true,
+                },
+            })
+
+            const address = await getAddressFromString(input.ensOrWalletAddress)
+
+            return ctx.prisma.organizationInvitation.create({
+                data: {
+                    organizationId: input.organizationId,
+                    inviteeAddress: address.toLowerCase(),
+                    role: OrganizationRole[input.role],
+                    issuedById: issuer.id,
+                },
+            })
+        }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))
         .mutation(async ({ ctx, input }) => {

@@ -1,8 +1,10 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Trait, TraitCategory } from '@prisma/client'
+import { ethers, providers } from 'ethers'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
+import { z } from 'zod'
 import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
@@ -127,4 +129,61 @@ export const getOpenseaUrl = (chain: Chain, contactAddress: string | null | unde
     const testnetString = chain.testnet ? 'testnets.' : ''
     const chainNetwork = chain.network.toLowerCase()
     return `https://${testnetString}opensea.io/assets/${chainNetwork}/${contactAddress}/${tokenId}`
+}
+
+const isAddress = (value: string) => {
+    try {
+        return ethers.utils.getAddress(value.toLowerCase())
+    } catch {
+        return false
+    }
+}
+
+const isValidEnsName = (value: string) => {
+    return value.endsWith('.eth')
+}
+
+// use zod to parse if a string is a valid eth address or an ens name
+export const parseEnsOrAddress = (address: string): string => {
+    try {
+        const ethAddressOrEnsName = z
+            .string()
+            .min(1, 'Invalid address or ens name')
+            .max(255, 'Invalid address or ens name')
+            .refine((address) => {
+                try {
+                    return isAddress(address) || isValidEnsName(address)
+                } catch (error) {
+                    return false
+                }
+            }, 'Invalid address or ens name')
+        return ethAddressOrEnsName.parse(address)
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function getAddressFromString(addressString: string): Promise<string> {
+    if (ethers.utils.isAddress(addressString)) {
+        // If the string is a valid EVM address, return it
+        return addressString
+    }
+
+    if (!addressString.endsWith('.eth')) {
+        // If the string does not end with ".eth", it's not a valid ENS name
+        throw new Error(`Invalid address or ENS name: ${addressString}`)
+    }
+
+    try {
+        // Otherwise, assume it's an ENS name and attempt to resolve it
+        const provider = new providers.AlchemyProvider('homestead', process.env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
+        const resolvedAddress = await provider.resolveName(addressString)
+        if (!resolvedAddress) {
+            throw new Error(`Could not resolve ENS name: ${addressString}`)
+        }
+        return resolvedAddress
+    } catch (e) {
+        // If it's not a valid ENS name, throw an error
+        throw new Error(`Could not resolve ENS name: ${addressString}`)
+    }
 }

@@ -7,8 +7,7 @@ import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
-import type { TraitWithEarnedBool } from 'utils/types'
-import { AddressZ, requestedTraitsSchema } from 'utils/types'
+import { AddressZ, organizationRoleZod, requestedTraitsSchema, TraitWithEarnedBool } from 'utils/types'
 import { z } from 'zod'
 import { protectedProcedure, publicProcedure, router } from '../trpc'
 
@@ -125,7 +124,7 @@ export const memberRouter = router({
         }
     }),
     acceptOrgInvitation: protectedProcedure
-        .input(z.object({ organizationId: z.number(), role: z.string() }))
+        .input(z.object({ organizationId: z.number(), role: organizationRoleZod }))
         .mutation(async ({ ctx, input }) => {
             if (!ctx.session) return null
 
