@@ -30,7 +30,7 @@ const Project: NextPage = () => {
 
     useEffect(() => {
         if (data?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkAirtableModal(true)
-    }, [data, setOpenRelinkAirtableModal])
+    }, [data, setOpenRelinkAirtableModal, openRelinkAirtableModal])
 
     // check is user is an org admin
     // const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.id)
@@ -46,14 +46,16 @@ const Project: NextPage = () => {
         <Shell pageTitle={name}>
             <>
                 {isOrgAdmin && data && !data.error && (
+                    <ConfigureAirtableModal
+                        open={openAirtableModal}
+                        setOpen={setOpenAirtableModal}
+                        organizationSlug={project.organization.slug}
+                        projectSlug={project.slug}
+                        bases={data.bases}
+                    />
+                )}
+                {isOrgAdmin && data && !data.error && data.members && (
                     <>
-                        <ConfigureAirtableModal
-                            open={openAirtableModal}
-                            setOpen={setOpenAirtableModal}
-                            organizationSlug={project.organization.slug}
-                            projectSlug={project.slug}
-                            bases={data.bases}
-                        />
                         <ConfigureAirtableMembersModal
                             open={openAirtableMembersModal}
                             setOpen={setOpenAirtableMembersModal}
@@ -67,13 +69,14 @@ const Project: NextPage = () => {
                             organizationSlug={project.organization.slug}
                             airtableFields={data.achievementFields}
                         />
-
-                        <RelinkAirtableAuthModal
-                            open={openRelinkAirtableModal}
-                            setOpen={setOpenRelinkAirtableModal}
-                            organizationSlug={project.organization.slug}
-                        />
                     </>
+                )}
+                {isOrgAdmin && data && data.error && (
+                    <RelinkAirtableAuthModal
+                        open={openRelinkAirtableModal}
+                        setOpen={setOpenRelinkAirtableModal}
+                        organizationSlug={project.organization.slug}
+                    />
                 )}
 
                 <div className="flex flex-col items-center">

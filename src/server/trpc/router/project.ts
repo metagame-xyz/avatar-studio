@@ -4,7 +4,7 @@ import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { slugify } from 'utils'
-import airtable, { airtableAuthErrorObj, airtableLockErrorObj } from 'utils/airtable'
+import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
 import type { MostTypes } from 'utils/types'
@@ -168,8 +168,8 @@ export const projectRouter = router({
                 },
             })
 
-            if (!project.airtableProject || !project.organization.airtableAuth)
-                return { bases: null, members: null, achievementFields: null, error: airtableAuthErrorObj }
+            if (!project.organization.airtableAuth)
+                return { bases: null, members: null, achievementFields: null, error: airtableAuthNotPresentObj }
 
             try {
                 await airtable.setOrg(project.organization.slug, 'getAllAirtableData')
@@ -181,6 +181,8 @@ export const projectRouter = router({
                     const tables = await airtable.getTablesList(base.id)
                     base.tables = tables || []
                 }
+
+                if (!project.airtableProject) return { bases, members: null, achievementFields: null, error: null }
 
                 const members = await airtable.getMembers(project.airtableProject)
 
@@ -215,7 +217,7 @@ export const projectRouter = router({
                 return { bases, members: updatedMembers, achievementFields, error: null }
             } catch (err) {
                 if (err instanceof AirtableAuthError) {
-                    return { bases: null, members: null, achievementFields: null, error: airtableAuthErrorObj }
+                    return { bases: null, members: null, achievementFields: null, error: airtableAuthExpiredObj }
                 } else if (err instanceof AirtableLockError) {
                     return { bases: null, members: null, achievementFields: null, error: airtableLockErrorObj }
                 } else {

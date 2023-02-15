@@ -27,6 +27,7 @@ export default function ConfigureAirtableMembersModal({
         onSuccess: () => {
             setOpen(false)
             trpcUtils.project.getProject.invalidate()
+            trpcUtils.project.getAllAirtableData.invalidate()
         },
     })
 

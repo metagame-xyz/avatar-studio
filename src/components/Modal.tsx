@@ -10,22 +10,22 @@ export default function Modal({
     onClick,
     onClickText,
     children,
-    cancelButtonRef,
+    initialFocusRef,
 }: {
     open: boolean
     setOpen: react.Dispatch<react.SetStateAction<boolean>>
     title: string
     onClick: () => void
     onClickText: string
-    children: JSX.Element
-    cancelButtonRef: react.MutableRefObject<null>
+    children?: React.ReactNode
+    initialFocusRef: react.MutableRefObject<null>
 }) {
     // const cancelButtonRef = useRef(null)
     // const [name, setName] = useState('')
 
     return (
         <Transition.Root show={open} as={react.Fragment}>
-            <Dialog as="div" className="relative z-10" initialFocus={cancelButtonRef} onClose={setOpen}>
+            <Dialog as="div" className="relative z-10" initialFocus={initialFocusRef} onClose={setOpen}>
                 <Transition.Child
                     as={react.Fragment}
                     enter="ease-out duration-300"
@@ -70,7 +70,6 @@ export default function Modal({
                                         type="button"
                                         className="btn-ghost mt-3 w-full sm:col-start-1 sm:mt-0 sm:text-sm"
                                         onClick={() => setOpen(false)}
-                                        ref={cancelButtonRef}
                                     >
                                         Cancel
                                     </button>

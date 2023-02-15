@@ -17,8 +17,12 @@ import { AirtableAuthError, AirtableLockError } from './airtableFrontend'
 import { createAuthHeader, sleep } from './backend'
 import type { MostTypes } from './types'
 
-export const airtableAuthErrorObj = {
-    error: 'Auth Issue',
+export const airtableAuthExpiredObj = {
+    error: 'Auth Token Expired',
+    action: 'REAUTH_AIRTABLE',
+}
+export const airtableAuthNotPresentObj = {
+    error: 'Hasnt Authed Airtable',
     action: 'REAUTH_AIRTABLE',
 }
 export const airtableLockErrorObj = {

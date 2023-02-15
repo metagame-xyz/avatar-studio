@@ -187,3 +187,13 @@ export async function getAddressFromString(addressString: string): Promise<strin
         throw new Error(`Could not resolve ENS name: ${addressString}`)
     }
 }
+
+type HandleKeyDownFunction = (event: React.KeyboardEvent<HTMLInputElement>) => void
+
+export function withEnterKeyPressHandler(onClick: () => void): HandleKeyDownFunction {
+    return function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+        if (event.key === 'Enter') {
+            onClick()
+        }
+    }
+}
