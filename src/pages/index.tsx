@@ -2,7 +2,6 @@ import { usePrivy } from '@privy-io/react-auth'
 import OldButton from 'components/OldButton'
 import { type NextPage } from 'next'
 import Head from 'next/head'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { pageToLoad } from 'utils'
@@ -28,33 +27,13 @@ const Home: NextPage = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             {authenticated ? null : (
-                <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#85C9C1] to-[#15162c]">
-                    <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-                        <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-                            Avat
-                            <span className="text-[hsl(280,100%,70%)]">a</span>r Stud
-                            <span className="text-[hsl(280,100%,70%)]">i</span>o
+                <main className="flex min-h-[calc(100vh_-_120px)] flex-col items-center justify-center bg-black bg-jupiter-pattern">
+                    <div className="container flex flex-col items-center justify-center gap-8 px-4 py-12">
+                        <h1 className="text-5xl font-extrabold tracking-tight text-teal-100 sm:text-[5rem]">
+                            Earnable Avatar Studio
                         </h1>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-                            <Link
-                                className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-                                href="https://create.t3.gg/en/usage/first-steps"
-                                target="_blank"
-                            >
-                                <h3 className="text-2xl font-bold">First Steps →</h3>
-                                <div className="text-lg">
-                                    Just the basics - Everything you need to know to set up your database and
-                                    authentication.
-                                </div>
-                            </Link>
-                            <Link
-                                className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-                                href="https://create.t3.gg/en/introduction"
-                                target="_blank"
-                            >
-                                <h3 className="text-2xl font-bold">Documentation →</h3>
-                                <div className="text-lg">Avatar Studio for everyone</div>
-                            </Link>
+                        <div className="text-2xl text-teal-100">
+                            Earn traits by participating and contributing to your community
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <div className="flex flex-col items-center justify-center gap-4">

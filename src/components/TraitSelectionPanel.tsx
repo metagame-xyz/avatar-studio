@@ -53,7 +53,6 @@ const TraitSelectionPanel = ({
                         <AttributeSelector
                             key={tc.name}
                             traitCategory={tc}
-                            backgroundTrait={assetData.find((t) => t.name === 'Body')?.traits[0] as TraitWithEarnedBool} // TODO no hardcode
                             pfpState={pfpState}
                             updatePfpState={updatePfpState}
                         />

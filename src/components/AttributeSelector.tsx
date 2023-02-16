@@ -8,12 +8,11 @@ import { useNetwork } from 'wagmi'
 
 type AttributeSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
-    backgroundTrait: TraitWithEarnedBool
     pfpState: TraitWithEarnedBool[]
     updatePfpState: (trait: TraitWithEarnedBool) => void
 }
 
-const AttributeSelector = ({ traitCategory, backgroundTrait, pfpState, updatePfpState }: AttributeSelectorProps) => {
+const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: AttributeSelectorProps) => {
     const { chain } = useNetwork() // TODO
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
@@ -56,7 +55,7 @@ const AttributeSelector = ({ traitCategory, backgroundTrait, pfpState, updatePfp
                         key={trait.name + i}
                         className={`col-span-1 ${i + 1 === traitOptions.length ? '' : ''}`}
                         trait={trait}
-                        backgroundTrait={backgroundTrait}
+                        pfpState={pfpState}
                         // also select the first in the traitOptions if none are selected
                         selected={pfpState.filter((t) => t.name === trait.name).length > 0}
                         disabled={!IsNewComboAllowed(isModifiable, usedCombos, pfpState, trait)}
