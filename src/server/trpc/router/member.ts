@@ -1,5 +1,5 @@
 import { hashMessage } from '@ethersproject/hash'
-import type { Account } from '@prisma/client'
+import type { Account, Organization, OrganizationInvitation } from '@prisma/client'
 import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import { env } from 'env/server.mjs'
@@ -102,11 +102,21 @@ export const memberRouter = router({
                 organizations: { include: { organization: true } },
                 projects: { include: { project: true } },
                 achievements: { include: { achievement: true } },
-                invitations: { include: { organization: true } },
                 nftMetadata: true,
                 accounts: true,
             },
         })
+        let orgInvitations: (OrganizationInvitation & { organization: Organization })[] = []
+        if (member.address) {
+            orgInvitations = await ctx.prisma.organizationInvitation.findMany({
+                where: {
+                    inviteeAddress: member.address,
+                },
+                include: {
+                    organization: true,
+                },
+            })
+        }
 
         return {
             ...member,
@@ -123,6 +133,7 @@ export const memberRouter = router({
                     status: a.status,
                 }
             }),
+            invitations: orgInvitations,
         }
     }),
     acceptOrgInvitation: protectedProcedure
