@@ -132,10 +132,13 @@ export const projectRouter = router({
                 tableName: z.string(),
                 baseId: z.string(),
                 tableId: z.string(),
+                walletAddressFieldId: z.string(),
+                walletAddressFieldName: z.string(),
             }),
         )
         .mutation(async ({ ctx, input }) => {
-            const { projectSlug, baseName, tableName, baseId, tableId } = input
+            const { projectSlug, baseName, tableName, baseId, tableId, walletAddressFieldId, walletAddressFieldName } =
+                input
             const project = await ctx.prisma.project.findUniqueOrThrow({
                 where: { slug: projectSlug },
                 select: { id: true },
@@ -147,6 +150,8 @@ export const projectRouter = router({
                     tableName,
                     baseId,
                     tableId,
+                    walletAddressFieldId,
+                    walletAddressFieldName,
                     project: { connect: { id: project.id } },
                 },
             })

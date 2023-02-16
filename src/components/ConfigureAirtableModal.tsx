@@ -1,7 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import type { AirtableBase, AirtableTable } from 'utils/airtableFrontend'
+import { AirtableBase, AirtableField, AirtableTable } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
 import Dropdown from './Dropdown'
 
@@ -32,10 +32,22 @@ export default function ConfigureAirtableModal({
 
     const [selectedBase, setSelectedBase] = useState<AirtableBase | null>(bases?.[0] || null)
     const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(bases?.[0]?.tables?.[0] || null)
+    const [selectedWalletAddressField, setSelectedWalletAddressField] = useState<AirtableField | null>(
+        bases?.[0]?.tables?.[0]?.fields?.[0] || null,
+    ) // TODO filter out non-string fields
 
     useEffect(() => {
-        if (selectedBase && selectedBase.tables.length > 0) setSelectedTable(selectedBase.tables[0] || null)
+        if (selectedBase && selectedBase.tables.length > 0) {
+            setSelectedTable(selectedBase.tables[0] || null)
+            setSelectedWalletAddressField(selectedBase.tables?.[0]?.fields[0] || null)
+        }
     }, [selectedBase])
+
+    useEffect(() => {
+        if (selectedTable && selectedTable.fields.length > 0) {
+            setSelectedWalletAddressField(selectedTable.fields[0] || null)
+        }
+    }, [selectedTable])
 
     if (!bases) return null
 
@@ -86,6 +98,14 @@ export default function ConfigureAirtableModal({
                                                     label="Airtable Table"
                                                 />
                                             )}
+                                            {selectedTable && (
+                                                <Dropdown
+                                                    items={selectedTable.fields}
+                                                    selected={selectedWalletAddressField}
+                                                    setSelected={setSelectedWalletAddressField}
+                                                    label="Wallet Address Field"
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -93,9 +113,9 @@ export default function ConfigureAirtableModal({
                                     <button
                                         type="button"
                                         className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        disabled={!selectedTable || !selectedBase}
+                                        disabled={!selectedTable || !selectedBase || !selectedWalletAddressField}
                                         onClick={() => {
-                                            if (selectedTable && selectedBase) {
+                                            if (selectedTable && selectedBase && selectedWalletAddressField) {
                                                 addAirtableProject.mutate({
                                                     projectSlug,
                                                     organizationSlug,
@@ -103,6 +123,8 @@ export default function ConfigureAirtableModal({
                                                     tableId: selectedTable.id,
                                                     baseName: selectedBase.name,
                                                     tableName: selectedTable.name,
+                                                    walletAddressFieldId: selectedWalletAddressField.id,
+                                                    walletAddressFieldName: selectedWalletAddressField.name,
                                                 })
                                             }
                                         }}

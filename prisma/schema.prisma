@@ -123,13 +123,15 @@ model Project {
 }
 
 model AirtableProject {
-  id        Int     @id @unique @default(autoincrement())
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId Int     @unique
-  baseId    String
-  baseName  String
-  tableId   String
-  tableName String
+  id                     Int     @id @unique @default(autoincrement())
+  project                Project @relation(fields: [projectId], references: [id])
+  projectId              Int     @unique
+  baseId                 String
+  baseName               String
+  tableId                String
+  tableName              String
+  walletAddressFieldId   String
+  walletAddressFieldName String
 }
 
 model MembersOfProjects {
