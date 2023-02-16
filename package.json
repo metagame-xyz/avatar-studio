@@ -11,7 +11,7 @@
         "lint": "next lint",
         "start": "next start",
         "check": "yarn run type-check && yarn run lint && yarn run format",
-        "refresh-dev-db": "cross-env DATABASE_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma migrate reset"
+        "refresh-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma migrate reset"
     },
     "prisma": {
         "seed": "ts-node -r tsconfig-paths/register --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
