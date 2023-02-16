@@ -39,16 +39,19 @@ export default function ConfigureAirtableMembersModal({
                 walletAddress: member[walletAddressFieldName] as string,
                 firstName: member['first-name'] as string,
                 lastName: member['last-name'] as string,
+                name: member['name'] as string,
                 ens: member['ens'] as string | undefined,
             })) || []
 
         return members.length > 0 ? (
             <>
-                {members.map(({ firstName, lastName, walletAddress, ens }) => (
+                {members.map(({ name, firstName, lastName, walletAddress, ens }) => (
                     <div className="mt-2 flex items-center" key={walletAddress}>
                         {/* <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}> */}
                         <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
-                        {firstName} {lastName} ({ens?.toLowerCase()}) {truncateAddress(walletAddress)}
+                        {`${name || firstName + ' ' + lastName} ${ens ? '(' + ens + ') ' : ''}${truncateAddress(
+                            walletAddress,
+                        )}`}
                         {/* </Link> */}
                     </div>
                 ))}
