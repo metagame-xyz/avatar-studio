@@ -185,6 +185,11 @@ export const projectRouter = router({
                 for (const base of bases) {
                     const tables = await airtable.getTablesList(base.id)
                     base.tables = tables || []
+                    for (const table of base.tables) {
+                        table.fields.map((field) => {
+                            console.log(field)
+                        })
+                    }
                 }
 
                 if (!project.airtableProject) return { bases, members: null, achievementFields: null, error: null }
