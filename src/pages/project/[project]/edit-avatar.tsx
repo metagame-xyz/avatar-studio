@@ -233,7 +233,7 @@ const EditAvatar = () => {
 
     return (
         <Shell Header={<Header />} pageTitle="edit avatar" leftWidth="half">
-            <motion.div layout transition={springAnimation} className="">
+            <motion.div layout transition={springAnimation} className="sticky top-0">
                 <PfpPreview
                     pfpState={pfpState}
                     mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}

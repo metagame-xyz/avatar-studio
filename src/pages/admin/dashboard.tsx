@@ -5,29 +5,24 @@ import Shell from 'components/Shell'
 import { env as clientEnv } from 'env/client.mjs'
 import { providers } from 'ethers'
 import { type NextPage } from 'next'
-import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
 import type { ArrayElement } from 'utils/types'
 
 const AdminDashboard: NextPage = () => {
-    const router = useRouter()
-    const { data: user } = trpc.member.me.useQuery()
+    const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
+    const trpcUtils = trpc.useContext()
 
-    // const { data } = trpc.trait.getFromS3.useQuery('llama-pfp')
     const copyS3Files = trpc.trait.createFromS3.useMutation({
         onSuccess: (data) => {
             console.log('success', data)
+            trpcUtils.org.getAllOrgs.invalidate()
         },
         onError: (error) => {
             console.log('error', error)
         },
     })
-
-    const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
-
-    const trpcUtils = trpc.useContext()
 
     const createOrg = trpc.org.createNewOrg.useMutation({
         onSuccess: (data) => {
