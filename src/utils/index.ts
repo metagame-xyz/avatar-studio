@@ -164,27 +164,29 @@ export const parseEnsOrAddress = (address: string): string => {
 }
 
 export async function getAddressFromString(addressString: string): Promise<string> {
-    if (ethers.utils.isAddress(addressString)) {
-        // If the string is a valid EVM address, return it
-        return addressString
-    }
-
-    if (!addressString.endsWith('.eth')) {
-        // If the string does not end with ".eth", it's not a valid ENS name
-        throw new Error(`Invalid address or ENS name: ${addressString}`)
-    }
-
+    const lowercaseAddress = addressString.toLowerCase()
     try {
+        if (ethers.utils.isAddress(lowercaseAddress)) {
+            // If the string is a valid EVM address, return it
+            return lowercaseAddress
+        }
+
+        if (!lowercaseAddress.endsWith('.eth')) {
+            // If the string does not end with ".eth", it's not a valid ENS name
+            throw new Error(`Invalid address or ENS name: ${lowercaseAddress}`)
+        }
+
         // Otherwise, assume it's an ENS name and attempt to resolve it
         const provider = new providers.AlchemyProvider('homestead', process.env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
-        const resolvedAddress = await provider.resolveName(addressString)
+        const resolvedAddress = await provider.resolveName(lowercaseAddress)
         if (!resolvedAddress) {
-            throw new Error(`Could not resolve ENS name: ${addressString}`)
+            throw new Error(`Could not resolve ENS name: ${lowercaseAddress}`)
         }
         return resolvedAddress
     } catch (e) {
         // If it's not a valid ENS name, throw an error
-        throw new Error(`Could not resolve ENS name: ${addressString}`)
+        console.log(`Could not resolve ENS name: ${lowercaseAddress}`)
+        return 'ERROR_RESOLVING_ENS_OR_ADDRESS'
     }
 }
 

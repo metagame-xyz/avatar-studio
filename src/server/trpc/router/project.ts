@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server'
 import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
-import { slugify } from 'utils'
+import { getAddressFromString, slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
@@ -195,8 +195,14 @@ export const projectRouter = router({
                     }
 
                     if (member['wallet-address'] && typeof member['wallet-address'] === 'string') {
-                        const ens = await provider.lookupAddress(member['wallet-address'])
-                        member['ens'] = ens
+                        try {
+                            const address = await getAddressFromString(member['wallet-address'])
+                            const ens = await provider.lookupAddress(member['wallet-address'])
+                            member['wallet-address'] = address?.toLowerCase()
+                            member['ens'] = ens
+                        } catch (err: Error | any) {
+                            console.error(err)
+                        }
                     }
 
                     return member as FieldSet
