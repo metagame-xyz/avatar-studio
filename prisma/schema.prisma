@@ -50,14 +50,12 @@ model User {
 }
 
 model OrganizationInvitation {
-  // id             Int          @id @unique @default(autoincrement())
   organization   Organization     @relation(fields: [organizationId], references: [id])
   organizationId Int
   // email          String
   inviteeAddress String
   role           OrganizationRole @default(ADMIN)
-  // status         InvitationStatus @default(PENDING)
-  status         String           @default("PENDING")
+  status         InvitationStatus @default(PENDING)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   issuedBy       User             @relation(fields: [issuedById], references: [id])
@@ -95,12 +93,11 @@ model Lock {
 }
 
 model MembersOfOrganizations {
-  member         User         @relation(fields: [userId], references: [id])
+  member         User             @relation(fields: [userId], references: [id])
   userId         String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization     @relation(fields: [organizationId], references: [id])
   organizationId Int
-  //   role           OrganizationRole @default(ADMIN)
-  role           String       @default("ADMIN")
+  role           OrganizationRole @default(ADMIN)
 
   @@id([organizationId, userId])
 }
@@ -136,10 +133,9 @@ model AirtableProject {
 }
 
 model MembersOfProjects {
-  member  User    @relation(fields: [userId], references: [id])
-  project Project @relation(fields: [projectSlug], references: [slug])
-  //   role      ProjectRole
-  role    String  @default("MEMBER")
+  member  User        @relation(fields: [userId], references: [id])
+  project Project     @relation(fields: [projectSlug], references: [slug])
+  role    ProjectRole @default(MEMBER)
 
   userId      String
   projectSlug String
@@ -161,17 +157,17 @@ model TraitCategory {
 }
 
 model Trait {
-  id                              Int                  @id @unique @default(autoincrement())
-  traitCategory                   TraitCategory        @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
+  id                              Int           @id @unique @default(autoincrement())
+  traitCategory                   TraitCategory @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
   name                            String
   pngUrl                          String
   isDefaultAchieved               Boolean?
   achievementsRequired            Achievement[]
   achievementsRequiredDescription String?
-  //   levelLogic                      LevelLogic?
-  levelLogic                      String?
-  levelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
-  levelRequired                   Int?
+  levelLogic                      LevelLogic?
+
+  levelCategory AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
+  levelRequired Int?
 
   projectId             Int
   traitCategoryName     String
@@ -245,16 +241,16 @@ model NftMetadata {
   @@unique([userId, projectSlug, network, timestamp])
 }
 
-// enum ProjectRole {
-//   OWNER
-//   ADMIN
-//   MEMBER
-// }
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
 
-// enum LevelLogic {
-//   MORE_THAN_OR_EQUAL_TO
-//   LESS_THAN_OR_EQUAL_TO
-// }
+enum LevelLogic {
+  MORE_THAN_OR_EQUAL_TO
+  LESS_THAN_OR_EQUAL_TO
+}
 
 enum AchievementType {
   SPECIFIC_ACHIEVEMENT
@@ -269,4 +265,11 @@ enum OrganizationRole {
 enum UserRole {
   METAGAME_ADMIN
   METAGAME_OWNER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
 }

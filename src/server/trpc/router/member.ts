@@ -1,5 +1,6 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Account } from '@prisma/client'
+import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
@@ -7,7 +8,8 @@ import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
-import { AddressZ, organizationRoleZod, requestedTraitsSchema, TraitWithEarnedBool } from 'utils/types'
+import type { TraitWithEarnedBool } from 'utils/types'
+import { AddressZ, organizationRoleZod, requestedTraitsSchema } from 'utils/types'
 import { z } from 'zod'
 import { protectedProcedure, publicProcedure, router } from '../trpc'
 
@@ -137,7 +139,7 @@ export const memberRouter = router({
 
             const orgInvite = await ctx.prisma.organizationInvitation.findFirstOrThrow({
                 where: {
-                    status: 'PENDING',
+                    status: InvitationStatus.PENDING,
                     inviteeAddress: address,
                     organizationId: input.organizationId,
                     role: input.role,
@@ -168,7 +170,7 @@ export const memberRouter = router({
                             role: orgInvite.role,
                         },
                     },
-                    data: { status: 'ACCEPTED' },
+                    data: { status: InvitationStatus.ACCEPTED },
                 }),
             ])
 

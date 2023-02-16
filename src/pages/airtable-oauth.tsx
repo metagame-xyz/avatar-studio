@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSessionStorage } from 'react-use'
 import { trpc } from 'utils/trpc'
-import { AirtableAuthCache } from 'utils/types'
+import type { AirtableAuthCache } from 'utils/types'
 
 const AirtableOauth = () => {
     const router = useRouter()

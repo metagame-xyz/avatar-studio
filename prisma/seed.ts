@@ -1,5 +1,4 @@
-import type { Achievement, TraitCategory } from '@prisma/client'
-import { PrismaClient, UserRole } from '@prisma/client'
+import { Achievement, InvitationStatus, LevelLogic, PrismaClient, TraitCategory, UserRole } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import * as dotenv from 'dotenv'
 import { objectToCamel } from 'ts-case-convert'
@@ -280,7 +279,7 @@ async function main() {
             inviteeAddress: metagameAddress,
             role: 'OWNER',
             issuedById: metagameAdmin.id,
-            status: 'ACCEPTED',
+            status: InvitationStatus.ACCEPTED,
         },
     })
 
@@ -429,7 +428,7 @@ async function main() {
             data: {
                 isDefaultAchieved: false,
                 levelRequired: Math.floor(i / 2) + 1,
-                levelLogic: 'GREATER_THAN_OR_EQUAL',
+                levelLogic: LevelLogic.MORE_THAN_OR_EQUAL_TO,
                 levelCategory: {
                     connect: {
                         id: llamaLevel.id,
