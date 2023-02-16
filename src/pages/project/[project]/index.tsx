@@ -9,6 +9,7 @@ import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
 import { useEffect, useState } from 'react'
+import { slugify } from 'utils'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
@@ -61,7 +62,7 @@ const Project: NextPage = () => {
                             setOpen={setOpenAirtableMembersModal}
                             organizationSlug={project.organization.slug}
                             members={data.members}
-                            walletAddressFieldName={project.airtableProject.walletAddressFieldName}
+                            walletAddressFieldName={slugify(project.airtableProject.walletAddressFieldName)}
                         />
 
                         <ConfigureAirtableAchievementsModal

@@ -229,8 +229,6 @@ class Airtable {
             console.log('Refresh Error', data)
             throw new AirtableAuthError(data.error)
         }
-
-        console.log(data)
         return data.bases
     }
 

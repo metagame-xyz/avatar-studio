@@ -185,20 +185,17 @@ export const projectRouter = router({
                 for (const base of bases) {
                     const tables = await airtable.getTablesList(base.id)
                     base.tables = tables || []
-                    for (const table of base.tables) {
-                        table.fields.map((field) => {
-                            console.log(field)
-                        })
-                    }
                 }
 
                 if (!project.airtableProject) return { bases, members: null, achievementFields: null, error: null }
 
                 const members = await airtable.getMembers(project.airtableProject)
 
+                console.log('members', members)
+
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
 
-                const walletAddressFieldName = project.airtableProject.walletAddressFieldName
+                const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
 
                 async function updateMember(member: Record<string, MostTypes>) {
                     if (member['ens'] && typeof member['ens'] === 'string') {
