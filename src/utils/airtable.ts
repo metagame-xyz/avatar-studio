@@ -225,6 +225,12 @@ class Airtable {
             },
         }).then((res) => res.json())
 
+        if ('error' in data) {
+            console.log('Refresh Error', data)
+            throw new AirtableAuthError(data.error)
+        }
+
+        console.log(data)
         return data.bases
     }
 
@@ -237,6 +243,11 @@ class Airtable {
             },
         }).then((res) => res.json())
 
+        if ('error' in data) {
+            console.log('Refresh Error', data)
+            throw new AirtableAuthError(data.error)
+        }
+
         return data.tables
     }
 
@@ -248,6 +259,11 @@ class Airtable {
                 Authorization: `Bearer ${this.airtableAuth.accessToken}`,
             },
         }).then((res) => res.json())
+
+        if ('error' in data) {
+            console.log('Refresh Error', data)
+            throw new AirtableAuthError(data.error)
+        }
 
         if (!data.tables) return []
 

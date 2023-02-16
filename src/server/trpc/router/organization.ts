@@ -95,11 +95,11 @@ export const organizationRouter = router({
         .query(async ({ input }) => {
             try {
                 await airtable.setOrg(input.organizationSlug, 'doesTokenNeedRefresh')
+                console.log('doesTokenNeedRefresh', false)
+                return false
+            } catch (err) {
                 console.log('doesTokenNeedRefresh', true)
                 return true
-            } catch (err) {
-                console.log('doesTokenNeedRefresh', false)
-                false
             } finally {
                 await airtable.postCallCleanup('doesTokenNeedRefresh')
             }
