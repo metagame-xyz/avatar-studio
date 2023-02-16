@@ -60,14 +60,17 @@ export const createAuthHeader = (id: string, secret: string): string => {
     return `Basic ${token}`
 }
 
-export const privyAddUser = async (newAirtableUser: NewAirtableMember): Promise<PrivyUser> => {
+export const privyAddUser = async (
+    newAirtableUser: NewAirtableMember,
+    walletAddressFieldName: string,
+): Promise<PrivyUser> => {
     const url = 'https://auth.privy.io/api/v1/users'
 
     const linked_accounts = []
 
-    if (newAirtableUser['wallet-address']) {
+    if (newAirtableUser[walletAddressFieldName]) {
         linked_accounts.push({
-            address: newAirtableUser['wallet-address'],
+            address: newAirtableUser[walletAddressFieldName],
             type: 'wallet',
             chain_type: 'ethereum',
         })

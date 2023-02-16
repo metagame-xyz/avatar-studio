@@ -13,11 +13,13 @@ export default function ConfigureAirtableMembersModal({
     setOpen,
     organizationSlug,
     members,
+    walletAddressFieldName,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
     members: FieldSet[]
+    walletAddressFieldName: string
 }) {
     const cancelButtonRef = useRef(null)
 
@@ -34,7 +36,7 @@ export default function ConfigureAirtableMembersModal({
     const AirtableMembersList: React.FC<{ membersList: FieldSet[] }> = ({ membersList }) => {
         const members =
             membersList.map((member) => ({
-                walletAddress: member['wallet-address'] as string,
+                walletAddress: member[walletAddressFieldName] as string,
                 firstName: member['first-name'] as string,
                 lastName: member['last-name'] as string,
                 ens: member['ens'] as string | undefined,

@@ -193,17 +193,19 @@ export const projectRouter = router({
 
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
 
+                const walletAddressFieldName = project.airtableProject.walletAddressFieldName
+
                 async function updateMember(member: Record<string, MostTypes>) {
                     if (member['ens'] && typeof member['ens'] === 'string') {
                         const address = await provider.resolveName(member['ens'])
-                        member['wallet-address'] = address?.toLowerCase()
+                        member[walletAddressFieldName] = address?.toLowerCase()
                     }
 
-                    if (member['wallet-address'] && typeof member['wallet-address'] === 'string') {
+                    if (member[walletAddressFieldName] && typeof member[walletAddressFieldName] === 'string') {
                         try {
-                            const address = await getAddressFromString(member['wallet-address'])
-                            const ens = await provider.lookupAddress(member['wallet-address'])
-                            member['wallet-address'] = address?.toLowerCase()
+                            const address = await getAddressFromString(member[walletAddressFieldName] as string) // shouldn't need this, the check is done in the if statement above...?
+                            const ens = await provider.lookupAddress(member[walletAddressFieldName] as string)
+                            member[walletAddressFieldName] = address?.toLowerCase()
                             member['ens'] = ens
                         } catch (err: Error | any) {
                             console.error(err)
@@ -217,7 +219,14 @@ export const projectRouter = router({
 
                 let airtableFields = await airtable.getTableFields(project.airtableProject)
                 airtableFields = airtableFields || []
-                const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens']
+                const nonAchievementFields = [
+                    'first-name',
+                    'last-name',
+                    'email',
+                    'wallet-address',
+                    'ens',
+                    walletAddressFieldName,
+                ]
 
                 const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
 
@@ -250,25 +259,33 @@ export const projectRouter = router({
         .mutation(async ({ ctx, input }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
-            // const users = await privyGetAllUsers()
-            // await users.map(async (user) => {
-            //     await privyDeleteUser(user.id)
-            // })
-            // console.log(users.map((u) => `${u.id} ${JSON.stringify(u.linked_accounts[0])}`))
+            const project = await ctx.prisma.project.findUniqueOrThrow({
+                where: { slug: ctx.projectSlug },
+                include: {
+                    airtableProject: true,
+                },
+            })
+
+            if (!project || !project.airtableProject) {
+                throw new Error('Project not found')
+            }
+
+            // TODO update this to somehow use field id instead of name
+            const walletAddressFieldName = project.airtableProject.walletAddressFieldId
 
             const users = await Promise.all(
                 input.airtableMembers.map(async (member) => {
                     const existingUser = await ctx.prisma.user.findUnique({
-                        where: { address: member['wallet-address'] },
+                        where: { address: member[walletAddressFieldName] },
                     })
                     if (existingUser) {
                         return existingUser
                     } else {
-                        const privyUser = await privyAddUser(member)
+                        const privyUser = await privyAddUser(member, walletAddressFieldName)
                         const user = await ctx.prisma.user.create({
                             data: {
                                 privyDID: privyUser.id,
-                                address: member['wallet-address'],
+                                address: member[walletAddressFieldName],
                                 firstName: member['first-name'],
                                 lastName: member['last-name'],
                                 email: member.email,
@@ -297,11 +314,6 @@ export const projectRouter = router({
                     }
                 }),
             )
-
-            const project = await ctx.prisma.project.findUnique({ where: { slug: ctx.projectSlug } })
-            if (!project) {
-                throw new Error('Project not found')
-            }
 
             await Promise.all(
                 users.map(async (user) => {

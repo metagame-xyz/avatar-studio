@@ -54,13 +54,14 @@ const Project: NextPage = () => {
                         bases={data.bases}
                     />
                 )}
-                {isOrgAdmin && data && !data.error && data.members && (
+                {isOrgAdmin && data && !data.error && data.members && project.airtableProject && (
                     <>
                         <ConfigureAirtableMembersModal
                             open={openAirtableMembersModal}
                             setOpen={setOpenAirtableMembersModal}
                             organizationSlug={project.organization.slug}
                             members={data.members}
+                            walletAddressFieldName={project.airtableProject.walletAddressFieldName}
                         />
 
                         <ConfigureAirtableAchievementsModal
