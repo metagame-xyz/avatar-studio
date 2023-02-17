@@ -53,9 +53,9 @@ const Org: NextPage = () => {
     const Projects = () => {
         const projects = org.projects || []
         return projects.length > 0 ? (
-            <div>
+            <div className="flex flex-col space-y-2 py-4">
                 {projects.map(({ name, slug }) => (
-                    <div className="mt-2 flex items-center" key={slug}>
+                    <div className="flex items-center" key={slug}>
                         <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}>
                             <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
                             {name}
@@ -79,7 +79,7 @@ const Org: NextPage = () => {
                     </div>
                     {isOrgAdmin && (
                         <button
-                            className="btn-primary mt-4 w-full self-start text-center"
+                            className="btn-primary my-4 w-full text-center"
                             onClick={() => {
                                 setOpenNewProjectModal(true)
                             }}
@@ -87,8 +87,8 @@ const Org: NextPage = () => {
                             Create Avatar
                         </button>
                     )}
-                    {isOrgAdmin && tokenNeedsRefresh && (
-                        <a className="btn-primary mt-4 w-64 items-center px-4 text-center" href={`${airtableAuthUrl}`}>
+                    {isOrgAdmin && !tokenNeedsRefresh && (
+                        <a className="btn-primary my-4 w-full text-center" href={`${airtableAuthUrl}`}>
                             Link Airtable
                         </a>
                     )}

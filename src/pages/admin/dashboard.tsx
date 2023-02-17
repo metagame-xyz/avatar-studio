@@ -95,7 +95,7 @@ const AdminDashboard: NextPage = () => {
 
     const Orgs = () => {
         return orgs && orgs.length > 0 ? (
-            <div>
+            <div className="flex flex-col space-y-2">
                 {orgs.map((org) => (
                     <span
                         onClick={() => {
@@ -105,7 +105,7 @@ const AdminDashboard: NextPage = () => {
                         key={org.name}
                     >
                         <div
-                            className={`mt-2 text-2xl hover:cursor-pointer hover:text-teal-200${
+                            className={`text-xl hover:cursor-pointer hover:text-teal-200${
                                 org.slug === selectedOrg?.slug ? ' text-teal-300' : ''
                             }`}
                         >
@@ -122,11 +122,11 @@ const AdminDashboard: NextPage = () => {
     const Projects = () => {
         const projects = selectedOrg?.projects || []
         return projects && projects.length > 0 ? (
-            <div>
+            <div className="flex flex-col space-y-2">
                 {projects.map((project) => (
                     <span onClick={() => setSelectedProject(project)} key={project.name}>
                         <div
-                            className={`mt-2 text-2xl hover:cursor-pointer hover:text-teal-200${
+                            className={`text-xl hover:cursor-pointer hover:text-teal-200${
                                 project.slug === selectedProject?.slug ? ' text-teal-300' : ''
                             }`}
                         >
@@ -174,64 +174,66 @@ const AdminDashboard: NextPage = () => {
         }
 
         return (
-            <div className="mt-2">
-                <div className="overflow-x-auto">
-                    <table className="table w-full">
-                        <thead className="border-b-2 border-gray-500">
-                            <tr>
-                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Name
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Z Index
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Upgradeable?
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Default Earned?
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-500 ">
-                            {traitCategories
-                                .sort((a, b) => a.zIndex - b.zIndex)
-                                .map((traitCategory) => (
-                                    <tr key={traitCategory.name}>
-                                        <td className="whitespace-nowrap px-6 py-4">{traitCategory.name}</td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-center">
-                                            <select
-                                                className="bg-black"
-                                                value={traitCategory.zIndex}
-                                                onChange={(event) =>
-                                                    handleZIndexChange(traitCategory, parseInt(event.target.value))
-                                                }
-                                            >
-                                                <Options />
-                                            </select>
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-center">
-                                            {traitCategory.isModifiable ? 'Yes' : 'No'}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-center">
-                                            {traitCategory.isDefaultAchieved ? 'Yes' : 'No'}
-                                        </td>
-                                    </tr>
-                                ))}
-                        </tbody>
-                    </table>
-                </div>
+            <div className="overflow-x-auto">
+                <table className="table w-full">
+                    <thead className="border-b-2 border-gray-500">
+                        <tr>
+                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                Name
+                            </th>
+                            <th className="p-4 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                Z Index
+                            </th>
+                            <th className="p-4 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                Upgradeable?
+                            </th>
+                            <th className="p-4 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                Default Earned?
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-500 ">
+                        {traitCategories
+                            .sort((a, b) => a.zIndex - b.zIndex)
+                            .map((traitCategory) => (
+                                <tr key={traitCategory.name}>
+                                    <td className="whitespace-nowrap p-4">{traitCategory.name}</td>
+                                    <td className="whitespace-nowrap p-4 text-center">
+                                        <select
+                                            className="bg-black"
+                                            value={traitCategory.zIndex}
+                                            onChange={(event) =>
+                                                handleZIndexChange(traitCategory, parseInt(event.target.value))
+                                            }
+                                        >
+                                            <Options />
+                                        </select>
+                                    </td>
+                                    <td className="whitespace-nowrap p-4 text-center">
+                                        {traitCategory.isModifiable ? 'Yes' : 'No'}
+                                    </td>
+                                    <td className="whitespace-nowrap p-4 text-center">
+                                        {traitCategory.isDefaultAchieved ? 'Yes' : 'No'}
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
             </div>
         )
     }
 
     return (
         <Shell pageTitle="Admin Dashboard">
-            <>
-                <div className="flex flex-col">
-                    <div className="text-4xl font-bold">Admin</div>
-                    <div className="mt-4 mb-2 text-3xl font-bold">Create New Org</div>
-                    <div className="mt-2 flex gap-4">
+            <div className="flex flex-col space-y-4">
+                <div className="text-2xl font-bold md:text-3xl">Admin</div>
+                <div>
+                    <div className="py-2 text-xl font-bold md:text-2xl">Orgs</div>
+                    <Orgs />
+                </div>
+                <div>
+                    <div className="py-2 text-lg font-bold md:text-xl">Create New Org</div>
+                    <div className="flex gap-4 py-4">
                         <Input
                             className="w-2/3"
                             label="New Org Name"
@@ -250,135 +252,147 @@ const AdminDashboard: NextPage = () => {
                             Create
                         </button>
                     </div>
-                    <div className="mt-4 mb-2 text-3xl font-bold">Orgs</div>
-                    <Orgs />
-
-                    {selectedOrg && (
-                        <>
-                            <div className="mt-4 mb-2 text-3xl font-bold">Projects</div>
-                            <Projects />
-                            <div className="mt-4 mb-2 text-3xl font-bold">Create New Project</div>
-                            <div className="mt-2 flex gap-4">
-                                <Input
-                                    className="w-2/3"
-                                    label="New Project Name"
-                                    placeholder={`${selectedOrg.name}'s Avatar`}
-                                    value={newProjectName}
-                                    onChange={(e) => {
-                                        setNewProjectName(e.target.value)
-                                    }}
-                                />
-                                <button
-                                    className="btn-primary"
-                                    onClick={() => {
-                                        createProject.mutate({
-                                            name: newProjectName,
-                                            organizationSlug: selectedOrg.slug,
-                                        })
-                                    }}
-                                >
-                                    Create
-                                </button>
-                            </div>
-                        </>
-                    )}
                 </div>
-            </>
-            <>
+
                 {selectedOrg && (
-                    <>
-                        <div className="text-4xl font-bold">{`${selectedOrg.name}`}</div>
-                        <div className="mt-8 text-3xl font-bold">Send Admin Invite</div>
-                        <div className="mt-4 flex gap-2">
+                    <div>
+                        <div className="py-2 text-xl font-bold md:text-2xl">Projects</div>
+                        <Projects />
+                    </div>
+                )}
+                {selectedOrg && (
+                    <div>
+                        <div className="py-2 text-lg font-bold md:text-xl">Create New Project</div>
+                        <div className="flex gap-4 py-4">
                             <Input
-                                label="ENS or Wallet Address"
-                                placeholder="brenner.eth"
-                                value={inviteAddress}
+                                className="w-2/3"
+                                label="New Project Name"
+                                placeholder={`${selectedOrg.name}'s Avatar`}
+                                value={newProjectName}
                                 onChange={(e) => {
-                                    setInviteAddress(e.target.value)
+                                    setNewProjectName(e.target.value)
                                 }}
-                                className="w-64 pt-2"
                             />
                             <button
                                 className="btn-primary"
                                 onClick={() => {
-                                    createInvite.mutate({
-                                        organizationId: selectedOrg.id,
-                                        ensOrWalletAddress: inviteAddress,
-                                        role: OrganizationRole.ADMIN,
+                                    createProject.mutate({
+                                        name: newProjectName,
+                                        organizationSlug: selectedOrg.slug,
                                     })
                                 }}
                             >
-                                Send Invite
+                                Create
                             </button>
                         </div>
-                        <div className="mt-8 text-3xl font-bold">Existing Admins & Invitations</div>
-                        {invites ? (
-                            <div className="mt-2">
-                                <div className="overflow-x-auto">
-                                    <table className="table w-full">
-                                        <thead className="border-b-2 border-gray-500">
-                                            <tr>
-                                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    ENS
-                                                </th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Address
-                                                </th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Sent At
-                                                </th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                    Status
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-500 ">
-                                            {invites.map((invite) => (
-                                                <tr key={invite.inviteeAddress}>
-                                                    <td className="whitespace-nowrap px-6 py-4">{invite.ens ?? '-'}</td>
-                                                    <td className="whitespace-nowrap px-6 py-4">
-                                                        {truncateAddress(invite.inviteeAddress)}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4">
-                                                        {invite.createdAt.toLocaleString()}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {invite.status.toLowerCase()}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                    </div>
+                )}
+            </div>
+            <>
+                <div className="flex flex-col space-y-12">
+                    {selectedOrg && (
+                        <div>
+                            <div className="flex flex-col space-y-4">
+                                <div className="text-2xl font-bold md:text-3xl">{`${selectedOrg.name}`}</div>
+                                <div className="flex flex-col space-y-2">
+                                    <div className="text-lg font-bold md:text-xl">Send Admin Invite</div>
+                                    <div className="flex gap-2 py-4">
+                                        <Input
+                                            label="ENS or Wallet Address"
+                                            placeholder="brenner.eth"
+                                            value={inviteAddress}
+                                            onChange={(e) => {
+                                                setInviteAddress(e.target.value)
+                                            }}
+                                            className="w-64 pt-2"
+                                        />
+                                        <button
+                                            className="btn-primary"
+                                            onClick={() => {
+                                                createInvite.mutate({
+                                                    organizationId: selectedOrg.id,
+                                                    ensOrWalletAddress: inviteAddress,
+                                                    role: OrganizationRole.ADMIN,
+                                                })
+                                            }}
+                                        >
+                                            Send Invite
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col space-y-2">
+                                    <div className="text-xl font-bold md:text-2xl">Existing Admins & Invitations</div>
+                                    {invites ? (
+                                        <div className="">
+                                            <div className="overflow-x-auto">
+                                                <table className="table w-full">
+                                                    <thead className="border-b-2 border-gray-500">
+                                                        <tr>
+                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                                ENS
+                                                            </th>
+                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                                Address
+                                                            </th>
+                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                                Sent At
+                                                            </th>
+                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                                Status
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-500 ">
+                                                        {invites.map((invite) => (
+                                                            <tr key={invite.inviteeAddress}>
+                                                                <td className="whitespace-nowrap p-4">
+                                                                    {invite.ens ?? '-'}
+                                                                </td>
+                                                                <td className="whitespace-nowrap p-4">
+                                                                    {truncateAddress(invite.inviteeAddress)}
+                                                                </td>
+                                                                <td className="whitespace-nowrap p-4">
+                                                                    {invite.createdAt.toLocaleString()}
+                                                                </td>
+                                                                <td className="whitespace-nowrap p-4 text-sm text-gray-500">
+                                                                    {invite.status.toLowerCase()}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    ) : null}
                                 </div>
                             </div>
-                        ) : null}
-                    </>
-                )}
-                {selectedProject && (
-                    <>
-                        <div className="mt-8">
-                            <div className="text-4xl font-bold">{`${selectedProject.name}`}</div>
-                            <button
-                                onClick={() =>
-                                    copyS3Files.mutate({
-                                        projectSlug: selectedProject.slug,
-                                    })
-                                }
-                                className="btn-primary mt-4"
-                            >
-                                upload traits from S3
-                            </button>
                         </div>
-                        <div className="mt-8">
-                            <div className="text-4xl font-bold">Trait Categories</div>
-                            <TraitCategoryTable
-                                traitCategories={selectedProject.traitCategories}
-                                projectSlug={selectedProject.slug}
-                            />
+                    )}
+                    {selectedProject && (
+                        <div className="flex flex-col space-y-4">
+                            <div className="text-2xl font-bold md:text-3xl">{`${selectedProject.name}`}</div>
+                            <div>
+                                <button
+                                    onClick={() =>
+                                        copyS3Files.mutate({
+                                            projectSlug: selectedProject.slug,
+                                        })
+                                    }
+                                    className="btn-primary my-4"
+                                >
+                                    upload traits from S3
+                                </button>
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <div className="text-xl font-bold md:text-2xl">Trait Categories</div>
+                                <TraitCategoryTable
+                                    traitCategories={selectedProject.traitCategories}
+                                    projectSlug={selectedProject.slug}
+                                />
+                            </div>
                         </div>
-                    </>
-                )}
+                    )}
+                </div>
             </>
         </Shell>
     )
