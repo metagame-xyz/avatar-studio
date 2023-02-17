@@ -38,6 +38,7 @@ class Airtable {
         'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: createAuthHeader(clientEnv.NEXT_PUBLIC_AIRTABLE_CLIENT_ID, serverEnv.AIRTABLE_CLIENT_SECRET),
     }
+    private lockAcquired = false
 
     constructor(organizationSlug: string | null = null) {
         this.organizationSlug = organizationSlug
@@ -83,6 +84,7 @@ class Airtable {
                         },
                     })
                     console.log(`Lock acquired by ${caller}`)
+                    this.lockAcquired = true
                     return
                 }
                 await sleep(800)
@@ -94,13 +96,18 @@ class Airtable {
     }
 
     private async releaseLock(caller = 'unknown'): Promise<void> {
-        console.log('releaseLock')
         if (!this.organizationSlug) {
             throw new Error('No Org Slug yet')
         }
-        try {
-            await prisma.lock.delete({ where: { id: this.organizationSlug, owner: caller } })
-        } catch (error) {}
+        if (this.lockAcquired) {
+            console.log('releaseLock')
+            try {
+                await prisma.lock.delete({ where: { id: this.organizationSlug, owner: caller } })
+            } catch (error) {
+            } finally {
+                this.lockAcquired = false
+            }
+        }
     }
 
     private async refreshAirtableAuth(): Promise<void> {
@@ -153,11 +160,9 @@ class Airtable {
         if (!this.organizationSlug) {
             throw new Error('No Org Slug yet')
         }
-        await this.acquireLock(caller)
         this.airtableAuth = await this.getOrgAirtableAuth()
-        console.log(new Date(Date.now()))
-        console.log(this.airtableAuth.accessTokenExpiration)
         if (new Date(Date.now()) > this.airtableAuth.accessTokenExpiration) {
+            await this.acquireLock(caller)
             await this.refreshAirtableAuth()
         }
         return this.airtableAuth

@@ -72,30 +72,30 @@ const Org: NextPage = () => {
         <Shell pageTitle={name}>
             <>
                 <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationSlug={slug} />
-                <div className="flex flex-col items-center">
-                    <div className="text-4xl font-bold">{name}</div>
+                <div className="flex flex-col">
+                    <div className="text-2xl font-bold md:text-3xl">{name}</div>
                     <div className="self-start">
                         <Projects />
-                        {isOrgAdmin && (
-                            <button
-                                className="btn-primary mt-4 self-start text-center"
-                                onClick={() => {
-                                    setOpenNewProjectModal(true)
-                                }}
-                            >
-                                Create Avatar
-                            </button>
-                        )}
-                        {isOrgAdmin && tokenNeedsRefresh && (
-                            <a className="btn-primary mt-4 w-64 items-center text-center" href={`${airtableAuthUrl}`}>
-                                Link Airtable
-                            </a>
-                        )}
                     </div>
+                    {isOrgAdmin && (
+                        <button
+                            className="btn-primary mt-4 w-full self-start text-center"
+                            onClick={() => {
+                                setOpenNewProjectModal(true)
+                            }}
+                        >
+                            Create Avatar
+                        </button>
+                    )}
+                    {isOrgAdmin && tokenNeedsRefresh && (
+                        <a className="btn-primary mt-4 w-64 items-center px-4 text-center" href={`${airtableAuthUrl}`}>
+                            Link Airtable
+                        </a>
+                    )}
                 </div>
             </>
             <>
-                <div className="text-4xl font-bold">Admins</div>
+                <div className="text-2xl font-bold md:text-3xl">Admins</div>
                 <MembersList membersList={org.admins} />
             </>
         </Shell>

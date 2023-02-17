@@ -23,12 +23,12 @@ const Shell: React.FC<ShellProps> = ({ children, Header, pageTitle, leftWidth = 
                 <div className="relative flex min-h-[calc(100vh_-_120px)] flex-col">
                     {/* page wrapper */}
                     <div className="container mx-auto">{Header}</div>
-                    <div className="container mx-auto w-full flex-grow lg:flex xl:px-8">
+                    <div className="container mx-auto flex w-full flex-grow">
                         {/* Left sidebar & main wrapper */}
-                        <div className="min-w-0 flex-1 md:flex">
+                        <div className="flex min-w-0 flex-1 flex-col gap-8 divide-y-2 md:flex-row md:gap-32 md:divide-y-0">
                             {/* Start left column area */}
                             <div className={`md:flex-shrink-0 ` + width}>
-                                <div className="h-full md:py-6">
+                                <div className="h-full p-4">
                                     <div className="relative h-full">{LeftChild}</div>
                                 </div>
                             </div>
@@ -36,7 +36,7 @@ const Shell: React.FC<ShellProps> = ({ children, Header, pageTitle, leftWidth = 
 
                             {/* Start main area*/}
                             <div className="md:min-w-0 md:flex-1">
-                                <div className="h-full md:py-6">
+                                <div className="h-full p-4">
                                     <div className="relative h-full">{RightChild}</div>
                                 </div>
                             </div>
