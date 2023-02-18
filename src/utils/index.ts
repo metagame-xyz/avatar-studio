@@ -110,7 +110,7 @@ export const isComboAllowed = (
 }
 
 export const pageToLoad = (member: any): string => {
-    if (member?.organizations?.length > 1 || member?.projects?.length > 1) {
+    if (member?.organizations?.length > 1 || member?.projects?.length > 1 || member?.pendingOrgInvitations.length > 0) {
         return '/home'
     }
     if (member?.projects?.length === 1) {

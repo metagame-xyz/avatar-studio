@@ -92,6 +92,55 @@ export const memberRouter = router({
             })
         }
     }),
+    homePage: protectedProcedure.query(async ({ ctx }) => {
+        if (!ctx.session) return null
+
+        const member = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session.userId,
+            },
+            include: {
+                organizations: { include: { organization: true } },
+                projects: { include: { project: true } },
+                achievements: { include: { achievement: true } },
+                nftMetadata: true,
+                accounts: true,
+            },
+        })
+
+        if (!member) return null
+
+        let pendingOrgInvitations: (OrganizationInvitation & { organization: Organization })[] = []
+        if (member.address) {
+            pendingOrgInvitations = await ctx.prisma.organizationInvitation.findMany({
+                where: {
+                    inviteeAddress: member.address,
+                    status: InvitationStatus.PENDING,
+                },
+                include: {
+                    organization: true,
+                },
+            })
+        }
+
+        return {
+            ...member,
+            organizations: member.organizations.map((o) => {
+                return { ...o.organization, role: o.role }
+            }),
+            projects: member.projects.map((p) => {
+                return { ...p.project, role: p.role }
+            }),
+            achievements: member.achievements.map((a) => {
+                return {
+                    ...a.achievement,
+                    timestamp: a.timestamp,
+                    status: a.status,
+                }
+            }),
+            pendingOrgInvitations,
+        }
+    }),
     me: protectedProcedure.query(async ({ ctx }) => {
         // console.log('network', ctx.network)
         const member = await ctx.prisma.user.findUniqueOrThrow({
