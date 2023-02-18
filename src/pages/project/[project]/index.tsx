@@ -81,76 +81,77 @@ const Project: NextPage = () => {
                     />
                 )}
 
-                <div className="flex flex-col items-center">
-                    <div className="text-4xl font-bold">{name}</div>
-                    <div className="flex-col items-center">
+                <div className="flex flex-col">
+                    <div className="pb-4 text-2xl font-bold md:text-3xl">{name}</div>
+
+                    <div className="flex flex-col space-y-8">
                         <div>
-                            <a
-                                className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
-                                href={`/project/${slug}/edit-avatar`}
-                            >
+                            <a className="btn-primary w-full text-center" href={`/project/${slug}/edit-avatar`}>
                                 {hasMinted ? `Update Avatar` : `Mint Avatar`}
                             </a>
                         </div>
 
-                        {isOrgAdmin && (
-                            <>
-                                <div className="mt-8 text-center text-2xl font-bold">Admin Actions</div>
-                                <button
-                                    className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
-                                    onClick={() => {
-                                        setOpenAirtableModal(true)
-                                    }}
-                                >
-                                    Update Airtable Table
-                                </button>
-                            </>
-                        )}
-                        <div className="flex">
-                            <div>Airtable Base: </div> <div>{project.airtableProject?.baseName}</div>
+                        <div className="flex flex-col space-y-4">
+                            {isOrgAdmin && (
+                                <>
+                                    <div className="text-xl font-bold md:text-2xl">Admin Actions</div>
+                                    <div className="flex flex-col space-y-2">
+                                        <button
+                                            className="btn-primary w-full text-center"
+                                            onClick={() => {
+                                                setOpenAirtableModal(true)
+                                            }}
+                                        >
+                                            Update Airtable Table
+                                        </button>
+                                        <div>{`Airtable Base: ${project.airtableProject?.baseName}`} </div>
+                                        <div>{`Airtable Table: ${project.airtableProject?.tableName}`} </div>
+                                    </div>
+                                </>
+                            )}
+                            {isOrgAdmin && project?.airtableProject && (
+                                <div>
+                                    <button
+                                        className="btn-primary w-full text-center"
+                                        onClick={() => {
+                                            setOpenAirtableMembersModal(true)
+                                        }}
+                                    >
+                                        Sync Members
+                                    </button>
+                                </div>
+                            )}
+                            {isOrgAdmin && project?.airtableProject && (
+                                <div>
+                                    <button
+                                        className="btn-primary w-full text-center"
+                                        onClick={() => {
+                                            setOpenAirtableAchievementsModal(true)
+                                        }}
+                                    >
+                                        Sync Achievements
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex">
-                            <div>Airtable Table:</div>
-                            <div>{project.airtableProject?.tableName}</div>
-                        </div>
-                        {isOrgAdmin && project?.airtableProject && (
-                            <div>
-                                <button
-                                    className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
-                                    onClick={() => {
-                                        setOpenAirtableMembersModal(true)
-                                    }}
-                                >
-                                    Sync Members
-                                </button>
-                            </div>
-                        )}
-                        {isOrgAdmin && project?.airtableProject && (
-                            <div>
-                                <button
-                                    className="btn-primary mt-4 w-64 text-center md:w-60 lg:w-64"
-                                    onClick={() => {
-                                        setOpenAirtableAchievementsModal(true)
-                                    }}
-                                >
-                                    Sync Achievements
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
             </>
 
-            <>
-                {project?.AchievementCategory?.length > 0 && (
-                    <div className="mb-4">
-                        <div className="text-4xl font-bold">Achievements</div>
+            <div className="flex flex-col space-y-12">
+                <div className="flex flex-col space-y-4">
+                    <div className="text-2xl font-bold md:text-3xl">Achievements</div>
+                    {project?.AchievementCategory?.length > 3 ? (
                         <AchievementCategoriesList achievementCategories={project.AchievementCategory} />
-                    </div>
-                )}
-                <div className="text-4xl font-bold">Members</div>
-                <MembersList membersList={project.members} />
-            </>
+                    ) : (
+                        <div>No achievements yet</div>
+                    )}
+                </div>
+                <div className="flex flex-col space-y-4">
+                    <div className="text-2xl font-bold md:text-3xl">Members</div>
+                    <MembersList membersList={project.members} />
+                </div>
+            </div>
         </Shell>
     )
 }

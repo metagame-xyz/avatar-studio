@@ -16,7 +16,7 @@ const MembersList: React.FC<MembersListProps> = ({ membersList }) => {
     const members = membersList.map(({ member, role }) => ({ ...member, role })) || []
 
     return members.length > 0 ? (
-        <div className="flex-row space-y-2 py-4">
+        <div className="flex-row space-y-2">
             {members.map(({ firstName, lastName, address, role }) => (
                 <div className="flex items-center" key={address}>
                     {/* <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}> */}

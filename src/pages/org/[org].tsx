@@ -53,7 +53,7 @@ const Org: NextPage = () => {
     const Projects = () => {
         const projects = org.projects || []
         return projects.length > 0 ? (
-            <div className="flex flex-col space-y-2 py-4">
+            <div className="flex flex-col space-y-2">
                 {projects.map(({ name, slug }) => (
                     <div className="flex items-center" key={slug}>
                         <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}>
@@ -72,25 +72,30 @@ const Org: NextPage = () => {
         <Shell pageTitle={name}>
             <>
                 <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationSlug={slug} />
-                <div className="flex flex-col">
-                    <div className="text-2xl font-bold md:text-3xl">{name}</div>
-                    <div className="self-start">
+                <div className="pb-4 text-2xl font-bold md:text-3xl">{name}</div>
+                <div className="flex flex-col space-y-8">
+                    <div className="flex flex-col space-y-4">
+                        <div className="text-xl font-bold md:text-2xl">Projects</div>
                         <Projects />
                     </div>
                     {isOrgAdmin && (
-                        <button
-                            className="btn-primary my-4 w-full text-center"
-                            onClick={() => {
-                                setOpenNewProjectModal(true)
-                            }}
-                        >
-                            Create Avatar
-                        </button>
+                        <div>
+                            <button
+                                className="btn-primary w-full"
+                                onClick={() => {
+                                    setOpenNewProjectModal(true)
+                                }}
+                            >
+                                Create Avatar
+                            </button>
+                        </div>
                     )}
                     {isOrgAdmin && !tokenNeedsRefresh && (
-                        <a className="btn-primary my-4 w-full text-center" href={`${airtableAuthUrl}`}>
-                            Link Airtable
-                        </a>
+                        <div>
+                            <a className="btn-primary w-full text-center" href={`${airtableAuthUrl}`}>
+                                Link Airtable
+                            </a>
+                        </div>
                     )}
                 </div>
             </>
