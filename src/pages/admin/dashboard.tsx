@@ -225,100 +225,96 @@ const AdminDashboard: NextPage = () => {
 
     return (
         <Shell pageTitle="Admin Dashboard">
-            <div className="flex flex-col space-y-4">
-                <div className="text-2xl font-bold md:text-3xl">Admin</div>
-                <div>
-                    <div className="py-2 text-xl font-bold md:text-2xl">Orgs</div>
-                    <Orgs />
-                </div>
-                <div>
-                    <div className="py-2 text-lg font-bold md:text-xl">Create New Org</div>
-                    <div className="flex gap-4 py-4">
-                        <Input
-                            className="w-2/3"
-                            label="New Org Name"
-                            placeholder="Haab Goblins Crypto Club"
-                            value={newOrgName}
-                            onChange={(e) => {
-                                setNewOrgName(e.target.value)
-                            }}
-                        />
-                        <button
-                            className="btn-primary"
-                            onClick={() => {
-                                createOrg.mutate(newOrgName)
-                            }}
-                        >
-                            Create
-                        </button>
-                    </div>
-                </div>
-
-                {selectedOrg && (
-                    <div>
-                        <div className="py-2 text-xl font-bold md:text-2xl">Projects</div>
-                        <Projects />
-                    </div>
-                )}
-                {selectedOrg && (
-                    <div>
-                        <div className="py-2 text-lg font-bold md:text-xl">Create New Project</div>
-                        <div className="flex gap-4 py-4">
+            <div>
+                <div className="pb-4 text-2xl font-bold md:text-3xl">Admin</div>
+                <div className="flex flex-col space-y-12">
+                    <div className="flex flex-col space-y-6">
+                        <div className="flex flex-col space-y-2">
+                            <div className="text-xl font-bold md:text-2xl">Orgs</div>
+                            <Orgs />
+                        </div>
+                        <div className="flex gap-2">
                             <Input
                                 className="w-2/3"
-                                label="New Project Name"
-                                placeholder={`${selectedOrg.name}'s Avatar`}
-                                value={newProjectName}
+                                label="New Org Name"
+                                placeholder="Haab Goblins Crypto Club"
+                                value={newOrgName}
                                 onChange={(e) => {
-                                    setNewProjectName(e.target.value)
+                                    setNewOrgName(e.target.value)
                                 }}
                             />
                             <button
                                 className="btn-primary"
                                 onClick={() => {
-                                    createProject.mutate({
-                                        name: newProjectName,
-                                        organizationSlug: selectedOrg.slug,
-                                    })
+                                    createOrg.mutate(newOrgName)
                                 }}
                             >
                                 Create
                             </button>
                         </div>
                     </div>
-                )}
+
+                    {selectedOrg && (
+                        <div className="flex flex-col space-y-6">
+                            <div className="flex flex-col space-y-2">
+                                <div className="text-xl font-bold md:text-2xl">Projects</div>
+                                <Projects />
+                            </div>
+
+                            <div className="flex gap-2">
+                                <Input
+                                    className="w-2/3"
+                                    label="New Project Name"
+                                    placeholder={`${selectedOrg.name}'s Avatar`}
+                                    value={newProjectName}
+                                    onChange={(e) => {
+                                        setNewProjectName(e.target.value)
+                                    }}
+                                />
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => {
+                                        createProject.mutate({
+                                            name: newProjectName,
+                                            organizationSlug: selectedOrg.slug,
+                                        })
+                                    }}
+                                >
+                                    Create
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
             <>
                 <div className="flex flex-col space-y-12">
-                    {selectedOrg && (
+                    {selectedOrg && !selectedProject && (
                         <div>
-                            <div className="flex flex-col space-y-4">
+                            <div className="flex flex-col space-y-8">
                                 <div className="text-2xl font-bold md:text-3xl">{`${selectedOrg.name}`}</div>
-                                <div className="flex flex-col space-y-2">
-                                    <div className="text-lg font-bold md:text-xl">Send Admin Invite</div>
-                                    <div className="flex gap-2 py-4">
-                                        <Input
-                                            label="ENS or Wallet Address"
-                                            placeholder="brenner.eth"
-                                            value={inviteAddress}
-                                            onChange={(e) => {
-                                                setInviteAddress(e.target.value)
-                                            }}
-                                            className="w-64 pt-2"
-                                        />
-                                        <button
-                                            className="btn-primary"
-                                            onClick={() => {
-                                                createInvite.mutate({
-                                                    organizationId: selectedOrg.id,
-                                                    ensOrWalletAddress: inviteAddress,
-                                                    role: OrganizationRole.ADMIN,
-                                                })
-                                            }}
-                                        >
-                                            Send Invite
-                                        </button>
-                                    </div>
+                                <div className="flex gap-2">
+                                    <Input
+                                        label="ENS or Wallet Address"
+                                        placeholder="brenner.eth"
+                                        value={inviteAddress}
+                                        onChange={(e) => {
+                                            setInviteAddress(e.target.value)
+                                        }}
+                                        className="w-64"
+                                    />
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => {
+                                            createInvite.mutate({
+                                                organizationId: selectedOrg.id,
+                                                ensOrWalletAddress: inviteAddress,
+                                                role: OrganizationRole.ADMIN,
+                                            })
+                                        }}
+                                    >
+                                        Send Admin Invite
+                                    </button>
                                 </div>
                                 <div className="flex flex-col space-y-2">
                                     <div className="text-xl font-bold md:text-2xl">Existing Admins & Invitations</div>
