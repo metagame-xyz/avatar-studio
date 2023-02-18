@@ -1,7 +1,11 @@
 import Spinner from 'components/Spinner'
 import Head from 'next/head'
 
-const FullPageLoading: React.FC = () => {
+interface FullPageLoadingProps {
+    loadingText?: string
+}
+
+const FullPageLoading: React.FC<FullPageLoadingProps> = ({ loadingText }) => {
     return (
         <>
             <Head>
@@ -11,7 +15,14 @@ const FullPageLoading: React.FC = () => {
             </Head>
             <>
                 <div className="container relative mx-auto flex min-h-[calc(100vh_-_120px)] items-center justify-center">
-                    <Spinner />
+                    {loadingText ? (
+                        <div className="flex flex-col items-center gap-4">
+                            <Spinner />
+                            <div className="text-center text-lg text-teal-400"> {loadingText}</div>
+                        </div>
+                    ) : (
+                        <Spinner />
+                    )}
                 </div>
             </>
         </>

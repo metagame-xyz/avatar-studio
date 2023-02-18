@@ -1,4 +1,5 @@
 import { usePrivy } from '@privy-io/react-auth'
+import FullPageLoading from 'components/FullPageLoading'
 import OldButton from 'components/OldButton'
 import { type NextPage } from 'next'
 import Head from 'next/head'
@@ -17,8 +18,7 @@ const Home: NextPage = () => {
         if (authenticated && user) router.push(page)
     }, [authenticated, router, user])
 
-    if (!ready) return <div>Loading...</div>
-    console.log('index', user)
+    if (!ready || (ready && authenticated)) return <FullPageLoading />
     return (
         <>
             <Head>

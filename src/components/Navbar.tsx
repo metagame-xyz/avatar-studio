@@ -192,7 +192,7 @@ export default function Navbar() {
                                                                 await logout()
                                                             }}
                                                         >
-                                                            Sign out
+                                                            Log out
                                                         </a>
                                                     )}
                                                 </Menu.Item>

@@ -92,7 +92,7 @@ const Org: NextPage = () => {
                     )}
                     {isOrgAdmin && !tokenNeedsRefresh && (
                         <div>
-                            <a className="btn-primary w-full text-center" href={`${airtableAuthUrl}`}>
+                            <a className="btn-primary w-full" href={`${airtableAuthUrl}`}>
                                 Link Airtable
                             </a>
                         </div>
@@ -100,7 +100,7 @@ const Org: NextPage = () => {
                 </div>
             </>
             <>
-                <div className="text-2xl font-bold md:text-3xl">Admins</div>
+                <div className="pb-4 text-2xl font-bold md:text-3xl">Admins</div>
                 <MembersList membersList={org.admins} />
             </>
         </Shell>

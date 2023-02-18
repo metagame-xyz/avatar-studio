@@ -86,18 +86,18 @@ const Project: NextPage = () => {
 
                     <div className="flex flex-col space-y-8">
                         <div>
-                            <a className="btn-primary w-full text-center" href={`/project/${slug}/edit-avatar`}>
+                            <a className="btn-primary w-full" href={`/project/${slug}/edit-avatar`}>
                                 {hasMinted ? `Update Avatar` : `Mint Avatar`}
                             </a>
                         </div>
 
                         <div className="flex flex-col space-y-4">
-                            {isOrgAdmin && (
+                            {isOrgAdmin && data && !data.error && (
                                 <>
                                     <div className="text-xl font-bold md:text-2xl">Admin Actions</div>
                                     <div className="flex flex-col space-y-2">
                                         <button
-                                            className="btn-primary w-full text-center"
+                                            className="btn-primary w-full"
                                             onClick={() => {
                                                 setOpenAirtableModal(true)
                                             }}
@@ -112,7 +112,7 @@ const Project: NextPage = () => {
                             {isOrgAdmin && project?.airtableProject && (
                                 <div>
                                     <button
-                                        className="btn-primary w-full text-center"
+                                        className="btn-primary w-full"
                                         onClick={() => {
                                             setOpenAirtableMembersModal(true)
                                         }}
@@ -124,7 +124,7 @@ const Project: NextPage = () => {
                             {isOrgAdmin && project?.airtableProject && (
                                 <div>
                                     <button
-                                        className="btn-primary w-full text-center"
+                                        className="btn-primary w-full"
                                         onClick={() => {
                                             setOpenAirtableAchievementsModal(true)
                                         }}

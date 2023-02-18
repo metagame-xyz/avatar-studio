@@ -1,3 +1,4 @@
+import FullPageLoading from 'components/FullPageLoading'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSessionStorage } from 'react-use'
@@ -47,7 +48,7 @@ const AirtableOauth = () => {
     // since the authorization didn't error, we know there's a grant code in the query
     // ...
 
-    return <div>{`Linking your Airtable to your Organization`}</div>
+    return <FullPageLoading loadingText="Linking your Airtable to your Organization" />
 }
 
 export default AirtableOauth
