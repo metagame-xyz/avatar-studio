@@ -191,24 +191,23 @@ export const projectRouter = router({
 
                 const members = await airtable.getMembers(project.airtableProject)
 
-                console.log('members', members)
-
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
 
                 const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
 
                 async function updateMember(member: Record<string, MostTypes>) {
-                    if (member['ens'] && typeof member['ens'] === 'string') {
-                        const address = await provider.resolveName(member['ens'])
+                    if (member.ens && typeof member.ens === 'string') {
+                        const address = await provider.resolveName(member.ens)
                         member[walletAddressFieldName] = address?.toLowerCase()
                     }
 
                     if (member[walletAddressFieldName] && typeof member[walletAddressFieldName] === 'string') {
                         try {
                             const address = await getAddressFromString(member[walletAddressFieldName] as string) // shouldn't need this, the check is done in the if statement above...?
-                            const ens = await provider.lookupAddress(member[walletAddressFieldName] as string)
                             member[walletAddressFieldName] = address?.toLowerCase()
-                            member['ens'] = ens
+
+                            const ens = await provider.lookupAddress(address)
+                            member.ens = ens
                         } catch (err: Error | any) {
                             console.error(err)
                         }
@@ -217,7 +216,9 @@ export const projectRouter = router({
                     return member as FieldSet
                 }
 
-                const updatedMembers = await Promise.all(members.map(async (member) => updateMember(member)))
+                const updatedMembers = await (
+                    await Promise.all(members.map(async (member) => updateMember(member)))
+                ).filter((member) => !!member[walletAddressFieldName])
 
                 let airtableFields = await airtable.getTableFields(project.airtableProject)
                 airtableFields = airtableFields || []
@@ -273,7 +274,7 @@ export const projectRouter = router({
             }
 
             // TODO update this to somehow use field id instead of name
-            const walletAddressFieldName = project.airtableProject.walletAddressFieldId
+            const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
 
             const users = await Promise.all(
                 input.airtableMembers.map(async (member) => {
@@ -284,12 +285,21 @@ export const projectRouter = router({
                         return existingUser
                     } else {
                         const privyUser = await privyAddUser(member, walletAddressFieldName)
+                        let lastName: string | null = null
+                        let firstName: string | null = null
+
+                        if (member.name) {
+                            // pop off the last word in the string
+                            lastName = member.name.split(' ').pop() || null
+                            // combine the rest of the words into a string
+                            firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                        }
                         const user = await ctx.prisma.user.create({
                             data: {
                                 privyDID: privyUser.id,
                                 address: member[walletAddressFieldName],
-                                firstName: member['first-name'],
-                                lastName: member['last-name'],
+                                firstName: member['first-name'] || firstName,
+                                lastName: member['last-name'] || lastName,
                                 email: member.email,
                             },
                         })

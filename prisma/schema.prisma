@@ -50,7 +50,7 @@ model User {
 }
 
 model OrganizationInvitation {
-  organization   Organization     @relation(fields: [organizationId], references: [id])
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId Int
   // email          String
   inviteeAddress String
@@ -135,7 +135,7 @@ model AirtableProject {
 }
 
 model MembersOfProjects {
-  member  User        @relation(fields: [userId], references: [id])
+  member  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   project Project     @relation(fields: [projectSlug], references: [slug])
   role    ProjectRole @default(MEMBER)
 
@@ -207,7 +207,7 @@ model Achievement {
 }
 
 model MemberAchievements {
-  member      User        @relation(fields: [userId], references: [id])
+  member      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id])
   timestamp   DateTime    @default(now())
   status      Boolean     @default(true)

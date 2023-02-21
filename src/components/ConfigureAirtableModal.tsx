@@ -1,7 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { AirtableBase, AirtableField, AirtableTable } from 'utils/airtableFrontend'
+import type { AirtableBase, AirtableField, AirtableTable } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
 import Dropdown from './Dropdown'
 
@@ -30,22 +30,35 @@ export default function ConfigureAirtableModal({
         },
     })
 
+    const getWalletFieldMaybe = (fieldArr: AirtableField[] | undefined): AirtableField | null => {
+        if (!fieldArr) return null
+        return (
+            fieldArr
+                ?.filter((field) => field.type === 'singleLineText')
+                .find((field) => field.name.toLowerCase().includes('address')) ||
+            fieldArr?.[0] ||
+            null
+        )
+    }
+
     const [selectedBase, setSelectedBase] = useState<AirtableBase | null>(bases?.[0] || null)
     const [selectedTable, setSelectedTable] = useState<AirtableTable | null>(bases?.[0]?.tables?.[0] || null)
     const [selectedWalletAddressField, setSelectedWalletAddressField] = useState<AirtableField | null>(
-        bases?.[0]?.tables?.[0]?.fields?.[0] || null,
+        getWalletFieldMaybe(bases?.[0]?.tables?.[0]?.fields),
     ) // TODO filter out non-string fields
 
     useEffect(() => {
         if (selectedBase && selectedBase.tables.length > 0) {
             setSelectedTable(selectedBase.tables[0] || null)
-            setSelectedWalletAddressField(selectedBase.tables?.[0]?.fields[0] || null)
+            const walletFieldMaybe = getWalletFieldMaybe(selectedBase.tables?.[0]?.fields)
+            setSelectedWalletAddressField(walletFieldMaybe)
         }
     }, [selectedBase])
 
     useEffect(() => {
         if (selectedTable && selectedTable.fields.length > 0) {
-            setSelectedWalletAddressField(selectedTable.fields[0] || null)
+            const walletFieldMaybe = getWalletFieldMaybe(selectedTable.fields)
+            setSelectedWalletAddressField(walletFieldMaybe || null)
         }
     }, [selectedTable])
 

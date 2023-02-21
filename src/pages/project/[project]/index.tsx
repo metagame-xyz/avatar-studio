@@ -21,12 +21,12 @@ const Project: NextPage = () => {
     const [openAirtableAchievementsModal, setOpenAirtableAchievementsModal] = useState(false)
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
-    const isOrgAdmin = true || user?.organizations?.find((o) => o.id == project?.organization?.id)
+    const isOrgAdmin = true || !!user?.organizations?.find((o) => o.id == project?.organization?.id)
     const organizationSlug = project?.organization?.slug as string
 
     const { data } = trpc.project.getAllAirtableData.useQuery(
         { organizationSlug },
-        { enabled: !!organizationSlug && !!isOrgAdmin },
+        { enabled: !!organizationSlug && isOrgAdmin },
     )
 
     useEffect(() => {
@@ -43,6 +43,8 @@ const Project: NextPage = () => {
     const { name, slug } = project
     const hasMinted = user.nftMetadata.length > 0
 
+    console.log(isOrgAdmin, !!data, !data?.error)
+
     return (
         <Shell pageTitle={name}>
             <>
@@ -55,16 +57,19 @@ const Project: NextPage = () => {
                         bases={data.bases}
                     />
                 )}
-                {isOrgAdmin && data && !data.error && data.members && project.airtableProject && (
+                {isOrgAdmin && !data?.error && (
                     <>
                         <ConfigureAirtableMembersModal
                             open={openAirtableMembersModal}
                             setOpen={setOpenAirtableMembersModal}
                             organizationSlug={project.organization.slug}
-                            members={data.members}
-                            walletAddressFieldName={slugify(project.airtableProject.walletAddressFieldName)}
+                            members={data?.members}
+                            walletAddressFieldName={slugify(project?.airtableProject?.walletAddressFieldName || '')}
                         />
-
+                    </>
+                )}
+                {isOrgAdmin && data && !data.error && data.achievementFields && (
+                    <>
                         <ConfigureAirtableAchievementsModal
                             open={openAirtableAchievementsModal}
                             setOpen={setOpenAirtableAchievementsModal}
@@ -104,8 +109,12 @@ const Project: NextPage = () => {
                                         >
                                             Update Airtable Table
                                         </button>
-                                        <div>{`Airtable Base: ${project.airtableProject?.baseName}`} </div>
-                                        <div>{`Airtable Table: ${project.airtableProject?.tableName}`} </div>
+                                        {project?.airtableProject && (
+                                            <>
+                                                <div>{`Airtable Base: ${project.airtableProject?.baseName}`}</div>
+                                                <div>{`Airtable Table: ${project.airtableProject?.tableName}`}</div>
+                                            </>
+                                        )}
                                     </div>
                                 </>
                             )}

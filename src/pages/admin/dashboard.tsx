@@ -50,6 +50,7 @@ const AdminDashboard: NextPage = () => {
         onSuccess: (data) => {
             console.log('success', data)
             setInviteAddress('')
+            trpcUtils.org.getAllOrgs.invalidate()
         },
         onError: (error) => {
             console.log('error', error)

@@ -18,8 +18,8 @@ export default function ConfigureAirtableMembersModal({
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
-    members: FieldSet[]
-    walletAddressFieldName: string
+    members: FieldSet[] | null | undefined
+    walletAddressFieldName: string | undefined
 }) {
     const cancelButtonRef = useRef(null)
 
@@ -34,34 +34,40 @@ export default function ConfigureAirtableMembersModal({
     })
 
     const AirtableMembersList: React.FC<{ membersList: FieldSet[] }> = ({ membersList }) => {
-        const members =
-            membersList.map((member) => ({
-                walletAddress: member[walletAddressFieldName] as string,
-                firstName: member['first-name'] as string,
-                lastName: member['last-name'] as string,
-                name: member['name'] as string,
-                ens: member['ens'] as string | undefined,
-            })) || []
+        const members = walletAddressFieldName
+            ? membersList.map((member) => ({
+                  walletAddress: member[walletAddressFieldName] as string,
+                  firstName: member['first-name'] as string,
+                  lastName: member['last-name'] as string,
+                  name: member['name'] as string,
+                  ens: member['ens'] as string | undefined,
+              }))
+            : []
 
         return members.length > 0 ? (
-            <>
-                {members.map(({ name, firstName, lastName, walletAddress, ens }) => (
-                    <div className="mt-2 flex items-center" key={walletAddress}>
-                        {/* <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}> */}
-                        <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
-                        {`${name || firstName + ' ' + lastName} ${ens ? '(' + ens + ') ' : ''}${truncateAddress(
-                            walletAddress,
-                        )}`}
-                        {/* </Link> */}
+            <div className="flex flex-col gap-2">
+                {members.map(({ name, firstName, lastName, walletAddress, ens }, i) => (
+                    <div className="flex text-left" key={i}>
+                        <div>
+                            <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
+                        </div>
+                        <div>
+                            {`${name || firstName + ' ' + lastName} ${ens ? '(' + ens + ') ' : ''}${truncateAddress(
+                                walletAddress,
+                            )}`}
+                        </div>
                     </div>
                 ))}
-            </>
+            </div>
         ) : null
     }
 
-    const airtableMembers = members.map((m) => newAirtableMemberSchema.parse(m))
+    const airtableMembers = members?.map((m) => newAirtableMemberSchema.parse(m))
 
-    if (!members) return null
+    // if !members return loading else return members list
+    // const Body = () => {
+    //     return (!members ? (<Loading/>) : ())
+    // }
 
     return (
         <Transition.Root show={open} as={Fragment}>
@@ -89,39 +95,45 @@ export default function ConfigureAirtableMembersModal({
                             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         >
-                            <Dialog.Panel className="relative transform rounded-lg bg-black px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                            <Dialog.Panel className="relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                                 <div>
-                                    <div className="mt-3 text-center">
-                                        <Dialog.Title as="h3" className="text-lg font-medium leading-6">
+                                    <div className="flex flex-col gap-4 text-center">
+                                        <Dialog.Title as="h3" className="text-lg font-medium">
                                             Members
                                         </Dialog.Title>
-                                        {members ? <AirtableMembersList membersList={members} /> : <Loading />}
+                                        {members ? (
+                                            <AirtableMembersList membersList={members} />
+                                        ) : (
+                                            <Loading loadingText="Loading Members from Airtable" />
+                                        )}
                                     </div>
-                                </div>
-                                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                                    <button
-                                        type="button"
-                                        className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        disabled={!members}
-                                        onClick={() => {
-                                            if (members) {
-                                                syncMemberList.mutate({
-                                                    organizationSlug,
-                                                    airtableMembers,
-                                                })
-                                            }
-                                        }}
-                                    >
-                                        Sync Members
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn-ghost mt-3 w-full sm:col-start-1 sm:mt-0 sm:text-sm"
-                                        onClick={() => setOpen(false)}
-                                        ref={cancelButtonRef}
-                                    >
-                                        Cancel
-                                    </button>
+                                    {members ? (
+                                        <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                                            <button
+                                                type="button"
+                                                className="btn-primary w-full sm:col-start-2 sm:text-sm"
+                                                disabled={!members}
+                                                onClick={() => {
+                                                    if (members && airtableMembers) {
+                                                        syncMemberList.mutate({
+                                                            organizationSlug,
+                                                            airtableMembers,
+                                                        })
+                                                    }
+                                                }}
+                                            >
+                                                Sync Members
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-ghost mt-3 w-full sm:col-start-1 sm:mt-0 sm:text-sm"
+                                                onClick={() => setOpen(false)}
+                                                ref={cancelButtonRef}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : null}
                                 </div>
                             </Dialog.Panel>
                         </Transition.Child>

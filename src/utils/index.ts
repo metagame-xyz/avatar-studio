@@ -1,5 +1,6 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Trait, TraitCategory } from '@prisma/client'
+import { env as clientEnv } from 'env/client.mjs'
 import { ethers, providers } from 'ethers'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
@@ -177,7 +178,7 @@ export async function getAddressFromString(addressString: string): Promise<strin
         }
 
         // Otherwise, assume it's an ENS name and attempt to resolve it
-        const provider = new providers.AlchemyProvider('homestead', process.env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
+        const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
         const resolvedAddress = await provider.resolveName(lowercaseAddress)
         if (!resolvedAddress) {
             throw new Error(`Could not resolve ENS name: ${lowercaseAddress}`)
