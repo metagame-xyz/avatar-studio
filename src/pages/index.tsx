@@ -1,6 +1,5 @@
 import { usePrivy } from '@privy-io/react-auth'
 import FullPageLoading from 'components/FullPageLoading'
-import OldButton from 'components/OldButton'
 import { type NextPage } from 'next'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
@@ -36,7 +35,9 @@ const Home: NextPage = () => {
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <div className="flex flex-col items-center justify-center gap-4">
-                                <OldButton text="log in" onClick={login} />
+                                <button className="btn-primary" onClick={login}>
+                                    Log In
+                                </button>
                             </div>
                         </div>
                     </div>

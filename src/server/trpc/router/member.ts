@@ -4,7 +4,7 @@ import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
-import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
+import { getEns, hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
@@ -141,50 +141,58 @@ export const memberRouter = router({
             pendingOrgInvitations,
         }
     }),
-    me: protectedProcedure.query(async ({ ctx }) => {
-        // console.log('network', ctx.network)
-        const member = await ctx.prisma.user.findUniqueOrThrow({
-            where: {
-                privyDID: ctx.session.userId,
-            },
-            include: {
-                organizations: { include: { organization: true } },
-                projects: { include: { project: true } },
-                achievements: { include: { achievement: true } },
-                nftMetadata: true,
-                accounts: true,
-            },
-        })
-        let orgInvitations: (OrganizationInvitation & { organization: Organization })[] = []
-        if (member.address) {
-            orgInvitations = await ctx.prisma.organizationInvitation.findMany({
+    me: protectedProcedure
+        .input(z.object({ getEns: z.boolean().optional() }).optional())
+        .query(async ({ ctx, input }) => {
+            // console.log('network', ctx.network)
+            const member = await ctx.prisma.user.findUniqueOrThrow({
                 where: {
-                    inviteeAddress: member.address,
+                    privyDID: ctx.session.userId,
                 },
                 include: {
-                    organization: true,
+                    organizations: { include: { organization: true } },
+                    projects: { include: { project: true } },
+                    achievements: { include: { achievement: true } },
+                    nftMetadata: true,
+                    accounts: true,
                 },
             })
-        }
+            let orgInvitations: (OrganizationInvitation & { organization: Organization })[] = []
+            if (member.address) {
+                orgInvitations = await ctx.prisma.organizationInvitation.findMany({
+                    where: {
+                        inviteeAddress: member.address,
+                    },
+                    include: {
+                        organization: true,
+                    },
+                })
+            }
 
-        return {
-            ...member,
-            organizations: member.organizations.map((o) => {
-                return { ...o.organization, role: o.role }
-            }),
-            projects: member.projects.map((p) => {
-                return { ...p.project, role: p.role }
-            }),
-            achievements: member.achievements.map((a) => {
-                return {
-                    ...a.achievement,
-                    timestamp: a.timestamp,
-                    status: a.status,
-                }
-            }),
-            invitations: orgInvitations,
-        }
-    }),
+            let ens = undefined
+            if (input?.getEns && member.address) {
+                ens = await getEns(member.address)
+            }
+
+            return {
+                ...member,
+                ens,
+                organizations: member.organizations.map((o) => {
+                    return { ...o.organization, role: o.role }
+                }),
+                projects: member.projects.map((p) => {
+                    return { ...p.project, role: p.role }
+                }),
+                achievements: member.achievements.map((a) => {
+                    return {
+                        ...a.achievement,
+                        timestamp: a.timestamp,
+                        status: a.status,
+                    }
+                }),
+                invitations: orgInvitations,
+            }
+        }),
     acceptOrgInvitation: protectedProcedure
         .input(z.object({ organizationId: z.number(), role: organizationRoleZod }))
         .mutation(async ({ ctx, input }) => {

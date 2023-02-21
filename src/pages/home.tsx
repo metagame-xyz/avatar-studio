@@ -1,24 +1,27 @@
+import { Dialog, Transition } from '@headlessui/react'
 import { usePrivy } from '@privy-io/react-auth'
 import FullPageLoading from 'components/FullPageLoading'
-import OldButton, { ButtonType } from 'components/OldButton'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
-import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import react, { useEffect, useState } from 'react'
+import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
 
 const Home: NextPage = () => {
     const router = useRouter()
     const trpcUtils = trpc.useContext()
 
-    const { data: user, error, status } = trpc.member.me.useQuery()
+    const { data: user, error, status } = trpc.member.me.useQuery({ getEns: true })
     const mutation = trpc.member.acceptOrgInvitation.useMutation({
         onSuccess: () => trpcUtils.member.me.invalidate(),
     })
 
     const { logout: privyLogout } = usePrivy()
+
+    const [openNoOrgsModal, setOpenNoOrgsModal] = useState(false)
 
     const logout = async () => {
         await privyLogout()
@@ -26,6 +29,17 @@ const Home: NextPage = () => {
     }
 
     const pendingInvites = user?.invitations?.filter(({ status }) => status === 'PENDING') || []
+
+    // create a variable that returns true if the user is in an org or project
+    const userHasOrgOrProject =
+        user &&
+        ((user?.organizations?.length || 0) > 0 || (user?.projects?.length || 0) > 0 || pendingInvites.length > 0)
+
+    useEffect(() => {
+        if (userHasOrgOrProject === false) {
+            setOpenNoOrgsModal(true)
+        }
+    }, [userHasOrgOrProject])
 
     if (error) {
         return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
@@ -77,6 +91,85 @@ const Home: NextPage = () => {
         )
     }
 
+    if (!userHasOrgOrProject)
+        return (
+            <Shell pageTitle="Earnable Avatar Studio">
+                <div>
+                    <Transition.Root show={openNoOrgsModal} as={react.Fragment}>
+                        <Dialog
+                            as="div"
+                            className="relative z-10"
+                            onClose={() => {
+                                return null
+                            }}
+                        >
+                            <Transition.Child
+                                as={react.Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0"
+                                enterTo="opacity-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100"
+                                leaveTo="opacity-0"
+                            >
+                                <div className="fixed inset-0 bg-transparent" />
+                            </Transition.Child>
+
+                            <div className="fixed inset-0 z-10 overflow-y-auto bg-gray-900/60">
+                                <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                                    <Transition.Child
+                                        as={react.Fragment}
+                                        enter="ease-out duration-300"
+                                        enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                        enterTo="opacity-100 translate-y-0 sm:scale-100"
+                                        leave="ease-in duration-200"
+                                        leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                                        leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                    >
+                                        <Dialog.Panel className="relative w-full max-w-fit transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:m-8 sm:p-16">
+                                            <div>
+                                                <Dialog.Title as="h3" className="text-2xl font-bold">
+                                                    {`This address (${
+                                                        user.ens || truncateAddress(user.address)
+                                                    }) isn’t part of an Organization with an Earnable Avatar.`}
+                                                </Dialog.Title>
+                                            </div>
+                                            <div className="pt-4 pb-12 text-lg">
+                                                If you’d like to create an Earnable Avatar for your own community,
+                                                please reach out directly to{' '}
+                                                <a
+                                                    href="https://twitter.com/metagame"
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-teal-200 hover:text-teal-300"
+                                                >
+                                                    @Metagame
+                                                </a>
+                                                .
+                                            </div>
+                                            <div className="text-center">
+                                                Or, log out and try logging in with a different wallet address.
+                                            </div>
+                                            <div className="mt-5 flex flex-col items-center sm:mt-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn-primary w-32 sm:text-sm"
+                                                    onClick={logout}
+                                                >
+                                                    Log Out
+                                                </button>
+                                            </div>
+                                        </Dialog.Panel>
+                                    </Transition.Child>
+                                </div>
+                            </div>
+                        </Dialog>
+                    </Transition.Root>
+                </div>
+                <div></div>
+            </Shell>
+        )
+
     return (
         <Shell pageTitle="Earnable Avatar Studio">
             <div className="flex flex-col space-y-12">
@@ -93,27 +186,6 @@ const Home: NextPage = () => {
             </div>
             <div></div>
         </Shell>
-    )
-    return (
-        <>
-            <Head>
-                <title>Earnable Avatar Studio</title>
-                <meta name="description" content="Earnable Avatar Studio" />
-                <link rel="icon" href="/favicon.ico" />
-            </Head>
-            <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-black to-black">
-                <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-                    <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">Home</h1>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-                        <h3 className="text-2xl font-bold">Organizations</h3>
-                        <Organizations />
-                        <h3 className="text-2xl font-bold"></h3>
-                        <Invitations />
-                    </div>
-                    <OldButton text="Log Out" onClick={logout} type={ButtonType.Secondary} />
-                </div>
-            </main>
-        </>
     )
 }
 

@@ -144,6 +144,14 @@ const isValidEnsName = (value: string) => {
     return value.endsWith('.eth')
 }
 
+export const getEns = async (address: string): Promise<string | null> => {
+    if (!isAddress(address)) return null
+
+    const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
+    const ens = await provider.lookupAddress(address)
+    return ens
+}
+
 // use zod to parse if a string is a valid eth address or an ens name
 export const parseEnsOrAddress = (address: string): string => {
     try {

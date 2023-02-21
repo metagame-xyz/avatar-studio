@@ -2,11 +2,9 @@ import type { OrganizationInvitation, Project, TraitCategory } from '@prisma/cli
 import { OrganizationRole } from '@prisma/client'
 import Input from 'components/Input'
 import Shell from 'components/Shell'
-import { env as clientEnv } from 'env/client.mjs'
-import { providers } from 'ethers'
 import { type NextPage } from 'next'
 import { useEffect, useState } from 'react'
-import { truncateAddress } from 'utils'
+import { getEns, truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
 import type { ArrayElement } from 'utils/types'
 
@@ -70,9 +68,8 @@ const AdminDashboard: NextPage = () => {
     useEffect(() => {
         const loadInvites = async () => {
             if (selectedOrg) {
-                const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
                 const invitations = selectedOrg.invitations.map(async (invite) => {
-                    const ens = await provider.lookupAddress(invite.inviteeAddress)
+                    const ens = await getEns(invite.inviteeAddress)
                     console.log('ens', ens, invite.inviteeAddress)
                     return { ...invite, ens }
                 })
