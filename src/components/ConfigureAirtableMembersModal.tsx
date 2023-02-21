@@ -1,12 +1,11 @@
-import { Dialog, Transition } from '@headlessui/react'
 import { UserCircleIcon } from '@heroicons/react/24/solid'
 import type { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
-import { Fragment, useRef } from 'react'
+import { useRef } from 'react'
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
 import { newAirtableMemberSchema } from 'utils/types'
-import Loading from './Loading'
+import Modal from './Modal'
 
 export default function ConfigureAirtableMembersModal({
     open,
@@ -18,7 +17,7 @@ export default function ConfigureAirtableMembersModal({
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
-    members: FieldSet[] | null | undefined
+    members: FieldSet[]
     walletAddressFieldName: string | undefined
 }) {
     const cancelButtonRef = useRef(null)
@@ -64,82 +63,25 @@ export default function ConfigureAirtableMembersModal({
 
     const airtableMembers = members?.map((m) => newAirtableMemberSchema.parse(m))
 
-    // if !members return loading else return members list
-    // const Body = () => {
-    //     return (!members ? (<Loading/>) : ())
-    // }
-
     return (
-        <Transition.Root show={open} as={Fragment}>
-            <Dialog as="div" className="relative z-10" initialFocus={cancelButtonRef} onClose={setOpen}>
-                <Transition.Child
-                    as={Fragment}
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0"
-                    enterTo="opacity-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                >
-                    <div className="fixed inset-0 bg-transparent" />
-                </Transition.Child>
-
-                <div className="fixed inset-0 z-10 overflow-y-auto bg-gray-900/60">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                        <Transition.Child
-                            as={Fragment}
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                            enterTo="opacity-100 translate-y-0 sm:scale-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        >
-                            <Dialog.Panel className="relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
-                                <div>
-                                    <div className="flex flex-col gap-4 text-center">
-                                        <Dialog.Title as="h3" className="text-lg font-medium">
-                                            Members
-                                        </Dialog.Title>
-                                        {members ? (
-                                            <AirtableMembersList membersList={members} />
-                                        ) : (
-                                            <Loading loadingText="Loading Members from Airtable" />
-                                        )}
-                                    </div>
-                                    {members ? (
-                                        <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                                            <button
-                                                type="button"
-                                                className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                                disabled={!members}
-                                                onClick={() => {
-                                                    if (members && airtableMembers) {
-                                                        syncMemberList.mutate({
-                                                            organizationSlug,
-                                                            airtableMembers,
-                                                        })
-                                                    }
-                                                }}
-                                            >
-                                                Sync Members
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-ghost mt-3 w-full sm:col-start-1 sm:mt-0 sm:text-sm"
-                                                onClick={() => setOpen(false)}
-                                                ref={cancelButtonRef}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    ) : null}
-                                </div>
-                            </Dialog.Panel>
-                        </Transition.Child>
-                    </div>
-                </div>
-            </Dialog>
-        </Transition.Root>
+        <Modal
+            open={open}
+            setOpen={setOpen}
+            title="Members"
+            onClick={() => {
+                if (members && airtableMembers) {
+                    syncMemberList.mutate({
+                        organizationSlug,
+                        airtableMembers,
+                    })
+                }
+            }}
+            onClickDisabled={!members}
+            onClickText="Sync Members"
+            initialFocusRef={cancelButtonRef}
+            hideButtons={!members}
+        >
+            <AirtableMembersList membersList={members} />
+        </Modal>
     )
 }

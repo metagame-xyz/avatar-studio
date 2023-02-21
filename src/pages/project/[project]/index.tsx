@@ -3,6 +3,7 @@ import ConfigureAirtableAchievementsModal from 'components/ConfigureAirtableAchi
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
+import Loading from 'components/Loading'
 import MembersList from 'components/MembersList'
 import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
@@ -43,12 +44,13 @@ const Project: NextPage = () => {
     const { name, slug } = project
     const hasMinted = user.nftMetadata.length > 0
 
-    console.log(isOrgAdmin, !!data, !data?.error)
+    const isDataLoaded = isOrgAdmin && data && !data.error
+    const isProjectConfigured = !!(isDataLoaded && data.members && data.achievementFields)
 
     return (
         <Shell pageTitle={name}>
             <>
-                {isOrgAdmin && data && !data.error && (
+                {isDataLoaded && (
                     <ConfigureAirtableModal
                         open={openAirtableModal}
                         setOpen={setOpenAirtableModal}
@@ -57,19 +59,15 @@ const Project: NextPage = () => {
                         bases={data.bases}
                     />
                 )}
-                {isOrgAdmin && !data?.error && (
+                {isProjectConfigured && (
                     <>
                         <ConfigureAirtableMembersModal
                             open={openAirtableMembersModal}
                             setOpen={setOpenAirtableMembersModal}
                             organizationSlug={project.organization.slug}
-                            members={data?.members}
+                            members={data.members}
                             walletAddressFieldName={slugify(project?.airtableProject?.walletAddressFieldName || '')}
                         />
-                    </>
-                )}
-                {isOrgAdmin && data && !data.error && data.achievementFields && (
-                    <>
                         <ConfigureAirtableAchievementsModal
                             open={openAirtableAchievementsModal}
                             setOpen={setOpenAirtableAchievementsModal}
@@ -97,28 +95,28 @@ const Project: NextPage = () => {
                         </div>
 
                         <div className="flex flex-col space-y-4">
-                            {isOrgAdmin && data && !data.error && (
-                                <>
-                                    <div className="text-xl font-bold md:text-2xl">Admin Actions</div>
-                                    <div className="flex flex-col space-y-2">
-                                        <button
-                                            className="btn-primary w-full"
-                                            onClick={() => {
-                                                setOpenAirtableModal(true)
-                                            }}
-                                        >
-                                            Update Airtable Table
-                                        </button>
-                                        {project?.airtableProject && (
-                                            <>
-                                                <div>{`Airtable Base: ${project.airtableProject?.baseName}`}</div>
-                                                <div>{`Airtable Table: ${project.airtableProject?.tableName}`}</div>
-                                            </>
-                                        )}
-                                    </div>
-                                </>
+                            {isOrgAdmin && <div className="text-xl font-bold md:text-2xl">Admin Actions</div>}
+                            {isDataLoaded ? (
+                                <div className="flex flex-col space-y-2">
+                                    <button
+                                        className="btn-primary w-full"
+                                        onClick={() => {
+                                            setOpenAirtableModal(true)
+                                        }}
+                                    >
+                                        Update Airtable Table
+                                    </button>
+                                    {isProjectConfigured && (
+                                        <>
+                                            <div>{`Airtable Base: ${project.airtableProject?.baseName}`}</div>
+                                            <div>{`Airtable Table: ${project.airtableProject?.tableName}`}</div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <Loading />
                             )}
-                            {isOrgAdmin && project?.airtableProject && (
+                            {isProjectConfigured && (
                                 <div>
                                     <button
                                         className="btn-primary w-full"
@@ -130,7 +128,7 @@ const Project: NextPage = () => {
                                     </button>
                                 </div>
                             )}
-                            {isOrgAdmin && project?.airtableProject && (
+                            {isProjectConfigured && (
                                 <div>
                                     <button
                                         className="btn-primary w-full"

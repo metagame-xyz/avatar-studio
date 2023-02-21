@@ -9,16 +9,20 @@ export default function Modal({
     title,
     onClick,
     onClickText,
+    onClickDisabled = false,
     children,
     initialFocusRef,
+    hideButtons = false,
 }: {
     open: boolean
     setOpen: react.Dispatch<react.SetStateAction<boolean>>
     title: string
     onClick: () => void
+    onClickDisabled?: boolean
     onClickText: string
     children?: React.ReactNode
     initialFocusRef: react.MutableRefObject<null>
+    hideButtons?: boolean
 }) {
     // const cancelButtonRef = useRef(null)
     // const [name, setName] = useState('')
@@ -51,29 +55,32 @@ export default function Modal({
                         >
                             <Dialog.Panel className="relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                                 <div>
-                                    <div className="mt-3 text-center">
+                                    <div className="flex flex-col gap-4 text-center">
                                         <Dialog.Title as="h3" className="text-lg font-medium leading-6">
                                             {title}
                                         </Dialog.Title>
+                                        {children}
                                     </div>
-                                    {children}
                                 </div>
-                                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                                    <button
-                                        type="button"
-                                        className="btn-primary w-full sm:col-start-2 sm:text-sm"
-                                        onClick={onClick}
-                                    >
-                                        {onClickText}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn-ghost mt-3 w-full sm:col-start-1 sm:mt-0 sm:text-sm"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
+                                {hideButtons ? null : (
+                                    <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                                        <button
+                                            type="button"
+                                            className="btn-primary w-full sm:col-start-2 sm:text-sm"
+                                            disabled={onClickDisabled}
+                                            onClick={onClick}
+                                        >
+                                            {onClickText}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn-ghost mt-3 w-full sm:col-start-1 sm:mt-0 sm:text-sm"
+                                            onClick={() => setOpen(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>

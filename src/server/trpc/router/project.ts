@@ -231,7 +231,13 @@ export const projectRouter = router({
                     walletAddressFieldName,
                 ]
 
-                const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText']
+                const allowedAchievementTypes = [
+                    'number',
+                    'checkbox',
+                    'singleLineText',
+                    'singleSelect',
+                    'multipleSelect',
+                ]
 
                 const achievementFields = airtableFields
                     .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
