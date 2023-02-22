@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { Twitter } from './Icons'
 
 const Footer = () => {
     return (
@@ -10,8 +11,7 @@ const Footer = () => {
                 </div>
                 <div className=""></div>
                 <div className="flex gap-4 text-sm">
-                    <a href="#about">About</a>
-                    <a href="#twitter">Twitter</a>
+                    <Twitter />
                 </div>
             </div>
         </footer>

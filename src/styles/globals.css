@@ -22,7 +22,12 @@ html {
 
 body {
     @apply bg-black;
+    @apply text-teal-50;
     /* @apply h-full; */
+}
+a {
+    @apply text-teal-50;
+    @apply hover:text-teal-400;
 }
 
 div {
