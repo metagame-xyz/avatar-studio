@@ -1,7 +1,6 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Trait, TraitCategory } from '@prisma/client'
-import { env as clientEnv } from 'env/client.mjs'
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
@@ -132,7 +131,7 @@ export const getOpenseaUrl = (chain: Chain, contactAddress: string | null | unde
     return `https://${testnetString}opensea.io/assets/${chainNetwork}/${contactAddress}/${tokenId}`
 }
 
-const isAddress = (value: string) => {
+export const isAddress = (value: string) => {
     try {
         return ethers.utils.getAddress(value.toLowerCase())
     } catch {
@@ -142,14 +141,6 @@ const isAddress = (value: string) => {
 
 const isValidEnsName = (value: string) => {
     return value.endsWith('.eth')
-}
-
-export const getEns = async (address: string): Promise<string | null> => {
-    if (!isAddress(address)) return null
-
-    const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
-    const ens = await provider.lookupAddress(address)
-    return ens
 }
 
 // use zod to parse if a string is a valid eth address or an ens name
@@ -169,33 +160,6 @@ export const parseEnsOrAddress = (address: string): string => {
         return ethAddressOrEnsName.parse(address)
     } catch (error) {
         throw error
-    }
-}
-
-export async function getAddressFromString(addressString: string): Promise<string> {
-    const lowercaseAddress = addressString.toLowerCase()
-    try {
-        if (ethers.utils.isAddress(lowercaseAddress)) {
-            // If the string is a valid EVM address, return it
-            return lowercaseAddress
-        }
-
-        if (!lowercaseAddress.endsWith('.eth')) {
-            // If the string does not end with ".eth", it's not a valid ENS name
-            throw new Error(`Invalid address or ENS name: ${lowercaseAddress}`)
-        }
-
-        // Otherwise, assume it's an ENS name and attempt to resolve it
-        const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
-        const resolvedAddress = await provider.resolveName(lowercaseAddress)
-        if (!resolvedAddress) {
-            throw new Error(`Could not resolve ENS name: ${lowercaseAddress}`)
-        }
-        return resolvedAddress
-    } catch (e) {
-        // If it's not a valid ENS name, throw an error
-        console.log(`Could not resolve ENS name: ${lowercaseAddress}`)
-        return 'ERROR_RESOLVING_ENS_OR_ADDRESS'
     }
 }
 

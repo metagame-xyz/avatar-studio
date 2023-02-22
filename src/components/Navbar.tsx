@@ -75,13 +75,15 @@ export default function Navbar() {
                                         />
                                     </div>
                                     <div className="hidden h-8 w-auto lg:block">
-                                        <Image
-                                            className="hidden lg:block"
-                                            src="/logo.png"
-                                            alt="Metagame"
-                                            width={32}
-                                            height={32}
-                                        />
+                                        <Link href={'/home'}>
+                                            <Image
+                                                className="hidden lg:block"
+                                                src="/logo.png"
+                                                alt="Metagame"
+                                                width={32}
+                                                height={32}
+                                            />
+                                        </Link>
                                     </div>
                                 </div>
                                 {/* <div className="hidden sm:ml-6 sm:block">

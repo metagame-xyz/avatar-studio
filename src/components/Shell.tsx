@@ -11,6 +11,7 @@ type ShellProps = {
 const Shell: React.FC<ShellProps> = ({ children, Header, pageTitle, leftWidth = 'third' }) => {
     const [LeftChild, RightChild] = React.Children.toArray(children)
     const width = leftWidth === 'third' ? 'md:w-4/12' : 'md:w-6/12'
+    const mdGap = leftWidth === 'third' ? 'md:gap-32' : ''
     return (
         <>
             <Head>
@@ -25,7 +26,9 @@ const Shell: React.FC<ShellProps> = ({ children, Header, pageTitle, leftWidth = 
                     <div className="container mx-auto">{Header}</div>
                     <div className="container mx-auto flex w-full flex-grow">
                         {/* Left sidebar & main wrapper */}
-                        <div className="flex min-w-0 flex-1 flex-col gap-8 divide-y-2 md:flex-row md:gap-32 md:divide-y-0">
+                        <div
+                            className={`flex min-w-0 flex-1 flex-col gap-8 divide-y-2 md:flex-row md:divide-y-0 ${mdGap}`}
+                        >
                             {/* Start left column area */}
                             <div className={`md:flex-shrink-0 ` + width}>
                                 <div className="h-full p-4">
