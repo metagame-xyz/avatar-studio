@@ -393,7 +393,6 @@ export const memberRouter = router({
             const traitHash = hashTraits(approvedTraits)
             const version = member.nftMetadata.length + 1
             const s3Key = `${projectSlug}/complete-images/${member.address}/${traitHash}_v${version}.png`
-
             const params = {
                 Bucket: 'metagame-xyz',
                 Key: `nft-images/${s3Key}`,
