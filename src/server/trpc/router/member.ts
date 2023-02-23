@@ -2,10 +2,12 @@ import { hashMessage } from '@ethersproject/hash'
 import type { Account, Organization, OrganizationInvitation } from '@prisma/client'
 import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
+import { createCanvas, loadImage } from 'canvas'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
 import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
+import { s3BaseFolderUrl } from 'utils/constants'
 import { getEns } from 'utils/needEnvUtils'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
@@ -367,6 +369,18 @@ export const memberRouter = router({
 
             const signature = await generateMintingSignature(member.address, project.slug, contractAddress, network)
 
+            // // generate the multi-layer image using canvas
+            const canvas = createCanvas(2400, 2400)
+            const canvasCtx = canvas.getContext('2d')
+
+            // // sort the layers by category z-index so that the background is drawn first
+            approvedTraits.sort((a, b) => a.zIndex - b.zIndex)
+
+            for (const layer of approvedTraits) {
+                const image = await loadImage(layer.pngUrl)
+                canvasCtx.drawImage(image, 0, 0, 2400, 2400)
+            }
+
             AWS.config.update({
                 accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
                 secretAccessKey: env.METAGAME_AWS_SECRET_ACCESS_KEY,
@@ -374,27 +388,19 @@ export const memberRouter = router({
 
             const s3 = new AWS.S3()
 
-            // // generate the multi-layer image using canvas
-            // const canvas = createCanvas(2400, 2400)
-            // const ctx = canvas.getContext('2d')
+            // upload the image to S3. the url param is
 
-            // // sort the layers by category z-index so that the background is drawn first
-            // requestedLayers.sort(
-            //     (a, b) => zIndexMap[a.category] - zIndexMap[b.category],
-            // )
+            const traitHash = hashTraits(approvedTraits)
+            const version = member.nftMetadata.length + 1
+            const s3Key = `${projectSlug}/complete-images/${member.address}/${traitHash}_v${version}.png`
 
-            // for (const layer of requestedLayers) {
-            //     const matchingAsset = getLayerIfEarned(assetData, layer)
-            //     if (matchingAsset) {
-            //         const image = await loadImage(matchingAsset.pngLink)
-            //         ctx.drawImage(image, 0, 0, 2400, 2400)
-            //     }
-            // }
+            const params = {
+                Bucket: 'metagame-xyz',
+                Key: `nft-images/${s3Key}`,
+                Body: canvas.toBuffer('image/png'),
+            }
 
-            // // upload the image to IPFS, return hash
-            // const ipfsUrl = await addToIpfsFromBuffer(
-            //     canvas.toBuffer('image/png'),
-            // )
+            await s3.upload(params).promise()
 
             // add a new nftMetadata record
             await ctx.prisma.nftMetadata.create({
@@ -402,17 +408,17 @@ export const memberRouter = router({
                     userId: member.id,
                     projectSlug,
                     tokenId: existingNftData?.tokenId || null,
-                    name: `${member.firstName}'s ${project.name} Avatar`,
-                    description: `${member.firstName}'s ${project.name} Avatar, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
+                    name: `${member.firstName}'s ${project.name}`,
+                    description: `${member.firstName}'s ${project.name}, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
                     walletAddress: member.address,
-                    image: 'todo url', // TODO
+                    image: `${s3BaseFolderUrl}${s3Key}`,
                     network,
+                    traitHash,
                     traits: {
                         connect: approvedTraits.map((t) => {
                             return { id: t.id }
                         }),
                     },
-                    traitHash: hashTraits(approvedTraits),
                 },
             })
 

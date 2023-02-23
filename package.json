@@ -13,7 +13,8 @@
         "check": "yarn run type-check && yarn run lint && yarn run format",
         "refresh-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma migrate reset",
         "delete-privy-users": "ts-node -r tsconfig-paths/register --compiler-options {\\\"module\\\":\\\"commonjs\\\"} scripts/deleteAllPrivyUsers.ts",
-        "push-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma db push"
+        "push-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma db push",
+        "vercel-build": "yum install libuuid-devel libmount-devel && cp /lib64/{libuuid,libmount,libblkid}.so.1 node_modules/canvas/build/Release/ && next build"
     },
     "prisma": {
         "seed": "ts-node -r tsconfig-paths/register --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -38,6 +39,7 @@
         "airtable": "^0.11.6",
         "aws-sdk": "^2.1294.0",
         "base64url": "^3.0.1",
+        "canvas": "2.10.1",
         "ethereum-blockies-base64": "^1.0.2",
         "ethers": "^5.7.2",
         "framer-motion": "^8.4.3",

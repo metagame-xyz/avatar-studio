@@ -99,8 +99,13 @@ function getNetworkString(network: string): NetworkStrings {
     }
 }
 
+export const s3BaseFolderUrl = 'https://metagame-xyz.s3.us-east-1.amazonaws.com/nft-images/'
+
 export const getS3LayersFolderUrl = (project: string): string =>
     `https://metagame-xyz.s3.us-east-1.amazonaws.com/nft-images/${project}/Layers/`
+
+export const getS3CompleteImagesFolderUrl = (project: string): string =>
+    `https://metagame-xyz.s3.us-east-1.amazonaws.com/nft-images/${project}/complete-images/`
 
 export const getR2LayersFolderUrl = (project: string): string =>
     `https://pub-f973221ec7dc4a44b71a25a1c673e6e8.r2.dev/${project}/Layers/`
