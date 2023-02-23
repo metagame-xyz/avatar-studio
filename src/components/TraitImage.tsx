@@ -32,7 +32,7 @@ const TraitImage = ({
                 disabled={(!trait.earned && trait.earned !== null) || disabled}
                 onClick={() => updatePfpState(trait)}
             >
-                {pfpState.map((existingTrait) => {
+                {pfpState.map((existingTrait, i) => {
                     const useNewTrait = existingTrait.category === trait.category
                     const t = useNewTrait ? trait : existingTrait
                     const style =
@@ -43,7 +43,7 @@ const TraitImage = ({
                             sizes="(max-width: 768px) 120px"
                             width={112}
                             height={112}
-                            key={t.name}
+                            key={`${t.name} ${i}`}
                             alt={`${t.category} ${t.name}`}
                             src={t.pngUrl}
                             style={{ zIndex: t.zIndex }}

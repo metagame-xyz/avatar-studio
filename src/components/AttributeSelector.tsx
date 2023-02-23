@@ -1,5 +1,4 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
-import Title from 'components/Title'
 import TraitImage from 'components/TraitImage'
 import { useState } from 'react'
 import AnimateHeight from 'react-animate-height'
@@ -35,14 +34,12 @@ const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: Attribut
     return (
         <div>
             <div
-                className="flex w-full items-center justify-between rounded-lg px-4 py-2  hover:bg-gray-900 focus:outline-none focus-visible:ring focus-visible:ring-teal-500 focus-visible:ring-opacity-75"
+                className="flex w-full items-center justify-between rounded-lg px-4 py-3  hover:bg-gray-900 focus:outline-none focus-visible:ring focus-visible:ring-teal-500 focus-visible:ring-opacity-75"
                 onClick={() => setOpen(open === false ? true : false)}
             >
                 <div className="flex flex-row items-center gap-3">
-                    <div className={`mt-1 h-4 w-4 rotate-45 transform ${traitTypeBg}`}></div>
-                    <Title level={3} className="font-title mb-1 text-center font-bold sm:mb-0 sm:text-left">
-                        {name}
-                    </Title>
+                    <div className={`h-4 w-4 rotate-45 transform ${traitTypeBg}`}></div>
+                    <div className="justify-center text-center text-3xl font-bold sm:mb-0 sm:text-left">{name}</div>
                 </div>
 
                 <ChevronRightIcon
@@ -64,7 +61,7 @@ const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: Attribut
                 >
                     {traitOptions.map((trait, i) => (
                         <TraitImage
-                            key={trait.name + i}
+                            key={`${trait.name} ${i}`}
                             className={`col-span-1 ${i + 1 === traitOptions.length ? '' : ''}`}
                             trait={trait}
                             pfpState={pfpState}

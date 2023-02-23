@@ -34,7 +34,7 @@ export default function ConfigureAirtableModal({
         if (!fieldArr) return null
         return (
             fieldArr
-                ?.filter((field) => field.type === 'singleLineText')
+                ?.filter((field) => ['multilineText', 'singleLineText'].includes(field.type))
                 .find((field) => field.name.toLowerCase().includes('address')) ||
             fieldArr?.[0] ||
             null

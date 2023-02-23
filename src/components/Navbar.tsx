@@ -14,8 +14,8 @@ const navigation = [
     // { name: 'Team', href: '#', current: false },
     // { name: 'Projects', href: '#', current: false },
     // { name: 'Calendar', href: '#', current: false },
-    { name: 'Help', href: '/help', current: false },
-    { name: 'About', href: '/about', current: false },
+    { name: 'Help', href: 'https://t.me/brennerspear', current: false, external: true },
+    // { name: 'About', href: '/about', current: false },
 ]
 
 function classNames(...classes: string[]) {
@@ -222,6 +222,7 @@ export default function Navbar() {
                                         'block rounded-md pl-2 text-base font-medium',
                                     )}
                                     aria-current={item.current ? 'page' : undefined}
+                                    target={item.external ? '_blank' : undefined}
                                 >
                                     {item.name}
                                 </Disclosure.Button>

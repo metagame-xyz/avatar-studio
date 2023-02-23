@@ -45,8 +45,8 @@ const TraitSelectionPanel = ({
     const projectSlug = router.query.project as string
 
     return (
-        <div className={`relative col-span-1 flex w-full flex-col justify-between`}>
-            <div className="grid gap-y-4 py-6 pr-6 pl-4">
+        <div className={`relative flex w-full flex-col justify-between gap-4 py-2`}>
+            <div className="grid gap-y-2">
                 {assetData?.map((tc) => {
                     // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
                     return !!existingPfpState && !tc.isModifiable ? null : (
@@ -60,7 +60,7 @@ const TraitSelectionPanel = ({
                 })}
             </div>
 
-            <div className="flex items-center justify-center gap-x-4 py-6">
+            <div className="flex items-center justify-center py-4">
                 {mintEnabled ? (
                     <AnimatePresence>
                         <motion.div

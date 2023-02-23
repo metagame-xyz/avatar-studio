@@ -90,7 +90,14 @@ const AdminDashboard: NextPage = () => {
 
             if (previouslySelectedOrg) setSelectedOrg(previouslySelectedOrg)
         }
-    }, [orgs, isOrgsLoading, selectedOrg])
+        if (!isOrgsLoading && orgs) {
+            const previouslySelectedProject = selectedProject
+                ? selectedOrg?.projects.find((project) => project.slug === selectedProject.slug)
+                : null
+
+            if (previouslySelectedProject) setSelectedProject(previouslySelectedProject)
+        }
+    }, [orgs, isOrgsLoading, selectedOrg, selectedProject])
 
     const Orgs = () => {
         return orgs && orgs.length > 0 ? (
