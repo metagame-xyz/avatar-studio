@@ -73,6 +73,24 @@ export type TraitWithCategory = Trait & {
     traitCategory: TraitCategory
 }
 
+export type NftMetadataWithTraits = NftMetadata & {
+    traits: Trait[]
+}
+
+export type Attribute = {
+    display_type?: string
+    trait_type: string
+    value: string | number | boolean
+}
+
+export type OpenSeaMetadata = {
+    name: string
+    description: string
+    image: string
+    external_url: string
+    attributes: Attribute[]
+}
+
 export const enum LlamaTier {
     Traveler = 'Traveler',
     Explorer = 'Explorer',

@@ -1,4 +1,5 @@
-import { Achievement, InvitationStatus, LevelLogic, PrismaClient, TraitCategory, UserRole } from '@prisma/client'
+import type { Achievement, TraitCategory } from '@prisma/client'
+import { InvitationStatus, LevelLogic, PrismaClient, UserRole } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import * as dotenv from 'dotenv'
 import { objectToCamel } from 'ts-case-convert'
