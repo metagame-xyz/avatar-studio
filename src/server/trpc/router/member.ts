@@ -388,8 +388,6 @@ export const memberRouter = router({
 
             const s3 = new AWS.S3()
 
-            // upload the image to S3. the url param is
-
             const traitHash = hashTraits(approvedTraits)
             const version = member.nftMetadata.length + 1
             const s3Key = `${projectSlug}/complete-images/${member.address}/${traitHash}_v${version}.png`
