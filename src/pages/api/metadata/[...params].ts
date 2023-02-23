@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from 'server/db/client'
-import { appRouter } from 'server/trpc/router/_app'
+import { nftMetadataRouter } from 'server/trpc/router/nftMetadata'
 
-const caller = appRouter.createCaller({
+const nftMetadataTrpc = nftMetadataRouter.createCaller({
     session: null,
     prisma: prisma,
     projectSlug: null,
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const chainNetwork = isProd ? 'mainnet' : 'goerli'
 
     try {
-        const nftMetadata = await caller.nftMetadata.getForOpenseaByTokenId({
+        const nftMetadata = await nftMetadataTrpc.getForOpenseaByTokenId({
             tokenId,
             projectSlug,
             chainNetwork,
