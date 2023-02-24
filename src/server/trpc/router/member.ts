@@ -385,11 +385,13 @@ export const memberRouter = router({
 
             const imagePromises = approvedTraits.map((layer) => loadImage(layer.pngUrl))
             const images = await Promise.all(imagePromises)
+            timer.stopTimer('load trait images')
 
+            timer.startTimer('draw trait images')
             for (const image of images) {
                 canvasCtx.drawImage(image, 0, 0, 2400, 2400)
             }
-            timer.stopTimer('load trait images')
+            timer.stopTimer('draw trait images')
 
             AWS.config.update({
                 accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
