@@ -3,7 +3,7 @@ import { InvitationStatus, LevelLogic, PrismaClient, UserRole } from '@prisma/cl
 import * as AWS from 'aws-sdk'
 import * as dotenv from 'dotenv'
 import { objectToCamel } from 'ts-case-convert'
-import { hashTraits } from 'utils'
+import { hashPermanentTraits } from 'utils'
 import { getFromS3 } from 'utils/s3'
 import type { NewAirtableMember, TraitWithEarnedBool } from 'utils/types'
 import { LlamaTier } from 'utils/types'
@@ -166,7 +166,7 @@ async function main() {
             privyDeleteUser(user.id, privyAppId, privyAppSecret)
         }),
     )
-    await sleep(1000)
+    await sleep(2000)
     const privyUsers = await Promise.all(seedMembers.map((member) => privyAddUser(member, privyAppId, privyAppSecret)))
 
     const metagameAdmin = await prisma.user.create({
@@ -499,7 +499,7 @@ async function main() {
                 userId: member.id,
                 projectSlug: llamaPfp.slug,
                 tokenId: (i % 2) + 1,
-                image: 'TODO',
+                image: `${member.address}-${i + 1}.png`,
                 name: `${member.firstName}'s Llama`,
                 description: 'TODO',
                 externalUrl: 'TODO',
@@ -507,7 +507,7 @@ async function main() {
                 traits: {
                     connect: traitsWithEarnedBool.map((t) => ({ id: t.id })),
                 },
-                traitHash: hashTraits(traitsWithEarnedBool),
+                traitHash: hashPermanentTraits(traitsWithEarnedBool),
             },
         })
     }

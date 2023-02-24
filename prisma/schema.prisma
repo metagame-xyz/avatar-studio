@@ -223,7 +223,7 @@ model NftMetadata {
   member        User     @relation(fields: [userId], references: [id])
   project       Project  @relation(fields: [projectSlug], references: [slug])
   name          String
-  image         String?
+  image         String?  @unique
   description   String
   externalUrl   String?
   tokenId       Int?

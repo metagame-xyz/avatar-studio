@@ -62,7 +62,7 @@ export const springAnimation = {
 export const truncateAddress = (address: string | null | undefined): string =>
     address ? `0x${address.slice(2, 6).toUpperCase()}...${address.slice(-4).toUpperCase()}` : ''
 
-export const hashTraits = (traits: TraitWithEarnedBool[]): string => {
+export const hashPermanentTraits = (traits: TraitWithEarnedBool[]): string => {
     const traitString = traits
         .filter((t) => !t.isModifiable)
         .map((trait) => `${trait.category}-${trait.name}`)

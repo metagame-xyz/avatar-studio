@@ -5,12 +5,13 @@ import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
-import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
+import { hashPermanentTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { s3BaseFolderUrl } from 'utils/constants'
 import { getEns } from 'utils/needEnvUtils'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
+import timer from 'utils/timer'
 import type { TraitWithEarnedBool } from 'utils/types'
 import { AddressZ, organizationRoleZod, requestedTraitsSchema } from 'utils/types'
 import { z } from 'zod'
@@ -286,7 +287,9 @@ export const memberRouter = router({
             const network = getNetworkName(chainNetwork)
             const message = JSON.stringify({ requestedTraits, chainNetwork, projectSlug })
             const signerAddress = AddressZ.parse(recoverAddress(hashMessage(message), input.signature))
+            timer.startTimer('getMemberWithProject')
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
+            timer.stopTimer('getMemberWithProject')
 
             const allTraitsWithEarned = getEarnedTraits(member)
 
@@ -344,11 +347,12 @@ export const memberRouter = router({
 
             // if this is their first time creating nft metadata, make sure they're creating a unique set of non-modifiable traits
             if (!existingNftData) {
+                timer.startTimer('first time nft metadata')
                 const usedTraitComboNft = await ctx.prisma.nftMetadata.findFirst({
                     where: {
                         projectSlug,
                         network,
-                        traitHash: hashTraits(approvedTraits),
+                        traitHash: hashPermanentTraits(approvedTraits),
                         // redundant, but just to be safe
                         NOT: {
                             userId: member.id,
@@ -360,6 +364,7 @@ export const memberRouter = router({
                 if (usedTraitComboNft) {
                     throw new Error(`Trait combo already used by ${usedTraitComboNft.member.firstName}`)
                 }
+                timer.stopTimer('first time nft metadata')
             }
 
             // generate signature for the address
@@ -376,10 +381,15 @@ export const memberRouter = router({
             // // sort the layers by category z-index so that the background is drawn first
             approvedTraits.sort((a, b) => a.zIndex - b.zIndex)
 
-            for (const layer of approvedTraits) {
-                const image = await loadImage(layer.pngUrl)
+            timer.startTimer('load trait images')
+
+            const imagePromises = approvedTraits.map((layer) => loadImage(layer.pngUrl))
+            const images = await Promise.all(imagePromises)
+
+            for (const image of images) {
                 canvasCtx.drawImage(image, 0, 0, 2400, 2400)
             }
+            timer.stopTimer('load trait images')
 
             AWS.config.update({
                 accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
@@ -388,17 +398,18 @@ export const memberRouter = router({
 
             const s3 = new AWS.S3()
 
-            const traitHash = hashTraits(approvedTraits)
+            const permanentTraitsHash = hashPermanentTraits(approvedTraits)
             const version = member.nftMetadata.length + 1
-            const s3Key = `${projectSlug}/complete-images/${member.address}/${traitHash}_v${version}.png`
+            const s3Key = `${projectSlug}/complete-images/${member.address}/${permanentTraitsHash}_v${version}.png`
             const params = {
                 Bucket: 'metagame-xyz',
                 Key: `nft-images/${s3Key}`,
                 Body: canvas.toBuffer('image/png'),
+                ContentType: 'image/png',
+                ContentDisposition: 'inline',
             }
 
-            await s3.upload(params).promise()
-
+            timer.startTimer('nftMetadata.create')
             // add a new nftMetadata record
             await ctx.prisma.nftMetadata.create({
                 data: {
@@ -410,7 +421,7 @@ export const memberRouter = router({
                     walletAddress: member.address,
                     image: `${s3BaseFolderUrl}${s3Key}`,
                     network,
-                    traitHash,
+                    traitHash: permanentTraitsHash,
                     traits: {
                         connect: approvedTraits.map((t) => {
                             return { id: t.id }
@@ -418,6 +429,11 @@ export const memberRouter = router({
                     },
                 },
             })
+            timer.stopTimer('nftMetadata.create')
+
+            timer.startTimer('s3 upload')
+            await s3.upload(params).promise()
+            timer.stopTimer('s3 upload')
 
             return signature
         }),
