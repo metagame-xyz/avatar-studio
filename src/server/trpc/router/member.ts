@@ -3,11 +3,12 @@ import { createCanvas, loadImage } from '@napi-rs/canvas'
 import type { Account, Organization, OrganizationInvitation } from '@prisma/client'
 import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
+import { PutObjectRequest } from 'aws-sdk/clients/s3'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
 import { hashPermanentTraits, traitsToTraitsWithEarnedBool } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
-import { s3BaseFolderUrl } from 'utils/constants'
+import { cloudfrontFolderUrl } from 'utils/constants'
 import { getEns } from 'utils/needEnvUtils'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
@@ -398,14 +399,14 @@ export const memberRouter = router({
                 secretAccessKey: env.METAGAME_AWS_SECRET_ACCESS_KEY,
             })
 
-            const s3 = new AWS.S3()
+            const s3 = new AWS.S3({ useAccelerateEndpoint: true })
 
             const permanentTraitsHash = hashPermanentTraits(approvedTraits)
             const version = member.nftMetadata.length + 1
-            const s3Key = `${projectSlug}/complete-images/${member.address}/${permanentTraitsHash}_v${version}.png`
-            const params = {
+            const imageFilePath = `${projectSlug}/complete-images/${member.address}/${permanentTraitsHash}_v${version}.png`
+            const params: PutObjectRequest = {
                 Bucket: 'metagame-xyz',
-                Key: `nft-images/${s3Key}`,
+                Key: `nft-images/${imageFilePath}`,
                 Body: canvas.toBuffer('image/png'),
                 ContentType: 'image/png',
                 ContentDisposition: 'inline',
@@ -421,7 +422,7 @@ export const memberRouter = router({
                     name: `${member.firstName}'s ${project.name}`,
                     description: `${member.firstName}'s ${project.name}, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
                     walletAddress: member.address,
-                    image: `${s3BaseFolderUrl}${s3Key}`,
+                    image: `${cloudfrontFolderUrl}${imageFilePath}`,
                     network,
                     traitHash: permanentTraitsHash,
                     traits: {

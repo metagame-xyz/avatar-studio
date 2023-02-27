@@ -40,7 +40,6 @@ const TraitImage = ({
                         ' group-disabled:opacity-40 group-disabled:grayscale'
                     return (
                         <Image
-                            sizes="(max-width: 768px) 120px"
                             width={112}
                             height={112}
                             key={`${t.name} ${i}`}

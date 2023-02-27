@@ -37,6 +37,7 @@ export const traitRouter = router({
                 data: {
                     zIndex: tc.zIndex,
                     isDefaultAchieved: tc.isDefaultAchieved,
+                    isModifiable: tc.isModifiable,
                 },
             })
         }),

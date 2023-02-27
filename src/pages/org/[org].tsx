@@ -90,7 +90,7 @@ const Org: NextPage = () => {
                             </button>
                         </div>
                     )}
-                    {isOrgAdmin && !tokenNeedsRefresh && (
+                    {isOrgAdmin && tokenNeedsRefresh && (
                         <div>
                             <a className="btn-primary w-full" href={`${airtableAuthUrl}`}>
                                 Link Airtable

@@ -2,7 +2,7 @@ import type { PrismaClient, TraitCategory } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import type * as AWS from 'aws-sdk'
 import { z } from 'zod'
-import { getS3LayersFolderUrl } from './constants'
+import { getCloudfrontLayersFolderUrl } from './constants'
 import type { TraitWithCategory } from './types'
 
 const S3FoldersSchema = z.record(z.array(z.string()))
@@ -65,7 +65,7 @@ export const getFromS3 = async (
         return fileName.replace(/_/g, ' ')
     }
 
-    const s3FolderUrl = getS3LayersFolderUrl(projectSlug)
+    const cloudfrontFolderUrl = getCloudfrontLayersFolderUrl(projectSlug)
 
     const traitCategories: TraitCategory[] = []
     const traits: TraitWithCategory[] = []
@@ -97,7 +97,7 @@ export const getFromS3 = async (
 
         // create traits
         for (const fileName of fileNameList) {
-            const pngUrl = s3FolderUrl + traitCategory.name + '/' + fileName
+            const pngUrl = cloudfrontFolderUrl + traitCategory.name + '/' + fileName
             const traitName = fileName.split('.')[0] as string
 
             const trait = await prisma.trait.upsert({

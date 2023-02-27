@@ -153,7 +153,7 @@ const AdminDashboard: NextPage = () => {
         traitCategories: TraitCategory[]
         projectSlug: string
     }) {
-        const updateZIndexMutation = trpc.trait.updateTraitCategory.useMutation({
+        const updateTraitCategoryMutation = trpc.trait.updateTraitCategory.useMutation({
             onSuccess: (data) => {
                 console.log('success', data)
                 trpcUtils.org.getAllOrgs.invalidate()
@@ -162,7 +162,17 @@ const AdminDashboard: NextPage = () => {
 
         const handleZIndexChange = async (updatedTraitCategory: TraitCategory, zIndex: number) => {
             updatedTraitCategory.zIndex = zIndex
-            await updateZIndexMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
+            await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
+        }
+
+        const handleUpgradeableChange = async (updatedTraitCategory: TraitCategory, isUpgradeable: boolean) => {
+            updatedTraitCategory.isModifiable = isUpgradeable
+            await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
+        }
+
+        const handleDefaultAchievedChange = async (updatedTraitCategory: TraitCategory, isDefaultAchieved: boolean) => {
+            updatedTraitCategory.isDefaultAchieved = isDefaultAchieved
+            await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
         }
 
         const zOptions = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
@@ -187,13 +197,13 @@ const AdminDashboard: NextPage = () => {
                             <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                 Name
                             </th>
-                            <th className="p-4 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                 Z Index
                             </th>
-                            <th className="p-4 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                 Upgradeable?
                             </th>
-                            <th className="p-4 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                 Default Earned?
                             </th>
                         </tr>
@@ -204,7 +214,7 @@ const AdminDashboard: NextPage = () => {
                             .map((traitCategory) => (
                                 <tr key={traitCategory.name}>
                                     <td className="whitespace-nowrap p-4">{traitCategory.name}</td>
-                                    <td className="whitespace-nowrap p-4 text-center">
+                                    <td className="whitespace-nowrap p-4 text-left">
                                         <select
                                             className="bg-black"
                                             value={traitCategory.zIndex}
@@ -215,11 +225,33 @@ const AdminDashboard: NextPage = () => {
                                             <Options />
                                         </select>
                                     </td>
-                                    <td className="whitespace-nowrap p-4 text-center">
-                                        {traitCategory.isModifiable ? 'Yes' : 'No'}
+                                    <td className="whitespace-nowrap p-4 text-left">
+                                        <select
+                                            className="bg-black"
+                                            value={traitCategory.isModifiable ? 'true' : ''}
+                                            onChange={(event) =>
+                                                handleUpgradeableChange(traitCategory, Boolean(event.target.value))
+                                            }
+                                        >
+                                            <>
+                                                <option value="true">Yes</option>
+                                                <option value="">No</option>
+                                            </>
+                                        </select>
                                     </td>
-                                    <td className="whitespace-nowrap p-4 text-center">
-                                        {traitCategory.isDefaultAchieved ? 'Yes' : 'No'}
+                                    <td className="whitespace-nowrap p-4 text-left">
+                                        <select
+                                            className="bg-black"
+                                            value={traitCategory.isDefaultAchieved ? 'true' : ''}
+                                            onChange={(event) =>
+                                                handleDefaultAchievedChange(traitCategory, Boolean(event.target.value))
+                                            }
+                                        >
+                                            <>
+                                                <option value="true">Yes</option>
+                                                <option value="">No</option>
+                                            </>
+                                        </select>
                                     </td>
                                 </tr>
                             ))}

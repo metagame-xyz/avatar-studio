@@ -15,7 +15,7 @@ const config = {
     },
     images: {
         dangerouslyAllowSVG: true,
-        domains: ['ipfs.infura.io', 'metagame-xyz.s3.us-east-1.amazonaws.com'],
+        domains: ['ipfs.infura.io', 'metagame-xyz.s3.us-east-1.amazonaws.com', 'd17y9jhu28q4cz.cloudfront.net'],
     },
 }
 export default config
