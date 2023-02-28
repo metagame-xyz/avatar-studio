@@ -73,7 +73,7 @@ const TraitSelectionPanel = ({
                             <button
                                 className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
                                 onClick={() => mintFunction?.()}
-                                disabled={false} // TODO
+                                disabled={mintStatus === Status.loading} // TODO
                             >
                                 {mintStatus === Status.loading ? (
                                     <Loader size="sm" />

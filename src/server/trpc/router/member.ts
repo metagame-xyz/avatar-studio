@@ -369,7 +369,7 @@ export const memberRouter = router({
             }
 
             // generate signature for the address
-            const contractAddress = network === 'mainnet' ? project.contractAddress : project.testContractAddress
+            const contractAddress = network === 'homestead' ? project.contractAddress : project.testContractAddress
 
             if (!contractAddress) throw new Error('Contract address not found')
 
@@ -439,5 +439,24 @@ export const memberRouter = router({
             timer.stopTimer('s3 upload')
 
             return signature
+        }),
+    getSignature: protectedProcedure
+        .input(
+            z.object({
+                chainNetwork: z.string(),
+                projectSlug: z.string(),
+            }),
+        )
+        .query(async ({ ctx, input }) => {
+            const network = getNetworkName(input.chainNetwork)
+            const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
+            const project = member.projects[0]?.project
+            if (!project) throw new Error('Project not found')
+            if (!member.address) throw new Error('User address not found')
+
+            const contractAddress = network === 'homestead' ? project.contractAddress : project.testContractAddress
+            if (!contractAddress) throw new Error('Contract address not found')
+
+            return generateMintingSignature(member.address, project.slug, contractAddress, network)
         }),
 })

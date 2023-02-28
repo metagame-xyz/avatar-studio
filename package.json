@@ -11,7 +11,7 @@
         "lint": "next lint",
         "start": "next start",
         "check": "yarn run type-check && yarn run lint && yarn run format",
-        "refresh-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma migrate reset",
+        "refresh-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) DATABASE_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) NEXT_PUBLIC_PRIVY_APP_ID=$(cat .env | grep DEV_PRIVY_APP_ID | cut -d '=' -f2) PRIVY_APP_SECRET=$(cat .env | grep DEV_PRIVY_APP_SECRET | cut -d '=' -f2) prisma migrate reset",
         "delete-privy-users": "ts-node -r tsconfig-paths/register --compiler-options {\\\"module\\\":\\\"commonjs\\\"} scripts/deleteAllPrivyUsers.ts",
         "push-dev-db": "cross-env DIRECT_URL=$(cat .env | grep DEV_DB_URL | cut -d '=' -f2) prisma db push"
     },

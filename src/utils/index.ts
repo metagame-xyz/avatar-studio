@@ -172,3 +172,24 @@ export function withEnterKeyPressHandler(onClick: () => void): HandleKeyDownFunc
         }
     }
 }
+
+// const TransferSignatureHash = ethers.utils.id(TransferEventSignature)
+
+export const getDecodedTransferEvent = (
+    logs: ethers.providers.Log[],
+    contractAbi: readonly any[],
+): { from: string; to: string; tokenId: number } => {
+    const TransferEventSignature = 'Transfer(address,address,uint256)'
+    const iface = new ethers.utils.Interface(contractAbi)
+    const transferLog = logs[0] as ethers.providers.Log
+    const decodedEvent = iface.decodeEventLog(TransferEventSignature, transferLog.data, transferLog.topics)
+    console.log('decodedEvent', decodedEvent)
+
+    if (!decodedEvent) throw new Error('No Transfer event found in logs')
+
+    return {
+        from: decodedEvent[0],
+        to: decodedEvent[1],
+        tokenId: decodedEvent[2].toNumber(),
+    }
+}

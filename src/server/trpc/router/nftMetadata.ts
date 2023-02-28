@@ -1,7 +1,7 @@
 import type { NftMetadata } from '@prisma/client'
 import type { Attribute, NftMetadataWithTraits, OpenSeaMetadata } from 'utils/types'
 import { z } from 'zod'
-import { publicProcedure, router } from '../trpc'
+import { protectedProcedure, publicProcedure, router } from '../trpc'
 
 const nftMetadataToOpenSeaFormat = (nftMetadata: NftMetadataWithTraits): OpenSeaMetadata => {
     const { name, description, image, externalUrl, traits } = nftMetadata
@@ -52,5 +52,23 @@ export const nftMetadataRouter = router({
             })
             // return latestNftMetadata
             return nftMetadataToOpenSeaFormat(latestNftMetadata)
+        }),
+    addTokenId: protectedProcedure
+        .input(z.object({ tokenId: z.number(), projectSlug: z.string(), network: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            const { tokenId, projectSlug, network } = input
+
+            const member = await ctx.prisma.user.findFirst({ where: { privyDID: ctx.session.userId } })
+
+            return ctx.prisma.nftMetadata.updateMany({
+                where: {
+                    userId: member?.id,
+                    projectSlug,
+                    network,
+                },
+                data: {
+                    tokenId,
+                },
+            })
         }),
 })

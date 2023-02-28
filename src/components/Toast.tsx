@@ -68,7 +68,7 @@ const Toast = ({ children, data, setData }: ToastProps) => {
         <ToastPrimitive.Provider swipeDirection="right">
             {children}
             <StyledToast
-                className={`flex rounded-lg border-2 border-ui-yankee-blue-light bg-ui-dark-jungle ${
+                className={`flex rounded-lg border-2 border-gray-500 bg-ui-dark-jungle ${
                     data.type === 'loading' ? 'p-0' : 'p-4'
                 } outline-none`}
                 open={data.open}

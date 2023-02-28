@@ -16,7 +16,7 @@ export const createDomainSeparator = (
     // tokenId is use for 1155s, where each tokenId has different mint requirements.
     // for 712s, tokenId is always 1.
 
-    const networkId = network === 'mainnet' ? mainnet.id : goerli.id
+    const networkId = network === 'homestead' ? mainnet.id : goerli.id
 
     const DOMAIN_SEPARATOR = ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(
