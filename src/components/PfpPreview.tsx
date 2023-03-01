@@ -98,13 +98,13 @@ const PfpPreview = ({
 
     return (
         <>
-            <motion.div layout="position" className={`flex-column p-4`} transition={{ springAnimation }}>
+            <motion.div layout="position" className="flex-column p-4" transition={{ springAnimation }}>
                 {!allImagesLoaded && (
                     <div className="relative mx-auto flex aspect-square w-full items-center justify-center rounded-xl bg-ui-gray">
                         <Loading />
                     </div>
                 )}
-                <div className={`${allImagesLoaded ? 'block' : 'hidden'}`}>
+                <div className={`${allImagesLoaded ? 'flex flex-col gap-4' : 'hidden'}`}>
                     <div className={`relative mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-gray`}>
                         {(mintStatus === Status.loading || mintStatus === Status.success) && (
                             <div className="relative flex h-full w-full items-center justify-center">

@@ -294,7 +294,7 @@ const EditAvatar = () => {
                                     : `Update your ${project.name}`
                                 : null}
                         </Title>
-                        <p className="text-md text-teal-50/75">Unlock more traits over time</p>
+                        <p className="text-md text-teal-50/75">Earn more traits over time</p>
                     </div>
                 </div>
             </>

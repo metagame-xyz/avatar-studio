@@ -34,7 +34,7 @@ const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: Attribut
     return (
         <div>
             <div
-                className="flex w-full items-center justify-between rounded-lg px-4 py-3  hover:bg-gray-900 focus:outline-none focus-visible:ring focus-visible:ring-teal-500 focus-visible:ring-opacity-75"
+                className="flex w-full items-center justify-between rounded-lg px-4 py-3 hover:cursor-pointer  hover:bg-gray-900 focus:outline-none focus-visible:ring focus-visible:ring-teal-500 focus-visible:ring-opacity-75"
                 onClick={() => setOpen(open === false ? true : false)}
             >
                 <div className="flex flex-row items-center gap-3">
