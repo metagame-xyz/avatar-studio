@@ -113,7 +113,7 @@ export const pageToLoad = (member: any): string => {
     if (member?.organizations?.length > 1 || member?.projects?.length > 1 || member?.pendingOrgInvitations.length > 0) {
         return '/home'
     }
-    if (member?.projects?.length === 1) {
+    if (member?.organization?.length === 1) {
         console.log('member.organizations[0].slug', member.organizations[0]?.slug)
         return '/org/' + member.organizations[0]?.slug
     }
@@ -192,4 +192,18 @@ export const getDecodedTransferEvent = (
         to: decodedEvent[1],
         tokenId: decodedEvent[2].toNumber(),
     }
+}
+
+export const areTraitArraysEqual = (
+    traits1: TraitWithEarnedBool[],
+    traits2: TraitWithEarnedBool[] | null | undefined,
+): boolean => {
+    if (!traits2) return false
+    if (traits1.length !== traits2.length) return false
+    traits1.sort((a, b) => a.id - b.id)
+    traits2.sort((a, b) => a.id - b.id)
+    for (let i = 0; i < traits1.length; i++) {
+        if (traits1[i]?.id !== traits2[i]?.id) return false
+    }
+    return true
 }

@@ -274,7 +274,7 @@ export const memberRouter = router({
             }
             return nftMetadata
         }),
-    createNftMetadata: protectedProcedure
+    createOrUpdateNftMetadata: protectedProcedure
         .input(
             z.object({
                 requestedTraits: requestedTraitsSchema,

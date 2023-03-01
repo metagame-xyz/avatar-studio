@@ -22,7 +22,7 @@ const Project: NextPage = () => {
     const [openAirtableAchievementsModal, setOpenAirtableAchievementsModal] = useState(false)
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
-    const isOrgAdmin = true || !!user?.organizations?.find((o) => o.id == project?.organization?.id)
+    const isOrgAdmin = !!user?.organizations?.find((o) => o.id == project?.organization?.id)
     const organizationSlug = project?.organization?.slug as string
 
     const { data } = trpc.project.getAllAirtableData.useQuery(
@@ -96,26 +96,28 @@ const Project: NextPage = () => {
 
                         <div className="flex flex-col space-y-4">
                             {isOrgAdmin && <div className="text-xl font-bold md:text-2xl">Admin Actions</div>}
-                            {isDataLoaded ? (
-                                <div className="flex flex-col space-y-2">
-                                    <button
-                                        className="btn-primary w-full"
-                                        onClick={() => {
-                                            setOpenAirtableModal(true)
-                                        }}
-                                    >
-                                        Update Airtable Table
-                                    </button>
-                                    {isProjectConfigured && (
-                                        <>
-                                            <div>{`Airtable Base: ${project.airtableProject?.baseName}`}</div>
-                                            <div>{`Airtable Table: ${project.airtableProject?.tableName}`}</div>
-                                        </>
-                                    )}
-                                </div>
-                            ) : (
-                                <Loading />
-                            )}
+                            {isOrgAdmin ? (
+                                isDataLoaded ? (
+                                    <div className="flex flex-col space-y-2">
+                                        <button
+                                            className="btn-primary w-full"
+                                            onClick={() => {
+                                                setOpenAirtableModal(true)
+                                            }}
+                                        >
+                                            Update Airtable Table
+                                        </button>
+                                        {isProjectConfigured && (
+                                            <>
+                                                <div>{`Airtable Base: ${project.airtableProject?.baseName}`}</div>
+                                                <div>{`Airtable Table: ${project.airtableProject?.tableName}`}</div>
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Loading />
+                                )
+                            ) : null}
                             {isProjectConfigured && (
                                 <div>
                                     <button

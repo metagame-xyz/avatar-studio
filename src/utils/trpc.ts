@@ -79,7 +79,7 @@ export const trpc = createTRPCNext<AppRouter>({
                             const rerouteCodes = ['UNAUTHORIZED', 'NOT_FOUND', 'FORBIDDEN']
 
                             if (error instanceof TRPCClientError) {
-                                if (rerouteCodes.includes(error.data.code)) Router.push('/')
+                                if (rerouteCodes.includes(error.data?.code)) Router.push('/')
                             }
 
                             if (error instanceof AirtableAuthError) {

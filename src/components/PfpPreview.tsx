@@ -1,27 +1,56 @@
-import { ArrowDownTrayIcon, HeartIcon } from '@heroicons/react/24/outline'
+import { ArrowDownTrayIcon, ExclamationCircleIcon, HeartIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { CheckIcon } from '@heroicons/react/24/solid'
+import type { SignMessageArgs } from '@wagmi/core'
 import Icon from 'components/Icon'
 import ThreeDotsWave from 'components/ThreeDotsWave'
+import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import opensea from 'public/icons/opensea.svg'
+import sparkles from 'public/icons/sparkles.svg'
 import upperRightArrow from 'public/icons/upperRightArrow.svg'
-import { springAnimation } from 'utils/index'
+import { networkStrings } from 'utils/constants'
+import { areTraitsEqual, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import { trpc } from 'utils/trpc'
 import type { TraitWithEarnedBool } from 'utils/types'
-import { Status } from 'utils/types'
+import { ActionType, Status } from 'utils/types'
+import { useNetwork } from 'wagmi'
+import Loader from './Loader'
 
 type PfpPreviewProps = {
     pfpState: TraitWithEarnedBool[]
-    mintStatus: Status
     txHash?: string
     openSeaUrl?: string | null
+    actionType: ActionType
+    signMessage: (args?: SignMessageArgs | undefined) => void
+    userIsSigning: boolean
+    existingPfpState: TraitWithEarnedBool[] | null
+    mintFunction: ((overrideConfig?: undefined) => void) | undefined
+    createNftMetadataStatus: Status
+    mintStatus: Status
+    isMintEnabled: boolean
 }
 
-const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpPreviewProps) => {
+const PfpPreview = ({
+    pfpState,
+    txHash = '',
+    openSeaUrl = '',
+    actionType,
+    signMessage,
+    userIsSigning,
+    mintFunction,
+    createNftMetadataStatus,
+    mintStatus,
+    isMintEnabled,
+    existingPfpState,
+}: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     const { data: user } = trpc.member.me.useQuery()
+    const { chain } = useNetwork()
+    const router = useRouter()
+    const projectSlug = router.query.project as string
 
     if (!user) return <></>
     // const [user, setUser] = React.useState({} as UserData)
@@ -84,7 +113,7 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
                                         transition={{ springAnimation }}
                                     >
                                         <Link
-                                            href={`https://etherscan.io/tx/${txHash}`}
+                                            href={`https://${networkStrings.etherscan}etherscan.io/tx/${txHash}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="font-title flex items-center px-8 py-3 text-lg text-white transition-all duration-100 ease-in-out hover:bg-gray-900 hover:bg-opacity-40"
@@ -125,7 +154,7 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
                                                 opacity: 1,
                                             }}
                                             exit={{ width: 0, opacity: 0 }}
-                                            className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary"
+                                            className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-teal-300"
                                             transition={{ springAnimation }}
                                         >
                                             <motion.span
@@ -147,7 +176,7 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
                                             >
                                                 <HeartIcon className="h-8 w-8 fill-white" />
                                             </motion.span>
-                                            <CheckIcon className="absolute h-4 w-4 text-primary" />
+                                            <CheckIcon className="absolute h-4 w-4 text-teal-300" />
                                         </motion.span>
                                     </>
                                 )}
@@ -175,6 +204,70 @@ const PfpPreview = ({ pfpState, mintStatus, txHash = '', openSeaUrl = '' }: PfpP
                     </button>
                 </div>
             )}
+            <div className="flex items-center justify-center py-4">
+                {isMintEnabled ? (
+                    <AnimatePresence>
+                        <motion.div
+                            key="mint"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ springAnimation }}
+                        >
+                            <button
+                                className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
+                                onClick={() => mintFunction?.()}
+                                disabled={mintStatus === Status.loading} // TODO
+                            >
+                                {mintStatus === Status.loading ? (
+                                    <Loader size="sm" />
+                                ) : (
+                                    <Icon size={2} image={sparkles} />
+                                )}
+                                Mint NFT
+                            </button>
+                        </motion.div>
+                    </AnimatePresence>
+                ) : (
+                    <div>
+                        <button
+                            className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
+                            onClick={() => {
+                                const sendablePfpState =
+                                    actionType == ActionType.mint
+                                        ? pfpState
+                                        : pfpState.filter((trait) => trait.isModifiable)
+                                signMessage({
+                                    message: JSON.stringify({
+                                        requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
+                                        chainNetwork: chain?.network || 'ERROR',
+                                        projectSlug,
+                                    }),
+                                })
+                            }}
+                            disabled={areTraitsEqual(pfpState, existingPfpState) || userIsSigning}
+                        >
+                            <>
+                                {userIsSigning || createNftMetadataStatus === Status.loading ? (
+                                    <Loader size="sm" />
+                                ) : (
+                                    <PencilSquareIcon className="w-5" />
+                                )}
+                                <span>{`${actionType === ActionType.mint ? 'Save' : 'Update'} Trait Choices`}</span>
+                                {!existingPfpState && (
+                                    <>
+                                        <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
+                                        <Tooltip
+                                            text="You must save your trait choices before you mint."
+                                            withInfoIcon
+                                        />
+                                    </>
+                                )}
+                            </>
+                        </button>
+                    </div>
+                )}
+            </div>
         </motion.div>
     )
 }
