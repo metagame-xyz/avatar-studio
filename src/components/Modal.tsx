@@ -3,6 +3,27 @@ import react from 'react'
 
 // TODO something about cancelButtonRef makes it focus on the cancel button every time you type a letter
 
+type ModalProps = {
+    open: boolean
+    setOpen: React.Dispatch<React.SetStateAction<boolean>>
+    title?: string
+    children?: React.ReactNode
+    onClickDisabled?: boolean
+    onClick?: () => void
+    onClickText?: string
+    initialFocusRef?: React.MutableRefObject<null>
+    className?: string
+    uncloseable?: boolean
+} & (
+    | { hideButtons: boolean }
+    | {
+          hideButtons?: undefined | false
+          onClick: () => void
+          onClickText: string
+          initialFocusRef: React.MutableRefObject<null>
+      }
+)
+
 export default function Modal({
     open,
     setOpen,
@@ -12,24 +33,22 @@ export default function Modal({
     onClickDisabled = false,
     children,
     initialFocusRef,
-    hideButtons = false,
-}: {
-    open: boolean
-    setOpen: react.Dispatch<react.SetStateAction<boolean>>
-    title: string
-    onClick: () => void
-    onClickDisabled?: boolean
-    onClickText: string
-    children?: React.ReactNode
-    initialFocusRef: react.MutableRefObject<null>
-    hideButtons?: boolean
-}) {
+    hideButtons,
+    className,
+    uncloseable,
+}: ModalProps) {
     // const cancelButtonRef = useRef(null)
     // const [name, setName] = useState('')
 
     return (
         <Transition.Root show={open} as={react.Fragment}>
-            <Dialog as="div" className="relative z-10" initialFocus={initialFocusRef} onClose={setOpen}>
+            <Dialog
+                as="div"
+                className="relative"
+                style={{ zIndex: 100 }}
+                initialFocus={initialFocusRef}
+                onClose={uncloseable ? () => null : setOpen}
+            >
                 <Transition.Child
                     as={react.Fragment}
                     enter="ease-out duration-300"
@@ -42,8 +61,8 @@ export default function Modal({
                     <div className="fixed inset-0 bg-transparent" />
                 </Transition.Child>
 
-                <div className="fixed inset-0 z-10 overflow-y-auto bg-gray-900/60">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div className="fixed inset-0 overflow-y-auto bg-gray-900/60" style={{ zIndex: 100 }}>
+                    <div className={`flex min-h-full items-center justify-center p-4 text-center sm:p-0`}>
                         <Transition.Child
                             as={react.Fragment}
                             enter="ease-out duration-300"
@@ -53,12 +72,16 @@ export default function Modal({
                             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         >
-                            <Dialog.Panel className="relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
+                            <Dialog.Panel
+                                className={`relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6 ${className}`}
+                            >
                                 <div>
                                     <div className="flex flex-col gap-4 text-center">
-                                        <Dialog.Title as="h3" className="text-lg font-medium leading-6">
-                                            {title}
-                                        </Dialog.Title>
+                                        {title && (
+                                            <Dialog.Title as="h3" className="text-lg font-medium leading-6">
+                                                {title}
+                                            </Dialog.Title>
+                                        )}
                                         {children}
                                     </div>
                                 </div>

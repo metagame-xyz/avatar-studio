@@ -1,5 +1,6 @@
 import AttributeSelector from 'components/AttributeSelector'
 import FullPageLoading from 'components/FullPageLoading'
+import Loading from 'components/Loading'
 import Modal from 'components/Modal'
 import PfpPreview from 'components/PfpPreview'
 import Shell from 'components/Shell'
@@ -48,6 +49,7 @@ const EditAvatar = () => {
 
     const correctChain = [goerli, mainnet].find((chain) => chain.network === NETWORK) || goerli
     const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(!!(chain?.id !== correctChain?.id))
+    const [isUpdatingTraitsModalOpen, setIsUpdatingTraitsModalOpen] = useState<boolean>(false)
     useEffect(() => {
         setIsChainModalOpen(chain?.id !== correctChain?.id)
     }, [correctChain, chain])
@@ -99,9 +101,11 @@ const EditAvatar = () => {
         }
 
         // user has data in db, so ready to mint, but no tokenId yet
-        if (!existingNftMetadata?.tokenId && existingNftMetadata) {
+        if (existingNftMetadata && !existingNftMetadata?.tokenId) {
             setNftState(NftState.hasDataNoNft)
-            setAllowedAction(AllowedAction.mint)
+
+            const statesAreSame = areTraitArraysEqual(existingNftMetadata?.traits, pfpState)
+            setAllowedAction(statesAreSame ? AllowedAction.mint : AllowedAction.update)
         }
 
         // user has no data in db, so not ready to mint
@@ -153,6 +157,9 @@ const EditAvatar = () => {
         onSuccess(data) {
             const sendablePfpState =
                 allowedAction == AllowedAction.create ? pfpState : pfpState.filter((trait) => trait.isModifiable)
+
+            setIsUpdatingTraitsModalOpen(true)
+
             createOrUpdateNftMetadata.mutate({
                 projectSlug,
                 requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
@@ -169,19 +176,16 @@ const EditAvatar = () => {
     // upload data to db
     const createOrUpdateNftMetadata = trpc.member.createOrUpdateNftMetadata.useMutation({
         onSuccess: (data) => {
-            if (nftState === NftState.hasDataNoNft) {
-                triggerErrorToast('Hmmm not sure whats going on here, text Brenner')
-            }
             if (nftState === NftState.hasDataAndNft) {
-                triggerSuccessToast('PFP updated!')
+                triggerSuccessToast(`Your ${project?.name} updated!`)
             }
-            if (nftState === NftState.noDataNoNft) {
+            if ([NftState.hasDataNoNft, NftState.noDataNoNft].includes(nftState)) {
                 setSignatureForMint(data)
                 setNftState(NftState.hasDataNoNft)
                 setAllowedAction(AllowedAction.mint)
-                triggerSuccessToast('You may mint your NFT now')
+                triggerSuccessToast(`You may mint your ${project?.name} now`)
             }
-
+            setIsUpdatingTraitsModalOpen(false)
             trpcUtils.member.nftMetadata.invalidate()
         },
         onError: (error) => {
@@ -219,13 +223,17 @@ const EditAvatar = () => {
     const { status: mintStatus } = useWaitForTransaction({
         hash: txResponse?.hash,
         onSuccess(txReceipt) {
-            const { tokenId } = getDecodedTransferEvent(txReceipt.logs, llamaPfpABI)
-            console.log('tokenId:', tokenId)
-            addTokenId.mutate({
-                tokenId,
-                projectSlug,
-                network: network,
-            })
+            if (txReceipt.status === 0) {
+                triggerErrorToast('Transaction reverted. Please try again.')
+            } else {
+                const { tokenId } = getDecodedTransferEvent(txReceipt.logs, llamaPfpABI)
+                console.log('tokenId:', tokenId)
+                addTokenId.mutate({
+                    tokenId,
+                    projectSlug,
+                    network: network,
+                })
+            }
         },
         onError(error) {
             console.log('error:', error)
@@ -237,7 +245,7 @@ const EditAvatar = () => {
         onSuccess: () => {
             trpcUtils.member.nftMetadata.invalidate()
             setNftState(NftState.hasDataAndNft)
-            triggerSuccessToast(`Your ${project?.name} NFT was minted successfully!`)
+            triggerSuccessToast(`Your ${project?.name} was minted successfully!`)
         },
     })
 
@@ -315,7 +323,7 @@ const EditAvatar = () => {
                 }}
                 onClickText={''}
                 initialFocusRef={switchChainRef}
-                hideButtons={true}
+                hideButtons
             >
                 <div className="flex flex-col items-center justify-center">
                     {/* <button
@@ -327,6 +335,23 @@ const EditAvatar = () => {
                         {correctChain.name}
                         {isLoading && pendingChainId === correctChain.id && ` (switching)`}
                     </button> */}
+                </div>
+            </Modal>
+            <Modal
+                open={isUpdatingTraitsModalOpen}
+                setOpen={setIsUpdatingTraitsModalOpen}
+                hideButtons
+                uncloseable
+                className="flex h-64 max-w-screen-md flex-col justify-center"
+            >
+                <div className="flex h-auto flex-col justify-center gap-6 text-left">
+                    <div className="text-center text-2xl">
+                        {`${allowedAction === AllowedAction.update ? 'Updating' : 'Creating'} your ${project?.name}`}
+                    </div>
+                    <div className="text-lg">
+                        {`Creating your ${project?.name} takes some time. Once it's done being assembled, you will be able to mint it! ${project?.name} is complicated to assemble and may take up to 2 minutes. `}
+                    </div>
+                    <Loading />
                 </div>
             </Modal>
             <Shell Header={<Header />} pageTitle="edit avatar" leftWidth="half">

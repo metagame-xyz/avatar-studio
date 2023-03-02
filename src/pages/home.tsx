@@ -96,13 +96,7 @@ const Home: NextPage = () => {
             <Shell pageTitle="Earnable Avatar Studio">
                 <div>
                     <Transition.Root show={openNoOrgsModal} as={react.Fragment}>
-                        <Dialog
-                            as="div"
-                            className="relative z-10"
-                            onClose={() => {
-                                return null
-                            }}
-                        >
+                        <Dialog as="div" className="relative z-10" onClose={() => null}>
                             <Transition.Child
                                 as={react.Fragment}
                                 enter="ease-out duration-300"
