@@ -28,7 +28,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
     const router = useRouter()
 
     const createOrUpdateUser = trpc.member.createOrUpdate.useMutation({
-        onSuccess: () => router.push('/home'),
+        // onSuccess: () => router.push('/home'),
     })
 
     const onLoginSuccess = async (privyUser: PrivyUser) => {
