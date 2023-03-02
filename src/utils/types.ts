@@ -39,7 +39,8 @@ export const enum Status {
     idle = 'idle',
 }
 
-export const enum ActionType {
+export const enum AllowedAction {
+    create = 'Save',
     mint = 'Mint',
     update = 'Update',
 }

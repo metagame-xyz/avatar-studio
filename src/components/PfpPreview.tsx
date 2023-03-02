@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react'
 import { networkStrings } from 'utils/constants'
 import { areTraitsEqual, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import type { TraitWithEarnedBool } from 'utils/types'
-import { ActionType, Status } from 'utils/types'
+import { AllowedAction, Status } from 'utils/types'
 import { useNetwork } from 'wagmi'
 import Loader from './Loader'
 import Loading from './Loading'
@@ -24,28 +24,26 @@ type PfpPreviewProps = {
     pfpState: TraitWithEarnedBool[]
     txHash?: string
     openSeaUrl?: string | null
-    actionType: ActionType
     signMessage: (args?: SignMessageArgs | undefined) => void
     userIsSigning: boolean
     existingPfpState: TraitWithEarnedBool[] | null
     mintFunction: ((overrideConfig?: undefined) => void) | undefined
     createNftMetadataStatus: Status
     mintStatus: Status
-    isMintEnabled: boolean
+    allowedAction: AllowedAction
 }
 
 const PfpPreview = ({
     pfpState,
     txHash = '',
     openSeaUrl = '',
-    actionType,
     signMessage,
     userIsSigning,
     mintFunction,
     createNftMetadataStatus,
     mintStatus,
-    isMintEnabled,
     existingPfpState,
+    allowedAction,
 }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     // const { data: user } = trpc.member.me.useQuery()
@@ -201,21 +199,30 @@ const PfpPreview = ({
                                 <div className="absolute inset-0 z-[100] bg-gray-900 opacity-50" />
                             </div>
                         )}
-                        {pfpState.map(({ name, category, pngUrl, zIndex }) => {
-                            return (
-                                <Image
-                                    onLoad={() => {
-                                        setImagesLoaded((prev) => ++prev)
-                                    }}
-                                    key={name}
-                                    alt={`${name} ${category}`}
-                                    src={pngUrl}
-                                    style={{ zIndex }}
-                                    fill
-                                    priority
-                                />
-                            )
-                        })}
+                        <AnimatePresence initial={false}>
+                            {pfpState.map(({ name, category, pngUrl, zIndex }) => {
+                                return (
+                                    <motion.div
+                                        key={name}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        style={{ zIndex }}
+                                    >
+                                        <Image
+                                            onLoad={() => {
+                                                setImagesLoaded((prev) => ++prev)
+                                            }}
+                                            key={name}
+                                            alt={`${name} ${category}`}
+                                            src={pngUrl}
+                                            fill
+                                            priority
+                                        />
+                                    </motion.div>
+                                )
+                            })}
+                        </AnimatePresence>
                     </div>
                     {openSeaUrl && (
                         <div className="mx-auto my-2 flex justify-center gap-3">
@@ -238,14 +245,13 @@ const PfpPreview = ({
                         </div>
                     )}
                     <div className="flex items-center justify-center py-4">
-                        {isMintEnabled ? (
+                        {allowedAction === AllowedAction.mint ? (
                             <AnimatePresence>
                                 <motion.div
                                     key="mint"
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0 }}
-                                    transition={{ springAnimation }}
                                 >
                                     <button
                                         className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
@@ -267,7 +273,7 @@ const PfpPreview = ({
                                     className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
                                     onClick={() => {
                                         const sendablePfpState =
-                                            actionType == ActionType.mint
+                                            allowedAction == AllowedAction.create
                                                 ? pfpState
                                                 : pfpState.filter((trait) => trait.isModifiable)
                                         signMessage({
@@ -278,17 +284,19 @@ const PfpPreview = ({
                                             }),
                                         })
                                     }}
-                                    disabled={areTraitsEqual(pfpState, existingPfpState) || userIsSigning}
+                                    disabled={
+                                        areTraitsEqual(pfpState, existingPfpState) ||
+                                        userIsSigning ||
+                                        createNftMetadataStatus === Status.loading
+                                    }
                                 >
                                     <>
                                         {userIsSigning || createNftMetadataStatus === Status.loading ? (
-                                            <Loader size="sm" />
+                                            <Loader size="sm" className="text-black" />
                                         ) : (
                                             <PencilSquareIcon className="w-5" />
                                         )}
-                                        <span>{`${
-                                            actionType === ActionType.mint ? 'Save' : 'Update'
-                                        } Trait Choices`}</span>
+                                        <span>{`${allowedAction} Trait Choices`}</span>
                                         {!existingPfpState && (
                                             <>
                                                 <ExclamationCircleIcon className="h-4 w-4 opacity-70" />

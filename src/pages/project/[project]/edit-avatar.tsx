@@ -20,7 +20,7 @@ import {
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
 import type { Signature, ToastData, TraitWithEarnedBool } from 'utils/types'
-import { ActionType, Status } from 'utils/types'
+import { AllowedAction, Status } from 'utils/types'
 import {
     goerli,
     mainnet,
@@ -85,7 +85,7 @@ const EditAvatar = () => {
     }
 
     const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
-    const [isMintEnabled, setIsReadyToMint] = useState<boolean>(false)
+    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create)
     const [existingPfpState, setExistingPfpState] = useState<TraitWithEarnedBool[] | null>(null)
     // set existing pfp state if user has an nft
     // set nft state (data in db, and then also if minted and has a tokenId)
@@ -95,19 +95,19 @@ const EditAvatar = () => {
         // user already has an nft, as shown by having a tokenId
         if (existingNftMetadata?.tokenId) {
             setNftState(NftState.hasDataAndNft)
-            setIsReadyToMint(false)
+            setAllowedAction(AllowedAction.update)
         }
 
         // user has data in db, so ready to mint, but no tokenId yet
         if (!existingNftMetadata?.tokenId && existingNftMetadata) {
             setNftState(NftState.hasDataNoNft)
-            setIsReadyToMint(true)
+            setAllowedAction(AllowedAction.mint)
         }
 
         // user has no data in db, so not ready to mint
         if (!existingNftMetadata) {
             setNftState(NftState.noDataNoNft)
-            setIsReadyToMint(false)
+            setAllowedAction(AllowedAction.create)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingNftMetadata])
@@ -120,8 +120,6 @@ const EditAvatar = () => {
     })
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [signatureForMint, setSignatureForMint] = useState<Signature>()
-
-    const actionType = isMintEnabled ? ActionType.mint : ActionType.update
 
     // set initial pfpState
     useEffect(() => {
@@ -154,7 +152,7 @@ const EditAvatar = () => {
     const { isLoading: userIsSigning, signMessage } = useSignMessage({
         onSuccess(data) {
             const sendablePfpState =
-                actionType == ActionType.mint ? pfpState : pfpState.filter((trait) => trait.isModifiable)
+                allowedAction == AllowedAction.create ? pfpState : pfpState.filter((trait) => trait.isModifiable)
             createOrUpdateNftMetadata.mutate({
                 projectSlug,
                 requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
@@ -180,7 +178,7 @@ const EditAvatar = () => {
             if (nftState === NftState.noDataNoNft) {
                 setSignatureForMint(data)
                 setNftState(NftState.hasDataNoNft)
-                setIsReadyToMint(true)
+                setAllowedAction(AllowedAction.mint)
                 triggerSuccessToast('You may mint your NFT now')
             }
 
@@ -269,9 +267,14 @@ const EditAvatar = () => {
         const updatedState = [...oldStateMinusNewTrait, newTrait]
 
         const statesAreSame = areTraitArraysEqual(updatedState, existingNftMetadata?.traits)
-        const isReadyToMint = statesAreSame && nftState === NftState.hasDataNoNft
 
-        setIsReadyToMint(isReadyToMint)
+        const stateToActionMap = {
+            [NftState.noDataNoNft]: AllowedAction.create,
+            [NftState.hasDataNoNft]: statesAreSame ? AllowedAction.mint : AllowedAction.update,
+            [NftState.hasDataAndNft]: AllowedAction.update,
+        }
+        setAllowedAction(stateToActionMap[nftState])
+
         setPfpState([...oldStateMinusNewTrait, newTrait])
         return
     }
@@ -289,9 +292,9 @@ const EditAvatar = () => {
                     <div className="grid gap-y-2 text-center">
                         <Title level={3} className="font-title font-bold">
                             {project
-                                ? actionType === 'Mint'
-                                    ? `Create your ${project.name}`
-                                    : `Update your ${project.name}`
+                                ? allowedAction === AllowedAction.update
+                                    ? `Update your ${project.name}`
+                                    : `Create your ${project.name}`
                                 : null}
                         </Title>
                         <p className="text-md text-teal-50/75">Earn more traits over time</p>
@@ -333,11 +336,10 @@ const EditAvatar = () => {
                         txHash={txHash}
                         openSeaUrl={openseaUrl}
                         existingPfpState={existingPfpState}
-                        actionType={actionType}
                         signMessage={signMessage}
                         userIsSigning={userIsSigning}
                         createNftMetadataStatus={createOrUpdateNftMetadata.status as Status}
-                        isMintEnabled={isMintEnabled}
+                        allowedAction={allowedAction}
                         mintFunction={mint}
                         mintStatus={mintStatus as Status}
                     />
