@@ -11,7 +11,7 @@ import { useRouter } from 'next/router'
 import opensea from 'public/icons/opensea.svg'
 import sparkles from 'public/icons/sparkles.svg'
 import upperRightArrow from 'public/icons/upperRightArrow.svg'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { networkStrings } from 'utils/constants'
 import { areTraitsEqual, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
 import type { TraitWithEarnedBool } from 'utils/types'
@@ -54,7 +54,11 @@ const PfpPreview = ({
     const projectSlug = router.query.project as string
 
     const [imagesLoadedCount, setImagesLoaded] = useState<number>(0)
-    const allImagesLoaded = imagesLoadedCount === pfpState.length
+    const [allImagesLoaded, setAllImagesLoaded] = useState<boolean>(false)
+
+    useEffect(() => {
+        if (imagesLoadedCount === pfpState.length) setAllImagesLoaded(true)
+    }, [imagesLoadedCount, pfpState.length])
 
     // if (!user) return <></>
     // const [user, setUser] = React.useState({} as UserData)
