@@ -245,13 +245,14 @@ const PfpPreview = ({
                         </div>
                     )}
                     <div className="flex items-center justify-center py-4">
-                        {allowedAction === AllowedAction.mint ? (
-                            <AnimatePresence>
+                        <AnimatePresence mode="wait">
+                            {allowedAction === AllowedAction.mint ? (
                                 <motion.div
                                     key="mint"
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0 }}
+                                    transition={{ springAnimation }}
                                 >
                                     <button
                                         className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
@@ -266,50 +267,56 @@ const PfpPreview = ({
                                         Mint NFT
                                     </button>
                                 </motion.div>
-                            </AnimatePresence>
-                        ) : (
-                            <div>
-                                <button
-                                    className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
-                                    onClick={() => {
-                                        const sendablePfpState =
-                                            allowedAction == AllowedAction.create
-                                                ? pfpState
-                                                : pfpState.filter((trait) => trait.isModifiable)
-                                        signMessage({
-                                            message: JSON.stringify({
-                                                requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
-                                                chainNetwork: chain?.network || 'ERROR',
-                                                projectSlug,
-                                            }),
-                                        })
-                                    }}
-                                    disabled={
-                                        areTraitsEqual(pfpState, existingPfpState) ||
-                                        userIsSigning ||
-                                        createNftMetadataStatus === Status.loading
-                                    }
+                            ) : (
+                                <motion.div
+                                    key="mint"
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ springAnimation }}
                                 >
-                                    <>
-                                        {userIsSigning || createNftMetadataStatus === Status.loading ? (
-                                            <Loader size="sm" className="text-black" />
-                                        ) : (
-                                            <PencilSquareIcon className="w-5" />
-                                        )}
-                                        <span>{`${allowedAction} Trait Choices`}</span>
-                                        {!existingPfpState && (
-                                            <>
-                                                <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
-                                                <Tooltip
-                                                    text="You must save your trait choices before you mint."
-                                                    withInfoIcon
-                                                />
-                                            </>
-                                        )}
-                                    </>
-                                </button>
-                            </div>
-                        )}
+                                    <button
+                                        className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
+                                        onClick={() => {
+                                            const sendablePfpState =
+                                                allowedAction == AllowedAction.create
+                                                    ? pfpState
+                                                    : pfpState.filter((trait) => trait.isModifiable)
+                                            signMessage({
+                                                message: JSON.stringify({
+                                                    requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
+                                                    chainNetwork: chain?.network || 'ERROR',
+                                                    projectSlug,
+                                                }),
+                                            })
+                                        }}
+                                        disabled={
+                                            areTraitsEqual(pfpState, existingPfpState) ||
+                                            userIsSigning ||
+                                            createNftMetadataStatus === Status.loading
+                                        }
+                                    >
+                                        <>
+                                            {userIsSigning || createNftMetadataStatus === Status.loading ? (
+                                                <Loader size="sm" className="text-black" />
+                                            ) : (
+                                                <PencilSquareIcon className="w-5" />
+                                            )}
+                                            <span>{`${allowedAction} Trait Choices`}</span>
+                                            {!existingPfpState && (
+                                                <>
+                                                    <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
+                                                    <Tooltip
+                                                        text="You must save your trait choices before you mint."
+                                                        withInfoIcon
+                                                    />
+                                                </>
+                                            )}
+                                        </>
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </motion.div>
