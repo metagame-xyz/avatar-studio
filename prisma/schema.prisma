@@ -103,16 +103,16 @@ model MembersOfOrganizations {
 }
 
 model Project {
-  id                  Int                   @id @unique @default(autoincrement())
-  name                String                @unique
-  slug                String                @unique
-  description         String?
-  traitCategories     TraitCategory[]
-  organization        Organization          @relation(fields: [organizationId], references: [id])
-  members             MembersOfProjects[]
-  organizationId      Int
-  AchievementCategory AchievementCategory[]
-  NftMetadata         NftMetadata[]
+  id                    Int                   @id @unique @default(autoincrement())
+  name                  String                @unique
+  slug                  String                @unique
+  description           String?
+  traitCategories       TraitCategory[]
+  organization          Organization          @relation(fields: [organizationId], references: [id])
+  members               MembersOfProjects[]
+  organizationId        Int
+  achievementCategories AchievementCategory[]
+  nftMetadata           NftMetadata[]
 
   contractAddress     String? @unique
   network             String? @default("ethereum")
@@ -202,6 +202,7 @@ model Achievement {
   level               Int?
   members             MemberAchievements[]
   traits              Trait[]
+  airtableId          String?              @unique
 
   achievementCategoryId Int
 }

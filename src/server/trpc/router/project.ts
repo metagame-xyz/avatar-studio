@@ -5,7 +5,7 @@ import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
-import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
+import { AirtableAuthError, airtableFieldSchema, AirtableFieldType, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
 import { getAddressFromString } from 'utils/needEnvUtils'
 import type { MostTypes } from 'utils/types'
@@ -26,7 +26,7 @@ export const projectRouter = router({
                     organization: true,
                     traitCategories: { include: { traits: true } },
                     airtableProject: true,
-                    AchievementCategory: true,
+                    achievementCategories: true,
                 },
             })
             return data
@@ -360,38 +360,79 @@ export const projectRouter = router({
         .mutation(async ({ ctx, input }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
+            const { airtableFields } = input
+
             const project = await ctx.prisma.project.findUniqueOrThrow({
                 where: { slug: ctx.projectSlug },
                 select: { id: true },
             })
 
-            const airtableFieldToAchievementCategoryType = (airtableType: string): AchievementType => {
+            const airtableFieldToAchievementCategoryType = (airtableType: AirtableFieldType): AchievementType => {
                 switch (airtableType) {
                     case 'number':
                         return 'LEVEL'
                     case 'checkbox':
-                    case 'singleLineText':
+                    case 'singleSelect':
                         return 'SPECIFIC_ACHIEVEMENT'
                     default:
                         return 'SPECIFIC_ACHIEVEMENT'
                 }
             }
 
-            const achievementCategoriesToCreate = input.airtableFields.map((field) => {
-                return {
+            const achievementCategoriesToCreate = airtableFields.map((field) => {
+                let achievements: { name: string; id: string }[] = []
+                if (field.type === 'singleSelect') {
+                    achievements = field.options?.choices?.map((choice) => ({ name: choice.name, id: choice.id })) || []
+                }
+
+                const upsert = achievements.map((achievement) => ({
+                    where: {
+                        airtableId: achievement.id,
+                    },
+                    create: {
+                        name: achievement.name,
+                        airtableId: achievement.id,
+                    },
+                    update: {
+                        name: achievement.name,
+                        airtableId: achievement.id,
+                    },
+                }))
+
+                const create = achievements.map((achievement) => ({
+                    name: achievement.name,
+                    airtableId: achievement.id,
+                }))
+
+                const category = {
                     projectId: project.id,
                     airtableId: field.id,
                     name: field.name,
                     description: field.description,
                     type: airtableFieldToAchievementCategoryType(field.type),
                 }
+
+                return { category, create, upsert }
             })
 
-            const createdResponse = await ctx.prisma.achievementCategory.createMany({
-                data: achievementCategoriesToCreate,
-                skipDuplicates: true,
-            })
+            return Promise.all(
+                achievementCategoriesToCreate.map(({ category, create, upsert }) => {
+                    return ctx.prisma.achievementCategory.upsert({
+                        where: {
+                            projectId_airtableId: { projectId: category.projectId, airtableId: category.airtableId },
+                        },
+                        create: { ...category, achievements: { create } },
+                        update: { ...category, achievements: { upsert } },
+                    })
+                }),
+            )
 
-            return createdResponse
+            // return ctx.prisma.achievementCategory.createMany({
+            //     data: achievementCategoriesToCreate,
+            //     skipDuplicates: true,
+            // })
         }),
+    // syncAirtableAchievements: protectedOrgProcedure
+    //     .input(z.object({ organizationSlug: z.string(), airtableFields: z.array(airtableFieldSchema) })) // for protectedOrgProcedure to work
+    //     .mutation(async ({ ctx, input }) => {}),
 })

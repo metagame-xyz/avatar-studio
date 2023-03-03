@@ -4,7 +4,6 @@ import Footer from 'components/Footer'
 import Navbar from 'components/Navbar'
 import { env } from 'env/client.mjs'
 import { type AppType } from 'next/app'
-import { useRouter } from 'next/router'
 import 'styles/globals.css'
 import { trpc } from 'utils/trpc'
 import { configureChains } from 'wagmi'
@@ -25,11 +24,7 @@ export const configureChainsConfig = configureChains(
 // })
 
 const MyApp: AppType = ({ Component, pageProps }) => {
-    const router = useRouter()
-
-    const createOrUpdateUser = trpc.member.createOrUpdate.useMutation({
-        // onSuccess: () => router.push('/home'),
-    })
+    const createOrUpdateUser = trpc.member.createOrUpdate.useMutation()
 
     const onLoginSuccess = async (privyUser: PrivyUser) => {
         await createOrUpdateUser.mutateAsync({

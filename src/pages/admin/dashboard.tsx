@@ -1,5 +1,6 @@
-import type { OrganizationInvitation, Project, TraitCategory } from '@prisma/client'
+import type { OrganizationInvitation, TraitCategory } from '@prisma/client'
 import { OrganizationRole } from '@prisma/client'
+import { AchievementCriteriaToggle } from 'components/AchievementCriteriaSelector'
 import Input from 'components/Input'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
@@ -7,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { truncateAddress } from 'utils'
 import { getEns } from 'utils/needEnvUtils'
 import { trpc } from 'utils/trpc'
-import type { ArrayElement } from 'utils/types'
+import type { AchievementCategoryWithAs, ArrayElement } from 'utils/types'
 
 const AdminDashboard: NextPage = () => {
     const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
@@ -56,12 +57,13 @@ const AdminDashboard: NextPage = () => {
         },
     })
 
+    type OrgWithData = ArrayElement<typeof orgs>
+    type ProjectWithData = ArrayElement<OrgWithData['projects']>
+
     const [newOrgName, setNewOrgName] = useState('')
     const [newProjectName, setNewProjectName] = useState('')
-    const [selectedOrg, setSelectedOrg] = useState<ArrayElement<typeof orgs> | null>(null)
-    const [selectedProject, setSelectedProject] = useState<(Project & { traitCategories: TraitCategory[] }) | null>(
-        null,
-    )
+    const [selectedOrg, setSelectedOrg] = useState<OrgWithData | null>(null)
+    const [selectedProject, setSelectedProject] = useState<ProjectWithData | null>(null)
 
     const [inviteAddress, setInviteAddress] = useState('')
     const [invites, setInvites] = useState<(OrganizationInvitation & { ens: string | null })[] | []>([])
@@ -191,30 +193,22 @@ const AdminDashboard: NextPage = () => {
 
         return (
             <div className="overflow-x-auto">
-                <table className="table w-full">
-                    <thead className="border-b-2 border-gray-500">
+                <table className="table-primary">
+                    <thead className="thead-primary">
                         <tr>
-                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                Name
-                            </th>
-                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                Z Index
-                            </th>
-                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                Upgradeable?
-                            </th>
-                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                Default Earned?
-                            </th>
+                            <th className="th-primary">Name</th>
+                            <th className="th-primary">Z Index</th>
+                            <th className="th-primary">Upgradeable?</th>
+                            <th className="th-primary">Default Earned?</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-500 ">
+                    <tbody className="tbody-primary">
                         {traitCategories
                             .sort((a, b) => a.zIndex - b.zIndex)
                             .map((traitCategory) => (
                                 <tr key={traitCategory.name}>
-                                    <td className="whitespace-nowrap p-4">{traitCategory.name}</td>
-                                    <td className="whitespace-nowrap p-4 text-left">
+                                    <td className="td-primary">{traitCategory.name}</td>
+                                    <td className="td-primary">
                                         <select
                                             className="bg-black"
                                             value={traitCategory.zIndex}
@@ -225,7 +219,7 @@ const AdminDashboard: NextPage = () => {
                                             <Options />
                                         </select>
                                     </td>
-                                    <td className="whitespace-nowrap p-4 text-left">
+                                    <td className="td-primary">
                                         <select
                                             className="bg-black"
                                             value={traitCategory.isModifiable ? 'true' : ''}
@@ -239,7 +233,7 @@ const AdminDashboard: NextPage = () => {
                                             </>
                                         </select>
                                     </td>
-                                    <td className="whitespace-nowrap p-4 text-left">
+                                    <td className="td-primary">
                                         <select
                                             className="bg-black"
                                             value={traitCategory.isDefaultAchieved ? 'true' : ''}
@@ -261,6 +255,13 @@ const AdminDashboard: NextPage = () => {
         )
     }
 
+    function AchievementCriteria({ achievementCategories }: { achievementCategories: AchievementCategoryWithAs[] }) {
+        return (
+            <div>
+                <AchievementCriteriaToggle achievementCategories={achievementCategories} />
+            </div>
+        )
+    }
     return (
         <Shell pageTitle="Admin Dashboard">
             <div>
@@ -359,36 +360,26 @@ const AdminDashboard: NextPage = () => {
                                     {invites ? (
                                         <div className="">
                                             <div className="overflow-x-auto">
-                                                <table className="table w-full">
-                                                    <thead className="border-b-2 border-gray-500">
+                                                <table className="table-primary">
+                                                    <thead className="thead-primary">
                                                         <tr>
-                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                                ENS
-                                                            </th>
-                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                                Address
-                                                            </th>
-                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                                Sent At
-                                                            </th>
-                                                            <th className="p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                                Status
-                                                            </th>
+                                                            <th className="th-primary">ENS</th>
+                                                            <th className="th-primary">Address</th>
+                                                            <th className="th-primary">Sent At</th>
+                                                            <th className="th-primary">Status</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody className="divide-y divide-gray-500 ">
+                                                    <tbody className="tbody-primary">
                                                         {invites.map((invite) => (
                                                             <tr key={invite.inviteeAddress}>
-                                                                <td className="whitespace-nowrap p-4">
-                                                                    {invite.ens ?? '-'}
-                                                                </td>
-                                                                <td className="whitespace-nowrap p-4">
+                                                                <td className="td-primary">{invite.ens ?? '-'}</td>
+                                                                <td className="td-primary">
                                                                     {truncateAddress(invite.inviteeAddress)}
                                                                 </td>
-                                                                <td className="whitespace-nowrap p-4">
+                                                                <td className="td-primary">
                                                                     {invite.createdAt.toLocaleString()}
                                                                 </td>
-                                                                <td className="whitespace-nowrap p-4 text-sm text-gray-500">
+                                                                <td className="td-primary text-sm text-gray-500">
                                                                     {invite.status.toLowerCase()}
                                                                 </td>
                                                             </tr>
@@ -423,6 +414,9 @@ const AdminDashboard: NextPage = () => {
                                     traitCategories={selectedProject.traitCategories}
                                     projectSlug={selectedProject.slug}
                                 />
+                            </div>
+                            <div>
+                                <AchievementCriteria achievementCategories={selectedProject.achievementCategories} />
                             </div>
                         </div>
                     )}

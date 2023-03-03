@@ -207,3 +207,16 @@ export const areTraitArraysEqual = (
     }
     return true
 }
+
+// chatGPT wrote this (I added the question mark)
+export function addSpacesBeforeCapitalLetters(input: string): string {
+    let output = ''
+    for (let i = 0; i < input.length; i++) {
+        const char = input[i]
+        if (char === char?.toUpperCase() && i !== 0) {
+            output += ' '
+        }
+        output += char
+    }
+    return output
+}

@@ -1,5 +1,5 @@
 import AchievementCategoriesList from 'components/AchievementCategoriesList'
-import ConfigureAirtableAchievementsModal from 'components/ConfigureAirtableAchievementsModal'
+import AirtableAchievementsModal from 'components/AirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
@@ -20,6 +20,7 @@ const Project: NextPage = () => {
     const [openAirtableModal, setOpenAirtableModal] = useState(false)
     const [openAirtableMembersModal, setOpenAirtableMembersModal] = useState(false)
     const [openAirtableAchievementsModal, setOpenAirtableAchievementsModal] = useState(false)
+
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
     const isOrgAdmin = !!user?.organizations?.find((o) => o.id == project?.organization?.id)
@@ -68,7 +69,7 @@ const Project: NextPage = () => {
                             members={data.members}
                             walletAddressFieldName={slugify(project?.airtableProject?.walletAddressFieldName || '')}
                         />
-                        <ConfigureAirtableAchievementsModal
+                        <AirtableAchievementsModal
                             open={openAirtableAchievementsModal}
                             setOpen={setOpenAirtableAchievementsModal}
                             organizationSlug={project.organization.slug}
@@ -150,8 +151,8 @@ const Project: NextPage = () => {
             <div className="flex flex-col space-y-12">
                 <div className="flex flex-col space-y-4">
                     <div className="text-2xl font-bold md:text-3xl">Achievements</div>
-                    {project?.AchievementCategory?.length > 3 ? (
-                        <AchievementCategoriesList achievementCategories={project.AchievementCategory} />
+                    {project?.achievementCategories?.length > 3 ? (
+                        <AchievementCategoriesList achievementCategories={project.achievementCategories} />
                     ) : (
                         <div>No achievements yet</div>
                     )}

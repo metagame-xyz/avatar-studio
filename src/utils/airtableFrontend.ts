@@ -2,6 +2,7 @@ import base64url from 'base64url'
 import crypto from 'crypto'
 import { env } from 'env/client.mjs'
 import { z } from 'zod'
+import type { Prettify } from './types'
 
 export const codeVerifierKey = base64url.encode(crypto.randomBytes(100))
 
@@ -58,19 +59,6 @@ export type AirtableTable = {
     views: AirtableView[]
 }
 
-export type AirtableField = {
-    description?: string
-    id: string
-    name: string
-    options?: {
-        inverseLinkFieldId?: string
-        isReversed?: boolean
-        linkedTableId?: string
-        prefersSingleRecordLink?: boolean
-    }
-    type: string
-}
-
 export type AirtableView = {
     id: string
     name: string
@@ -90,6 +78,36 @@ export class AirtableLockError extends Error {
     }
 }
 
+export type AirtableFieldType = 'checkbox' | 'number' | 'singleSelect'
+
+type AirtableFieldBase = {
+    id: string
+    name: string
+    description?: string
+    type: AirtableFieldType
+}
+
+type AirtableCheckbox = { icon?: string; color?: string }
+type AirtableNumber = { precision?: number }
+type AirtableSingleSelect = { choices: { id: string; name: string; color?: string }[] }
+
+type AirtableFieldCheckbox = AirtableFieldBase & {
+    type: 'checkbox'
+    options: AirtableCheckbox
+}
+
+type AirtableFieldNumber = AirtableFieldBase & {
+    type: 'number'
+    options: AirtableNumber
+}
+
+type AirtableFieldSingleSelect = AirtableFieldBase & {
+    type: 'singleSelect'
+    options: AirtableSingleSelect
+}
+
+export type AirtableField = Prettify<AirtableFieldCheckbox | AirtableFieldNumber | AirtableFieldSingleSelect>
+
 export const airtableOAuthResponseSchema = z.object({
     token_type: z.string(),
     scope: z.string(),
@@ -99,20 +117,60 @@ export const airtableOAuthResponseSchema = z.object({
     refresh_expires_in: z.number(),
 })
 
-export const airtableFieldSchema = z.object({
-    description: z.string().optional(),
+const airtableFieldTypeSchema = z.union([z.literal('checkbox'), z.literal('number'), z.literal('singleSelect')])
+
+const airtableFieldBaseSchema = z.object({
     id: z.string(),
     name: z.string(),
-    options: z
-        .object({
-            inverseLinkFieldId: z.string().optional(),
-            isReversed: z.boolean().optional(),
-            linkedTableId: z.string().optional(),
-            prefersSingleRecordLink: z.boolean().optional(),
-        })
-        .optional(),
-    type: z.string(),
+    description: z.string().optional(),
+    type: airtableFieldTypeSchema,
 })
+
+const airtableCheckboxSchema = z.object({
+    icon: z.string().optional(),
+    color: z.string().optional(),
+})
+
+const airtableNumberSchema = z.object({
+    precision: z.number().optional(),
+})
+
+const airtableSingleSelectSchema = z.object({
+    choices: z.array(
+        z.object({
+            id: z.string(),
+            name: z.string(),
+            color: z.string().optional(),
+        }),
+    ),
+})
+
+const airtableFieldCheckboxSchema = airtableFieldBaseSchema.and(
+    z.object({
+        type: z.literal('checkbox'),
+        options: airtableCheckboxSchema,
+    }),
+)
+
+const airtableFieldNumberSchema = airtableFieldBaseSchema.and(
+    z.object({
+        type: z.literal('number'),
+        options: airtableNumberSchema,
+    }),
+)
+
+const airtableFieldSingleSelectSchema = airtableFieldBaseSchema.and(
+    z.object({
+        type: z.literal('singleSelect'),
+        options: airtableSingleSelectSchema,
+    }),
+)
+
+export const airtableFieldSchema = z.union([
+    airtableFieldCheckboxSchema,
+    airtableFieldNumberSchema,
+    airtableFieldSingleSelectSchema,
+])
 
 export const airtableViewSchema = z.object({
     id: z.string(),

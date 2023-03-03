@@ -1,5 +1,6 @@
 import type {
     Achievement,
+    AchievementCategory,
     MemberAchievements,
     MembersOfProjects,
     NftMetadata,
@@ -55,28 +56,38 @@ export type PfpUpdateRequest = TraitWithEarnedBool[]
 
 export type ProfileIconSizeType = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
-export type TraitWithEarnedBool = Trait & {
-    earned: boolean
-    category: string
-    zIndex: number
-    isModifiable: boolean
-}
+export type TraitWithEarnedBool = Prettify<
+    Trait & {
+        earned: boolean
+        category: string
+        zIndex: number
+        isModifiable: boolean
+    }
+>
 
-export type TraitCategoryWithTraitsWithEarned = TraitCategory & {
-    traits: TraitWithEarnedBool[]
-}
+export type TraitCategoryWithTraitsWithEarned = Prettify<
+    TraitCategory & {
+        traits: TraitWithEarnedBool[]
+    }
+>
 
-export type TraitCategoryWitTraits = TraitCategory & {
-    traits: Trait[]
-}
+export type TraitCategoryWitTraits = Prettify<
+    TraitCategory & {
+        traits: Trait[]
+    }
+>
 
-export type TraitWithCategory = Trait & {
-    traitCategory: TraitCategory
-}
+export type TraitWithCategory = Prettify<
+    Trait & {
+        traitCategory: TraitCategory
+    }
+>
 
-export type NftMetadataWithTraits = NftMetadata & {
-    traits: Trait[]
-}
+export type NftMetadataWithTraits = Prettify<
+    NftMetadata & {
+        traits: Trait[]
+    }
+>
 
 export type Attribute = {
     display_type?: string
@@ -142,26 +153,28 @@ export type NewAirtableMember = z.infer<typeof newAirtableMemberSchema>
 
 export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
 
-export type MemberWithAProject = User & {
-    projects: (MembersOfProjects & {
-        project: Project & {
-            traitCategories: (TraitCategory & {
-                traits: Trait[]
-            })[]
-            organization: Organization
-        }
-    })[]
-    achievements: (MemberAchievements & {
-        achievement: Achievement & {
-            traits: Trait[]
-        }
-    })[]
-    nftMetadata: (NftMetadata & {
-        traits: (Trait & {
-            traitCategory: TraitCategory
+export type MemberWithAProject = Prettify<
+    User & {
+        projects: (MembersOfProjects & {
+            project: Project & {
+                traitCategories: (TraitCategory & {
+                    traits: Trait[]
+                })[]
+                organization: Organization
+            }
         })[]
-    })[]
-}
+        achievements: (MemberAchievements & {
+            achievement: Achievement & {
+                traits: Trait[]
+            }
+        })[]
+        nftMetadata: (NftMetadata & {
+            traits: (Trait & {
+                traitCategory: TraitCategory
+            })[]
+        })[]
+    }
+>
 
 export type AirtableAuthCache = {
     codeVerifier: string
@@ -169,3 +182,10 @@ export type AirtableAuthCache = {
 }
 
 export const organizationRoleZod = z.enum(['ADMIN', 'OWNER'])
+
+export type Prettify<T> = {
+    [K in keyof T]: T[K]
+    // eslint-disable-next-line @typescript-eslint/ban-types
+} & {}
+
+export type AchievementCategoryWithAs = Prettify<AchievementCategory & { achievements: Achievement[] }>
