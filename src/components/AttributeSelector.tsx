@@ -59,24 +59,26 @@ const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: Attribut
                         gridTemplateColumns: `repeat(auto-fill, minmax(7rem, 1fr))`,
                     }}
                 >
-                    {traitOptions.map((trait, i) => (
-                        <TraitImage
-                            key={`${trait.name} ${i}`}
-                            className={`col-span-1 ${i + 1 === traitOptions.length ? '' : ''}`}
-                            trait={trait}
-                            pfpState={pfpState}
-                            // also select the first in the traitOptions if none are selected
-                            selected={pfpState.filter((t) => t.name === trait.name).length > 0}
-                            disabled={!IsNewComboAllowed(isModifiable, usedCombos, pfpState, trait)}
-                            disabledMessage={
-                                trait.earned === false
-                                    ? trait?.achievementsRequiredDescription ||
-                                      "Sorry, you haven't unlocked this trait yet."
-                                    : 'Sorry, someone else already has that combo!'
-                            }
-                            updatePfpState={updatePfpState}
-                        />
-                    ))}
+                    {traitOptions
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((trait, i) => (
+                            <TraitImage
+                                key={`${trait.name} ${i}`}
+                                className="col-span-1"
+                                trait={trait}
+                                pfpState={pfpState}
+                                // also select the first in the traitOptions if none are selected
+                                selected={pfpState.filter((t) => t.name === trait.name).length > 0}
+                                disabled={!IsNewComboAllowed(isModifiable, usedCombos, pfpState, trait)}
+                                disabledMessage={
+                                    trait.earned === false
+                                        ? trait?.achievementsRequiredDescription ||
+                                          "Sorry, you haven't unlocked this trait yet."
+                                        : 'Sorry, someone else already has that combo!'
+                                }
+                                updatePfpState={updatePfpState}
+                            />
+                        ))}
                 </div>
             </AnimateHeight>
         </div>

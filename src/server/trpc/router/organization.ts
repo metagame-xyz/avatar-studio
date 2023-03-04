@@ -43,7 +43,9 @@ export const organizationRouter = router({
                 admins: { include: { member: true } },
                 projects: {
                     include: {
-                        traitCategories: { include: { traits: true } },
+                        traitCategories: {
+                            include: { traits: { include: { achievementsRequired: true, levelCategory: true } } },
+                        },
                         achievementCategories: { include: { achievements: true } },
                     },
                 },

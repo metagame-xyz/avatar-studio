@@ -71,9 +71,16 @@ export type TraitCategoryWithTraitsWithEarned = Prettify<
     }
 >
 
+export type TraitWithAchievements = Prettify<
+    Trait & {
+        achievementsRequired: Achievement[]
+        levelCategory: AchievementCategory | null
+    }
+>
+
 export type TraitCategoryWitTraits = Prettify<
     TraitCategory & {
-        traits: Trait[]
+        traits: TraitWithAchievements[]
     }
 >
 

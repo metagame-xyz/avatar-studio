@@ -1,6 +1,6 @@
 import type { OrganizationInvitation, TraitCategory } from '@prisma/client'
 import { OrganizationRole } from '@prisma/client'
-import { AchievementCriteriaToggle } from 'components/AchievementCriteriaSelector'
+import AchievementToTraitEditor from 'components/AchievementToTraitEditor'
 import Input from 'components/Input'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { truncateAddress } from 'utils'
 import { getEns } from 'utils/needEnvUtils'
 import { trpc } from 'utils/trpc'
-import type { AchievementCategoryWithAs, ArrayElement } from 'utils/types'
+import type { ArrayElement } from 'utils/types'
 
 const AdminDashboard: NextPage = () => {
     const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
@@ -177,7 +177,7 @@ const AdminDashboard: NextPage = () => {
             await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
         }
 
-        const zOptions = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
+        const zOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
         const Options = () => {
             return (
@@ -255,13 +255,6 @@ const AdminDashboard: NextPage = () => {
         )
     }
 
-    function AchievementCriteria({ achievementCategories }: { achievementCategories: AchievementCategoryWithAs[] }) {
-        return (
-            <div>
-                <AchievementCriteriaToggle achievementCategories={achievementCategories} />
-            </div>
-        )
-    }
     return (
         <Shell pageTitle="Admin Dashboard">
             <div>
@@ -416,7 +409,17 @@ const AdminDashboard: NextPage = () => {
                                 />
                             </div>
                             <div>
-                                <AchievementCriteria achievementCategories={selectedProject.achievementCategories} />
+                                <div className="text-xl font-bold md:text-2xl">Achievement to Trait mapping</div>
+                                {selectedProject.traitCategories
+                                    .filter((traitCategory) => !traitCategory.isDefaultAchieved)
+                                    .map((traitCategory) => (
+                                        <div key={traitCategory.name}>
+                                            <AchievementToTraitEditor
+                                                traitCategory={traitCategory}
+                                                achievementCategories={selectedProject.achievementCategories}
+                                            />
+                                        </div>
+                                    ))}
                             </div>
                         </div>
                     )}

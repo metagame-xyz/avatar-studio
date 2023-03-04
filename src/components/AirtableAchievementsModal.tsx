@@ -90,7 +90,7 @@ export default function AirtableAchievementsModal({
             onClickText="Sync Achievements"
             initialFocusRef={cancelButtonRef}
             hideButtons={!airtableFields}
-            className="max-w-max"
+            className="max-w-screen-lg"
         >
             <AirtableAchievementsList achievements={airtableFields} />
         </Modal>

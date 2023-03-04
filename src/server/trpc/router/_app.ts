@@ -1,4 +1,5 @@
 import { router } from '../trpc'
+import { achievementRouter } from './achievement'
 import { memberRouter } from './member'
 import { nftMetadataRouter } from './nftMetadata'
 import { organizationRouter } from './organization'
@@ -11,6 +12,7 @@ export const appRouter = router({
     project: projectRouter,
     trait: traitRouter,
     nftMetadata: nftMetadataRouter,
+    achievement: achievementRouter,
 })
 
 // export type definition of API

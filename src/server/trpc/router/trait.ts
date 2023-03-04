@@ -1,7 +1,7 @@
 import { env } from 'env/server.mjs'
 import { getFromS3, getTraitCategoriesAndNames } from 'utils/s3'
 import { z } from 'zod'
-import { protectedProjectProcedure, publicProcedure, router } from '../trpc'
+import { protectedMetagameAdminProcedure, protectedProjectProcedure, publicProcedure, router } from '../trpc'
 
 import * as AWS from 'aws-sdk'
 import { traitCategorySchema } from 'utils/types'
@@ -38,6 +38,51 @@ export const traitRouter = router({
                     zIndex: tc.zIndex,
                     isDefaultAchieved: tc.isDefaultAchieved,
                     isModifiable: tc.isModifiable,
+                },
+            })
+        }),
+    connectAchievement: protectedMetagameAdminProcedure
+        .input(
+            z.object({ traitId: z.number(), achievementId: z.number(), achievementsRequiredDescription: z.string() }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const { traitId, achievementId, achievementsRequiredDescription } = input
+
+            return ctx.prisma.trait.update({
+                where: {
+                    id: traitId,
+                },
+                data: {
+                    achievementsRequired: {
+                        set: [],
+                        connect: {
+                            id: achievementId,
+                        },
+                    },
+                    achievementsRequiredDescription,
+                },
+                include: {
+                    achievementsRequired: true,
+                },
+            })
+        }),
+    removeAchievement: protectedMetagameAdminProcedure
+        .input(z.object({ traitId: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            const { traitId } = input
+
+            return ctx.prisma.trait.update({
+                where: {
+                    id: traitId,
+                },
+                data: {
+                    achievementsRequired: {
+                        set: [],
+                    },
+                    achievementsRequiredDescription: null,
+                },
+                include: {
+                    achievementsRequired: true,
                 },
             })
         }),

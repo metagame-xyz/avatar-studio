@@ -1,7 +1,6 @@
-import Image from 'next/image'
-
 import { LockClosedIcon } from '@heroicons/react/24/solid'
 import Tooltip from 'components/Tooltip'
+import Image from 'next/image'
 import type { TraitWithEarnedBool } from 'utils/types'
 
 type TraitImageProps = {
