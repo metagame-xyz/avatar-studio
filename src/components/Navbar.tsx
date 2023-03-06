@@ -114,9 +114,9 @@ export default function Navbar() {
                                 <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
                                     <Link href={'/help'}>Help</Link>
                                 </div>
-                                <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
+                                {/* <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
                                     <Link href={'/about'}>About</Link>
-                                </div>
+                                </div> */}
                                 {/* <button
                                     type="button"
                                     className="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"

@@ -9,13 +9,17 @@ import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
+import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { slugify } from 'utils'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
+    const router = useRouter()
     const { data: project, error, status } = trpc.project.getProject.useQuery()
     const { data: user, status: userStatus } = trpc.member.me.useQuery()
+
+    if (userStatus === 'error') router.push('/')
 
     const [openAirtableModal, setOpenAirtableModal] = useState(false)
     const [openAirtableMembersModal, setOpenAirtableMembersModal] = useState(false)
@@ -24,6 +28,7 @@ const Project: NextPage = () => {
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
     const isOrgAdmin = !!user?.organizations?.find((o) => o.id == project?.organization?.id)
+
     const organizationSlug = project?.organization?.slug as string
 
     const { data } = trpc.project.getAllAirtableData.useQuery(
@@ -152,7 +157,7 @@ const Project: NextPage = () => {
             <div className="flex flex-col space-y-12">
                 <div className="flex flex-col space-y-4">
                     <div className="text-2xl font-bold md:text-3xl">Achievements</div>
-                    {project?.achievementCategories?.length > 3 ? (
+                    {project?.achievementCategories?.length > 0 ? (
                         <AchievementCategoriesList achievementCategories={project.achievementCategories} />
                     ) : (
                         <div>No achievements yet</div>

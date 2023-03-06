@@ -27,7 +27,7 @@ export const projectRouter = router({
                     organization: true,
                     traitCategories: { include: { traits: true } },
                     airtableProject: true,
-                    achievementCategories: true,
+                    achievementCategories: { include: { achievements: true } },
                 },
             })
             return data

@@ -1,17 +1,22 @@
-import type { AchievementCategory } from '@prisma/client'
+import type { AchievementCategoryWithAs } from 'utils/types'
 
 type AchievementCategoriesListProps = {
-    achievementCategories: AchievementCategory[]
+    achievementCategories: AchievementCategoryWithAs[]
 }
 
 const AchievementCategoriesList: React.FC<AchievementCategoriesListProps> = ({ achievementCategories }) => {
     return achievementCategories.length > 0 ? (
-        <div>
-            {achievementCategories.map(({ name, type, description }) => (
-                <div className="mt-2 flex items-center" key={name}>
-                    {name} {type} ({description})
-                </div>
-            ))}
+        <div className="flex flex-col gap-4">
+            {achievementCategories.map(({ name, description, achievements }) => {
+                const desc = description ? ` (${description})` : ''
+                const options = achievements ? `${achievements.map((a) => a.name).join(', ')}` : ''
+                return (
+                    <div key={name}>
+                        <div className="text-lg">{`${name}${desc}`}</div>
+                        {options && options}
+                    </div>
+                )
+            })}
         </div>
     ) : null
 }
