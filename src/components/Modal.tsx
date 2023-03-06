@@ -14,6 +14,7 @@ type ModalProps = {
     initialFocusRef?: React.MutableRefObject<null>
     className?: string
     uncloseable?: boolean
+    wide?: boolean
 } & (
     | { hideButtons: boolean }
     | {
@@ -36,9 +37,11 @@ export default function Modal({
     hideButtons,
     className,
     uncloseable,
+    wide,
 }: ModalProps) {
     // const cancelButtonRef = useRef(null)
     // const [name, setName] = useState('')
+    const width = wide ? 'max-w-screen-lg' : ''
 
     return (
         <Transition.Root show={open} as={react.Fragment}>
@@ -73,7 +76,7 @@ export default function Modal({
                             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         >
                             <Dialog.Panel
-                                className={`relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6 ${className}`}
+                                className={`relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6 ${className} ${width}`}
                             >
                                 <div>
                                     <div className="flex flex-col gap-4 text-center">

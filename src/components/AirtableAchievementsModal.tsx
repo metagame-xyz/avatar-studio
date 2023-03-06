@@ -1,3 +1,4 @@
+import type { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
 import { useRef } from 'react'
 import { addSpacesBeforeCapitalLetters } from 'utils'
@@ -9,22 +10,20 @@ export default function AirtableAchievementsModal({
     open,
     setOpen,
     organizationSlug,
-    // achievementCategories,
     airtableFields,
-}: // airtableMembers,
-{
+    airtableMembers,
+}: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
-    // achievementCategories: AchievementCategory[]
     airtableFields: AirtableField[]
-    // airtableMembers: FieldSet[]
+    airtableMembers: FieldSet[]
 }) {
     const cancelButtonRef = useRef(null)
 
     const trpcUtils = trpc.useContext()
 
-    const syncAchievements = trpc.project.syncAirtableAchievementCategories.useMutation({
+    const syncAchievements = trpc.project.syncAirtableAchievements.useMutation({
         onSuccess: () => {
             setOpen(false)
             trpcUtils.project.getProject.invalidate()
@@ -82,7 +81,8 @@ export default function AirtableAchievementsModal({
                 if (airtableFields) {
                     syncAchievements.mutate({
                         organizationSlug,
-                        airtableFields: airtableFields,
+                        airtableFields,
+                        airtableMembers,
                     })
                 }
             }}
@@ -90,7 +90,7 @@ export default function AirtableAchievementsModal({
             onClickText="Sync Achievements"
             initialFocusRef={cancelButtonRef}
             hideButtons={!airtableFields}
-            className="max-w-screen-lg"
+            wide
         >
             <AirtableAchievementsList achievements={airtableFields} />
         </Modal>

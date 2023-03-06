@@ -74,6 +74,7 @@ const Project: NextPage = () => {
                             setOpen={setOpenAirtableAchievementsModal}
                             organizationSlug={project.organization.slug}
                             airtableFields={data.achievementFields}
+                            airtableMembers={data.members}
                         />
                     </>
                 )}

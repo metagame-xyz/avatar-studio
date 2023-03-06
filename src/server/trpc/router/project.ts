@@ -3,9 +3,10 @@ import { TRPCError } from '@trpc/server'
 import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
-import { slugify } from 'utils'
+import { filterToAchievementFields, slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
-import { AirtableAuthError, airtableFieldSchema, AirtableFieldType, AirtableLockError } from 'utils/airtableFrontend'
+import type { AirtableFieldType } from 'utils/airtableFrontend'
+import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
 import { getAddressFromString } from 'utils/needEnvUtils'
 import type { MostTypes } from 'utils/types'
@@ -223,26 +224,8 @@ export const projectRouter = router({
 
                 let airtableFields = await airtable.getTableFields(project.airtableProject)
                 airtableFields = airtableFields || []
-                const nonAchievementFields = [
-                    'first-name',
-                    'last-name',
-                    'email',
-                    'wallet-address',
-                    'ens',
-                    walletAddressFieldName,
-                ]
 
-                const allowedAchievementTypes = [
-                    'number',
-                    'checkbox',
-                    'singleLineText',
-                    'singleSelect',
-                    'multipleSelect',
-                ]
-
-                const achievementFields = airtableFields
-                    .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
-                    .filter((field) => allowedAchievementTypes.includes(field.type))
+                const achievementFields = filterToAchievementFields(airtableFields, walletAddressFieldName)
 
                 return { bases, members: updatedMembers, achievementFields, error: null }
             } catch (err) {
@@ -257,13 +240,6 @@ export const projectRouter = router({
                 airtable.postCallCleanup('getAllAirtableData')
             }
         }),
-    // deleteAllMembers: publicProcedure.query(async ({ ctx }) => {
-    // const users = await privyGetAllUsers()
-    // await users.map(async (user) => {
-    //     await privyDeleteUser(user.id)
-    // })
-    // console.log(users.map((u) => `${u.id} ${JSON.stringify(u.linked_accounts[0])}`))
-    // }),
     syncAirtableMembers: protectedOrgProcedure
         .input(z.object({ organizationSlug: z.string(), airtableMembers: z.array(newAirtableMemberSchema) }))
         .mutation(async ({ ctx, input }) => {
@@ -355,17 +331,31 @@ export const projectRouter = router({
                 }),
             )
         }),
-    syncAirtableAchievementCategories: protectedOrgProcedure
-        .input(z.object({ organizationSlug: z.string(), airtableFields: z.array(airtableFieldSchema) })) // for protectedOrgProcedure to work
+    syncAirtableAchievements: protectedOrgProcedure
+        .input(
+            z.object({
+                organizationSlug: z.string(),
+                airtableFields: z.array(airtableFieldSchema),
+                airtableMembers: z.array(newAirtableMemberSchema),
+            }),
+        ) // for protectedOrgProcedure to work
         .mutation(async ({ ctx, input }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
-            const { airtableFields } = input
+            const { airtableFields, airtableMembers } = input
 
             const project = await ctx.prisma.project.findUniqueOrThrow({
                 where: { slug: ctx.projectSlug },
-                select: { id: true },
+                include: { airtableProject: true },
             })
+
+            const { walletAddressFieldName } = project.airtableProject ?? {}
+
+            if (!walletAddressFieldName) {
+                throw new Error(`Project's airtableProject not found`)
+            }
+
+            const achievementFields = filterToAchievementFields(airtableFields, walletAddressFieldName)
 
             const airtableFieldToAchievementCategoryType = (airtableType: AirtableFieldType): AchievementType => {
                 switch (airtableType) {
@@ -379,8 +369,9 @@ export const projectRouter = router({
                 }
             }
 
-            const achievementCategoriesToCreate = airtableFields.map((field) => {
+            const achievementCategoriesToCreate = achievementFields.map((field) => {
                 let achievements: { name: string; id: string }[] = []
+                // TODO: add support for other field types
                 if (field.type === 'singleSelect') {
                     achievements = field.options?.choices?.map((choice) => ({ name: choice.name, id: choice.id })) || []
                 }
@@ -415,7 +406,7 @@ export const projectRouter = router({
                 return { category, create, upsert }
             })
 
-            return Promise.all(
+            const achievementCategories = await Promise.all(
                 achievementCategoriesToCreate.map(({ category, create, upsert }) => {
                     return ctx.prisma.achievementCategory.upsert({
                         where: {
@@ -423,16 +414,54 @@ export const projectRouter = router({
                         },
                         create: { ...category, achievements: { create } },
                         update: { ...category, achievements: { upsert } },
+                        include: { achievements: true },
                     })
                 }),
             )
 
-            // return ctx.prisma.achievementCategory.createMany({
-            //     data: achievementCategoriesToCreate,
-            //     skipDuplicates: true,
-            // })
+            const userAddresses = airtableMembers.map((member) => member['wallet-address'])
+
+            const prismaMembers = await ctx.prisma.user.findMany({
+                where: { address: { in: userAddresses } },
+            })
+
+            const memberAchievementData: { userId: string; achievementId: number }[] = []
+
+            for (const airtableMember of airtableMembers) {
+                const prismaMember = prismaMembers.find((u) => u.address === airtableMember['wallet-address'])
+
+                if (!prismaMember) {
+                    console.error(`User with address ${airtableMember['wallet-address']} not found`)
+                    continue
+                }
+
+                for (const field of achievementFields) {
+                    const prismaAC = achievementCategories.find((ac) => ac.name === field.name)
+
+                    if (!prismaAC) {
+                        console.error(`AchievementCategory with name ${field.name} not found`)
+                        continue
+                    }
+
+                    const achievement = prismaAC.achievements.find(
+                        (prismaAchievement) => prismaAchievement.name === airtableMember[slugify(field.name)],
+                    )
+
+                    if (!achievement) {
+                        console.error(`Achievement for category ${field.name} not found`)
+                        continue
+                    }
+
+                    memberAchievementData.push({
+                        userId: prismaMember.id,
+                        achievementId: achievement.id,
+                    })
+                }
+            }
+
+            return ctx.prisma.memberAchievements.createMany({
+                skipDuplicates: true,
+                data: memberAchievementData,
+            })
         }),
-    // syncAirtableAchievements: protectedOrgProcedure
-    //     .input(z.object({ organizationSlug: z.string(), airtableFields: z.array(airtableFieldSchema) })) // for protectedOrgProcedure to work
-    //     .mutation(async ({ ctx, input }) => {}),
 })

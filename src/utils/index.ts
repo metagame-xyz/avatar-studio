@@ -5,6 +5,7 @@ import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
 import { z } from 'zod'
+import { AirtableField } from './airtableFrontend'
 import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
@@ -219,4 +220,16 @@ export function addSpacesBeforeCapitalLetters(input: string): string {
         output += char
     }
     return output
+}
+
+export const filterToAchievementFields = (
+    airtableFields: AirtableField[],
+    walletAddressFieldName: string,
+): AirtableField[] => {
+    const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens', walletAddressFieldName]
+
+    const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText', 'singleSelect', 'multipleSelect']
+    return airtableFields
+        .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
+        .filter((field) => allowedAchievementTypes.includes(field.type))
 }
