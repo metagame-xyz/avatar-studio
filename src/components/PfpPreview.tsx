@@ -5,6 +5,7 @@ import Icon from 'components/Icon'
 import ThreeDotsWave from 'components/ThreeDotsWave'
 import Tooltip from 'components/Tooltip'
 import { AnimatePresence, motion } from 'framer-motion'
+import mergeImages from 'merge-images'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -31,6 +32,7 @@ type PfpPreviewProps = {
     createNftMetadataStatus: Status
     mintStatus: Status
     allowedAction: AllowedAction
+    projectName: string
 }
 
 const PfpPreview = ({
@@ -44,6 +46,7 @@ const PfpPreview = ({
     mintStatus,
     existingPfpState,
     allowedAction,
+    projectName,
 }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     // const { data: user } = trpc.member.me.useQuery()
@@ -60,32 +63,20 @@ const PfpPreview = ({
 
     // if (!user) return <></>
     // const [user, setUser] = React.useState({} as UserData)
-    // const createImageDownload = async () => {
-    //     const links = pfpState
-    //         .map((attribute) =>
-    //             getMetagameAssetDataFromName({
-    //                 category: attribute.category,
-    //                 name: attribute.name,
-    //                 assetData: assetData,
-    //             }),
-    //         )
-    //         .sort(
-    //             (a, b) =>
-    //                 attributeZIndexMapping[a.category].index -
-    //                 attributeZIndexMapping?[b?.category].index,
-    //         )
-    //         .map(
-    //             (attribute) =>
-    //                 '/_next/image?url=' + attribute.pngLink + '&w=3840&q=75',
-    //         )
 
-    //     mergeImages(links, { crossOrigin: 'anonymous' }).then((b64: string) => {
-    //         const a = document.createElement('a')
-    //         a.href = b64
-    //         a.download = `${user.firstName}'s Llama PFP.png`
-    //         a.click()
-    //     })
-    // }
+    const createImageDownload = async () => {
+        if (!existingPfpState) return
+        const links = existingPfpState
+            .sort((a, b) => a.zIndex - b.zIndex)
+            .map((trait) => '/_next/image?url=' + trait.pngUrl + '&w=3840&q=75')
+
+        mergeImages(links, { crossOrigin: 'anonymous' }).then((b64: string) => {
+            const a = document.createElement('a')
+            a.href = b64
+            a.download = `${projectName}.png`
+            a.click()
+        })
+    }
 
     const variants = {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -235,10 +226,7 @@ const PfpPreview = ({
                                 <Icon image={opensea} size={2} />
                                 OpenSea
                             </a>
-                            <button
-                                className="btn-ghost items-center gap-2"
-                                // onClick={createImageDownload} // TODO
-                            >
+                            <button className="btn-ghost items-center gap-2" onClick={createImageDownload}>
                                 <ArrowDownTrayIcon className="w-5" />
                                 Download <span className="text-sm font-light text-gray-400">PNG</span>
                             </button>

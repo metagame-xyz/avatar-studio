@@ -307,10 +307,20 @@ const EditAvatar = () => {
                         </Title>
                         <p className="text-md text-teal-50/75">Earn more traits over time</p>
                     </div>
+                    {/* <button
+                        className="btn-primary"
+                        onClick={() => {
+                            triggerSuccessToast(`hello ${Math.random()}`)
+                        }}
+                    >
+                        click me
+                    </button> */}
                 </div>
             </>
         )
     }
+
+    const actionCopy = allowedAction === AllowedAction.update ? 'Updating' : 'Creating'
 
     return (
         <>
@@ -318,10 +328,6 @@ const EditAvatar = () => {
                 open={isChainModalOpen}
                 setOpen={setIsChainModalOpen}
                 title={`Please switch to ${correctChain?.network}`}
-                onClick={function (): void {
-                    throw new Error('Function not implemented.')
-                }}
-                onClickText={''}
                 initialFocusRef={switchChainRef}
                 hideButtons
             >
@@ -345,11 +351,13 @@ const EditAvatar = () => {
                 className="flex h-64 max-w-screen-md flex-col justify-center"
             >
                 <div className="flex h-auto flex-col justify-center gap-6 text-left">
-                    <div className="text-center text-2xl">
-                        {`${allowedAction === AllowedAction.update ? 'Updating' : 'Creating'} your ${project?.name}`}
-                    </div>
+                    <div className="text-center text-2xl">{`${actionCopy} your ${project?.name}`}</div>
                     <div className="text-lg">
-                        {`Creating your ${project?.name} takes some time. Once it's done being assembled, you will be able to mint it! ${project?.name} is complicated to assemble and may take up to 2 minutes. `}
+                        {`${actionCopy} your ${project?.name} takes time. ${
+                            !(allowedAction === AllowedAction.update)
+                                ? `Once it's done being assembled, you will be able to mint it! `
+                                : ''
+                        }${project?.name} is complicated to assemble, this may take up to 2 minutes. `}
                     </div>
                     <Loading />
                 </div>
@@ -367,6 +375,7 @@ const EditAvatar = () => {
                         allowedAction={allowedAction}
                         mintFunction={mint}
                         mintStatus={mintStatus as Status}
+                        projectName={project?.name || ''}
                     />
                 </motion.div>
                 <motion.div transition={springAnimation}>
