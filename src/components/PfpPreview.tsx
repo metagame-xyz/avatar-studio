@@ -1,5 +1,4 @@
-import { ArrowDownTrayIcon, ExclamationCircleIcon, HeartIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
-import { CheckIcon } from '@heroicons/react/24/solid'
+import { ArrowDownTrayIcon, ExclamationCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import type { SignMessageArgs } from '@wagmi/core'
 import Icon from 'components/Icon'
 import ThreeDotsWave from 'components/ThreeDotsWave'
@@ -147,7 +146,7 @@ const PfpPreview = ({
                                                 </Link>
                                             </motion.div>
                                         )}
-                                        {mintStatus === Status.success && (
+                                        {/* {mintStatus === Status.success && (
                                             <>
                                                 <motion.span
                                                     initial={{
@@ -184,10 +183,10 @@ const PfpPreview = ({
                                                     <CheckIcon className="absolute h-4 w-4 text-teal-300" />
                                                 </motion.span>
                                             </>
-                                        )}
+                                        )} */}
                                     </AnimatePresence>
                                 </motion.div>
-                                <div className="absolute inset-0 z-[100] bg-gray-900 opacity-50" />
+                                {/* <div className="absolute inset-0 z-[100] bg-gray-900 opacity-50" /> */}
                             </div>
                         )}
                         <AnimatePresence initial={false}>

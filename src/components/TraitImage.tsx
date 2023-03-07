@@ -51,7 +51,7 @@ const TraitImage = ({
                 })}
                 {disabled && (
                     <div className="flex h-full w-full items-center justify-center">
-                        <LockClosedIcon className="h-5 w-5 fill-current" />
+                        <LockClosedIcon className="z-50 h-5 w-5 fill-current" />
                         <Tooltip text={disabledMessage} withLockIcon />
                     </div>
                 )}

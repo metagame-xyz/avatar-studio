@@ -1,4 +1,3 @@
-import AttributeSelector from 'components/AttributeSelector'
 import FullPageLoading from 'components/FullPageLoading'
 import Loading from 'components/Loading'
 import Modal from 'components/Modal'
@@ -6,6 +5,7 @@ import PfpPreview from 'components/PfpPreview'
 import Shell from 'components/Shell'
 import Title from 'components/Title'
 import Toast from 'components/Toast'
+import TraitSelector from 'components/TraitSelector'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
@@ -384,7 +384,7 @@ const EditAvatar = () => {
                             {assetData?.map((tc) => {
                                 // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
                                 return !!existingPfpState && !tc.isModifiable ? null : (
-                                    <AttributeSelector
+                                    <TraitSelector
                                         key={tc.name}
                                         traitCategory={tc}
                                         pfpState={pfpState}

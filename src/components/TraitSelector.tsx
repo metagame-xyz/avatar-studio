@@ -7,13 +7,13 @@ import { trpc } from 'utils/trpc'
 import type { TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
 import { useNetwork } from 'wagmi'
 
-type AttributeSelectorProps = {
+type TraitSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
     pfpState: TraitWithEarnedBool[]
     updatePfpState: (trait: TraitWithEarnedBool) => void
 }
 
-const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: AttributeSelectorProps) => {
+const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelectorProps) => {
     const { chain } = useNetwork() // TODO
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
@@ -85,4 +85,4 @@ const AttributeSelector = ({ traitCategory, pfpState, updatePfpState }: Attribut
     )
 }
 
-export default AttributeSelector
+export default TraitSelector
