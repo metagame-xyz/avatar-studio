@@ -87,9 +87,11 @@ export const nftMetadataRouter = router({
         .mutation(async ({ ctx, input }) => {
             const { tokenId, projectSlug, network, address } = input
 
+            console.log('addTokenIdFromEventForwarder', input)
+
             const member = await ctx.prisma.user.findFirst({ where: { address } })
 
-            return ctx.prisma.nftMetadata.updateMany({
+            await ctx.prisma.nftMetadata.updateMany({
                 where: {
                     userId: member?.id,
                     projectSlug,
@@ -99,5 +101,11 @@ export const nftMetadataRouter = router({
                     tokenId,
                 },
             })
+
+            return {
+                minterAddress: member?.address,
+                tokenId,
+                ensName: '', // TODO
+            }
         }),
 })
