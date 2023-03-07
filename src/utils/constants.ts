@@ -61,21 +61,22 @@ export const s3AcceleratedFolderUrl = 'https://metagame-xyz.s3-accelerate.amazon
 
 export const cloudfrontFolderUrl = 'https://d17y9jhu28q4cz.cloudfront.net/nft-images/'
 
-export const getS3LayersFolderUrl = (project: string): string => `${s3BaseFolderUrl}${project}/Layers/`
+// export const getS3LayersFolderUrl = (network: string, project: string): string =>
+//     `${s3BaseFolderUrl}${network}/${project}/Layers/`
 
 export const getCloudfrontLayersFolderUrl = (project: string): string => `${cloudfrontFolderUrl}${project}/Layers/`
 
-export const getS3CompleteImagesFolderUrlForUpload = (project: string): string =>
-    `${s3AcceleratedFolderUrl}${project}/complete-images/`
+// export const getS3CompleteImagesFolderUrlForUpload = (network: string, project: string): string =>
+//     `${s3AcceleratedFolderUrl}${network}/${project}/complete-images/`
 
-export const getCloudfrontCompleteImagesFolderUrl = (project: string): string =>
-    `${cloudfrontFolderUrl}${project}/complete-images/`
+// export const getCloudfrontCompleteImagesFolderUrl = (network: string, project: string): string =>
+//     `${cloudfrontFolderUrl}${network}/${project}/complete-images/`
 
-export const getR2LayersFolderUrl = (project: string): string =>
-    `https://pub-f973221ec7dc4a44b71a25a1c673e6e8.r2.dev/${project}/Layers/`
+// export const getR2LayersFolderUrl = (project: string): string =>
+//     `https://pub-f973221ec7dc4a44b71a25a1c673e6e8.r2.dev/${project}/Layers/`
 
-export const getTwicPicFolderUrl = (project: string): string =>
-    `https://metagame.twic.pics/nft-images/${project}/Layers/`
+// export const getTwicPicFolderUrl = (project: string): string =>
+//     `https://metagame.twic.pics/nft-images/${project}/Layers/`
 
 export type ProductionNetworks = 'ethereum' | 'polygon' | 'fantom' | 'avalanche'
 

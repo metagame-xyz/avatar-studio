@@ -1,7 +1,9 @@
 import { PrivyClient, type User as PrivyUser } from '@privy-io/server-auth'
+import { createHmac } from 'crypto'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 import { ethers, Wallet } from 'ethers'
+import type { NextApiRequest } from 'next/types'
 import { goerli, mainnet } from 'wagmi/chains'
 import type { NewAirtableMember, Signature } from './types'
 
@@ -138,4 +140,15 @@ export const privyDeleteUser = async (id: string): Promise<void> => {
 
 export const sleep = (ms: number) => {
     return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export const isValidEventForwarderSignature = (request: NextApiRequest) => {
+    const token = serverEnv.EVENT_FORWARDER_AUTH_TOKEN
+    const headers = request.headers
+    const signature = headers['x-event-forwarder-signature']
+    const body = request.body
+    const hmac = createHmac('sha256', token) // Create a HMAC SHA256 hash using the auth token
+    hmac.update(JSON.stringify(body), 'utf8') // Update the token hash with the request body using utf8
+    const digest = hmac.digest('hex')
+    return signature === digest
 }

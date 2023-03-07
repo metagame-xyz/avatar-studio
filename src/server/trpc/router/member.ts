@@ -403,7 +403,7 @@ export const memberRouter = router({
 
             const permanentTraitsHash = hashPermanentTraits(approvedTraits)
             const version = member.nftMetadata.length + 1
-            const imageFilePath = `${projectSlug}/complete-images/${member.address}/${permanentTraitsHash}_v${version}.png`
+            const imageFilePath = `${projectSlug}/complete-images/${network}/${member.address}/${permanentTraitsHash}_v${version}.png`
             const params: PutObjectRequest = {
                 Bucket: 'metagame-xyz',
                 Key: `nft-images/${imageFilePath}`,

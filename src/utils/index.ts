@@ -5,7 +5,7 @@ import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
 import { z } from 'zod'
-import { AirtableField } from './airtableFrontend'
+import type { AirtableField } from './airtableFrontend'
 import type { RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {

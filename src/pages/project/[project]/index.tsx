@@ -48,7 +48,7 @@ const Project: NextPage = () => {
     if (status !== 'success' || userStatus !== 'success') return <FullPageLoading />
 
     const { name, slug } = project
-    const hasMinted = user.nftMetadata.length > 0
+    const hasMinted = user.nftMetadata.filter((n) => n.projectSlug === project.slug).length > 0
 
     const isDataLoaded = isOrgAdmin && data && !data.error
     const isProjectConfigured = !!(isDataLoaded && data.members && data.achievementFields)

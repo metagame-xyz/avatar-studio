@@ -1,9 +1,9 @@
+import { UserRole } from '@prisma/client'
 import { initTRPC, TRPCError } from '@trpc/server'
+import { createHmac } from 'crypto'
+import { env } from 'env/server.mjs'
 import superjson from 'superjson'
 import { z } from 'zod'
-
-import { UserRole } from '@prisma/client'
-import { env } from 'env/server.mjs'
 import { type Context } from './context'
 
 const t = initTRPC.context<Context>().create({
@@ -136,6 +136,21 @@ const isMetagameAdmin = t.middleware(async ({ ctx, next }) => {
     return next({ ctx })
 })
 
+const eventForwarderProtection = t.middleware(async ({ ctx, next, rawInput }) => {
+    const input = z.object({ authToken: z.string(), signature: z.string(), body: z.any() }).parse(rawInput)
+    const { authToken, signature, body } = input
+
+    const hmac = createHmac('sha256', authToken) // Create a HMAC SHA256 hash using the auth token
+    hmac.update(JSON.stringify(body), 'utf8') // Update the token hash with the request body using utf8
+    const digest = hmac.digest('hex')
+
+    if (signature !== digest) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    return next({ ctx })
+})
+
 /**
  * Unprotected procedure
  **/
@@ -147,3 +162,4 @@ export const protectedProcedure = t.procedure.use(getNetwork).use(isAuthed)
 export const protectedOrgProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isOrgAdmin)
 export const protectedProjectProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isProjectOrgAdmin)
 export const protectedMetagameAdminProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isMetagameAdmin)
+export const eventForwarderProcedure = t.procedure.use(eventForwarderProtection)

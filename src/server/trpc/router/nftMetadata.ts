@@ -71,4 +71,33 @@ export const nftMetadataRouter = router({
                 },
             })
         }),
+    addTokenIdFromEventForwarder: publicProcedure
+        .input(
+            z.object({
+                projectSlug: z.string(),
+                address: z.string(),
+                tokenId: z.number(),
+                network: z.string(),
+                // for eventForwarder signature check
+                authToken: z.string(),
+                signature: z.string(),
+                body: z.any(),
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const { tokenId, projectSlug, network, address } = input
+
+            const member = await ctx.prisma.user.findFirst({ where: { address } })
+
+            return ctx.prisma.nftMetadata.updateMany({
+                where: {
+                    userId: member?.id,
+                    projectSlug,
+                    network,
+                },
+                data: {
+                    tokenId,
+                },
+            })
+        }),
 })

@@ -78,7 +78,7 @@ const Org: NextPage = () => {
                         <div className="text-xl font-bold md:text-2xl">Projects</div>
                         <Projects />
                     </div>
-                    {isOrgAdmin && (
+                    {/* {isOrgAdmin && (
                         <div>
                             <button
                                 className="btn-primary w-full"
@@ -89,7 +89,7 @@ const Org: NextPage = () => {
                                 Create Avatar
                             </button>
                         </div>
-                    )}
+                    )} */}
                     {isOrgAdmin && tokenNeedsRefresh && (
                         <div>
                             <a className="btn-primary w-full" href={`${airtableAuthUrl}`}>

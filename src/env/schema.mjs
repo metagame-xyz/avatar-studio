@@ -14,6 +14,7 @@ export const serverSchema = z.object({
     METAGAME_AWS_SECRET_ACCESS_KEY: z.string(),
     VALIDATOR_PRIVATE_KEY: z.string(),
     AIRTABLE_CLIENT_SECRET: z.string(),
+    EVENT_FORWARDER_AUTH_TOKEN: z.string(),
 })
 
 /**
