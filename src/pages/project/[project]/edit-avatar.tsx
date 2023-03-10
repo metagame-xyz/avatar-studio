@@ -129,28 +129,25 @@ const EditAvatar = () => {
     useEffect(() => {
         if (existingNftMetadata?.traits && assetData) {
             setPfpState(existingNftMetadata.traits)
-        } else if (assetData) {
-            let i = 0
-            let defaultPfpState = assetData
-                ?.filter((tc) => !tc.isModifiable)
-                .map((traitCategory) => traitCategory.traits[i] as TraitWithEarnedBool) as TraitWithEarnedBool[]
+        } else if (assetData && !pfpState.length) {
+            let defaultPfpState: TraitWithEarnedBool[] | undefined = undefined
 
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
                 // create a new combo for defaultPfPState if taken
-                defaultPfpState = assetData
-                    ?.filter((tc) => !tc.isModifiable)
-                    .map((traitCategory) => {
-                        i = (i + 1) % traitCategory.traits.length
-                        return traitCategory.traits[i] as TraitWithEarnedBool
-                    }) as TraitWithEarnedBool[]
+                defaultPfpState = assetData.map((traitCategory) => {
+                    const earnedTraits = traitCategory.traits.filter((t) => t.earned)
+                    const i = Math.floor(Math.random() * earnedTraits.length)
+                    return earnedTraits[i] as TraitWithEarnedBool
+                })
 
                 safety++
                 if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
             }
+            if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
             setPfpState(defaultPfpState)
         }
-    }, [assetData, existingNftMetadata?.traits, usedCombos])
+    }, [assetData, existingNftMetadata?.traits, pfpState.length, usedCombos])
 
     // Signing transaction (pre-mint & for updating pfp)
     const { isLoading: userIsSigning, signMessage } = useSignMessage({
