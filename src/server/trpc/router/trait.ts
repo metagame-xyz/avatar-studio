@@ -53,6 +53,7 @@ export const traitRouter = router({
                     id: traitId,
                 },
                 data: {
+                    isDefaultAchieved: false,
                     achievementsRequired: {
                         set: [],
                         connect: {
@@ -76,6 +77,27 @@ export const traitRouter = router({
                     id: traitId,
                 },
                 data: {
+                    achievementsRequired: {
+                        set: [],
+                    },
+                    achievementsRequiredDescription: null,
+                },
+                include: {
+                    achievementsRequired: true,
+                },
+            })
+        }),
+    toggleTraitComplimentary: protectedMetagameAdminProcedure
+        .input(z.object({ traitId: z.number(), isComplimentary: z.boolean() }))
+        .mutation(async ({ ctx, input }) => {
+            const { traitId, isComplimentary } = input
+
+            return ctx.prisma.trait.update({
+                where: {
+                    id: traitId,
+                },
+                data: {
+                    isDefaultAchieved: isComplimentary,
                     achievementsRequired: {
                         set: [],
                     },

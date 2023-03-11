@@ -33,6 +33,16 @@ const AchievementToTraitEditor = ({ traitCategory, achievementCategories }: Achi
                 <div className="flex flex-col divide-y border-y">
                     {traits
                         .sort((a, b) => a.name.localeCompare(b.name))
+                        .sort((a, b) =>
+                            a.achievementsRequired.length === b.achievementsRequired.length
+                                ? 0
+                                : a.achievementsRequired.length
+                                ? -1
+                                : 1,
+                        )
+                        .sort((a, b) =>
+                            a.isDefaultAchieved === b.isDefaultAchieved ? 0 : a.isDefaultAchieved ? -1 : 1,
+                        )
                         .map((t, i) => (
                             <div key={`${t.name} ${i}`} className="flex gap-4 py-4">
                                 <div className="flex">

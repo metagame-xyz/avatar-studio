@@ -12,7 +12,10 @@ type Props = {
 export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }: Props) => {
     const connectAchievement = trpc.trait.connectAchievement.useMutation({})
     const removeAchievement = trpc.trait.removeAchievement.useMutation({})
-    const [enabled, setEnabled] = useState(trait.achievementsRequired.length > 0)
+    const makeTraitComplimentary = trpc.trait.toggleTraitComplimentary.useMutation({})
+
+    const [earnable, setEarnable] = useState(trait.achievementsRequired.length > 0 || !!trait.isDefaultAchieved)
+    const [isComplimentary, setIsComplimentary] = useState(!!trait.isDefaultAchieved)
 
     const levelCategoryId = trait.levelCategory?.id
     const specificAchievementCategoryId = trait.achievementsRequired[0]?.achievementCategoryId
@@ -28,13 +31,21 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
 
     // console.log('selectedCategory', selectedCategory)
 
-    const handleSetEnabled = (enabled: boolean) => {
-        if (!enabled) {
+    const handleSetEarnable = (earnable: boolean) => {
+        if (!earnable) {
             removeAchievement.mutate({ traitId: trait.id })
             setSelectedCategory(existingCategory || achievementCategoryOptions[0] || null)
             setSelectedAchievement(null)
         }
-        setEnabled(enabled)
+        setEarnable(earnable)
+    }
+
+    const handleSetIsComplimentary = (isComplimentary: boolean) => {
+        makeTraitComplimentary.mutate({ traitId: trait.id, isComplimentary })
+
+        setSelectedCategory(existingCategory || achievementCategoryOptions[0] || null)
+        setSelectedAchievement(null)
+        setIsComplimentary(isComplimentary)
     }
 
     const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -90,9 +101,15 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
         <div className="flex flex-col gap-4 py-2">
             <div className="flex gap-4">
                 <div className="flex text-xl">Earnable</div>
-                <ToggleWithIcon enabled={enabled} setEnabled={handleSetEnabled} />
+                <ToggleWithIcon enabled={earnable} setEnabled={handleSetEarnable} />
             </div>
-            {enabled && (
+            {earnable && (
+                <div className="flex gap-4">
+                    <div className="flex text-xl">Complimentary</div>
+                    <ToggleWithIcon enabled={isComplimentary} setEnabled={handleSetIsComplimentary} />
+                </div>
+            )}
+            {earnable && !isComplimentary && (
                 <div className="flex gap-4">
                     <select className="bg-black" value={selectedCategory?.id} onChange={handleCategoryChange}>
                         {achievementCategoryOptions.map((category) => (

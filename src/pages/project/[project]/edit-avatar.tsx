@@ -135,11 +135,14 @@ const EditAvatar = () => {
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
                 // create a new combo for defaultPfPState if taken
-                defaultPfpState = assetData.map((traitCategory) => {
-                    const earnedTraits = traitCategory.traits.filter((t) => t.earned)
-                    const i = Math.floor(Math.random() * earnedTraits.length)
-                    return earnedTraits[i] as TraitWithEarnedBool
-                })
+                defaultPfpState = assetData
+                    .map((traitCategory) => {
+                        const earnedTraits = traitCategory.traits.filter((t) => t.earned)
+                        if (!earnedTraits.length) return null
+                        const i = Math.floor(Math.random() * earnedTraits.length)
+                        return earnedTraits[i] as TraitWithEarnedBool
+                    })
+                    .filter((t) => !!t) as TraitWithEarnedBool[]
 
                 safety++
                 if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
@@ -378,17 +381,19 @@ const EditAvatar = () => {
                 <motion.div transition={springAnimation}>
                     <div className={`relative flex w-full flex-col justify-between gap-4 py-2`}>
                         <div className="grid gap-y-2">
-                            {assetData?.map((tc) => {
-                                // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
-                                return !!existingPfpState && !tc.isModifiable ? null : (
-                                    <TraitSelector
-                                        key={tc.name}
-                                        traitCategory={tc}
-                                        pfpState={pfpState}
-                                        updatePfpState={updatePfpState}
-                                    />
-                                )
-                            })}
+                            {assetData
+                                ?.sort((a, b) => b.zIndex - a.zIndex)
+                                .map((tc) => {
+                                    // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
+                                    return !!existingPfpState && !tc.isModifiable ? null : (
+                                        <TraitSelector
+                                            key={tc.name}
+                                            traitCategory={tc}
+                                            pfpState={pfpState}
+                                            updatePfpState={updatePfpState}
+                                        />
+                                    )
+                                })}
                         </div>
                     </div>
                 </motion.div>
