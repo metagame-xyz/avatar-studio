@@ -1,79 +1,97 @@
 import { z } from 'zod'
 
-export const walletTypeSchema = z.union([
-    z.literal('metamask'),
-    z.literal('coinbase_wallet'),
-    z.literal('wallet_connect'),
+const linkedAccountTypeSchema = z.union([
+    z.literal('wallet'),
+    z.literal('email'),
+    z.literal('phone'),
+    z.literal('google_oauth'),
+    z.literal('twitter_oauth'),
+    z.literal('discord_oauth'),
+    z.literal('github_oauth'),
 ])
 
-export const linkMetadataSchema = z.object({
-    type: z.union([
-        z.literal('wallet'),
-        z.literal('email'),
-        z.literal('phone'),
-        z.literal('google_oauth'),
-        z.literal('twitter_oauth'),
-        z.literal('discord_oauth'),
-    ]),
+const linkMetadataSchema = z.object({
+    type: linkedAccountTypeSchema,
     verifiedAt: z.date(),
 })
 
-export const walletSchema = z.object({
+const walletSchema = z.object({
     address: z.string(),
     chainType: z.union([z.literal('ethereum'), z.literal('solana')]),
     chainId: z.string().optional(),
-    walletType: walletTypeSchema.optional(),
+    walletClient: z.union([z.literal('privy'), z.literal('unknown')]),
 })
 
-export const emailSchema = z.object({
+const emailSchema = z.object({
     address: z.string(),
 })
 
-export const phoneSchema = z.object({
+const phoneSchema = z.object({
     number: z.string(),
 })
 
-export const googleSchema = z.object({
+const googleSchema = z.object({
     subject: z.string(),
     email: z.string(),
     name: z.string().nullable(),
 })
 
-export const twitterSchema = z.object({
+const twitterSchema = z.object({
     subject: z.string(),
     username: z.string().nullable(),
     name: z.string().nullable(),
 })
 
-export const discordSchema = z.object({
+const discordSchema = z.object({
     subject: z.string(),
     username: z.string().nullable(),
     email: z.string().nullable(),
 })
 
-export const emailWithMetadataSchema = linkMetadataSchema.extend(emailSchema.shape).extend({
+const githubSchema = z.object({
+    subject: z.string(),
+    username: z.string().nullable(),
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+})
+
+const emailWithMetadataSchema = linkMetadataSchema.extend(emailSchema.shape).extend({
     type: z.literal('email'),
 })
 
-export const phoneWithMetadataSchema = linkMetadataSchema.extend(phoneSchema.shape).extend({
+const phoneWithMetadataSchema = linkMetadataSchema.extend(phoneSchema.shape).extend({
     type: z.literal('phone'),
 })
 
-export const walletWithMetadataSchema = linkMetadataSchema.extend(walletSchema.shape).extend({
+const walletWithMetadataSchema = linkMetadataSchema.extend(walletSchema.shape).extend({
     type: z.literal('wallet'),
 })
 
-export const googleOAuthWithMetadataSchema = linkMetadataSchema.extend(googleSchema.shape).extend({
+const googleOAuthWithMetadataSchema = linkMetadataSchema.extend(googleSchema.shape).extend({
     type: z.literal('google_oauth'),
 })
 
-export const twitterOAuthWithMetadataSchema = linkMetadataSchema.extend(twitterSchema.shape).extend({
+const twitterOAuthWithMetadataSchema = linkMetadataSchema.extend(twitterSchema.shape).extend({
     type: z.literal('twitter_oauth'),
 })
 
-export const discordOAuthWithMetadataSchema = linkMetadataSchema.extend(discordSchema.shape).extend({
+const discordOAuthWithMetadataSchema = linkMetadataSchema.extend(discordSchema.shape).extend({
     type: z.literal('discord_oauth'),
 })
+
+const githubOAuthWithMetadataSchema = linkMetadataSchema.extend(githubSchema.shape).extend({
+    type: z.literal('github_oauth'),
+})
+
+const linkedAccountWithMetadataSchema = z.union([
+    walletWithMetadataSchema,
+    emailWithMetadataSchema,
+    phoneWithMetadataSchema,
+    googleOAuthWithMetadataSchema,
+    twitterOAuthWithMetadataSchema,
+    discordOAuthWithMetadataSchema,
+    githubOAuthWithMetadataSchema,
+])
 
 export const privyUserZ = z.object({
     id: z.string(),
@@ -84,14 +102,6 @@ export const privyUserZ = z.object({
     google: googleSchema.optional(),
     twitter: twitterSchema.optional(),
     discord: discordSchema.optional(),
-    linkedAccounts: z.array(
-        z.union([
-            walletWithMetadataSchema,
-            emailWithMetadataSchema,
-            phoneWithMetadataSchema,
-            googleOAuthWithMetadataSchema,
-            twitterOAuthWithMetadataSchema,
-            discordOAuthWithMetadataSchema,
-        ]),
-    ),
+    github: githubSchema.optional(),
+    linkedAccounts: z.array(linkedAccountWithMetadataSchema),
 })

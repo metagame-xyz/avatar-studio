@@ -39,7 +39,7 @@ const TraitImage = ({
                         <Image
                             width={112}
                             height={112}
-                            key={`${t.name} ${i}`}
+                            key={`${t.category} ${t.name} ${i}`}
                             alt={`${t.category} ${t.name}`}
                             src={t.pngUrl}
                             style={{ zIndex: t.zIndex }}

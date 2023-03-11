@@ -30,6 +30,7 @@ import {
     useNetwork,
     usePrepareContractWrite,
     useSignMessage,
+    useSwitchNetwork,
     useWaitForTransaction,
 } from 'wagmi'
 
@@ -39,8 +40,7 @@ const EditAvatar = () => {
 
     const { address } = useAccount()
     const { chain } = useNetwork()
-    // const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork()
-    // console.log('switchNetwork', switchNetwork)
+    const { isLoading, pendingChainId, switchNetwork } = useSwitchNetwork()
     const switchChainRef = useRef(null)
     const trpcUtils = trpc.useContext()
 
@@ -129,11 +129,12 @@ const EditAvatar = () => {
     useEffect(() => {
         if (existingNftMetadata?.traits && assetData) {
             setPfpState(existingNftMetadata.traits)
-        } else if (assetData && !pfpState.length) {
+        } else if (assetData && !pfpState.length && usedCombos) {
             let defaultPfpState: TraitWithEarnedBool[] | undefined = undefined
 
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
+                console.log(defaultPfpState?.length)
                 // create a new combo for defaultPfPState if taken
                 defaultPfpState = assetData
                     .map((traitCategory) => {
@@ -332,7 +333,7 @@ const EditAvatar = () => {
                 hideButtons
             >
                 <div className="flex flex-col items-center justify-center">
-                    {/* <button
+                    <button
                         className="btn-primary"
                         disabled={!switchNetwork}
                         onClick={() => switchNetwork?.(correctChain.id)}
@@ -340,7 +341,7 @@ const EditAvatar = () => {
                     >
                         {correctChain.name}
                         {isLoading && pendingChainId === correctChain.id && ` (switching)`}
-                    </button> */}
+                    </button>
                 </div>
             </Modal>
             <Modal

@@ -193,7 +193,7 @@ const PfpPreview = ({
                             {pfpState.map(({ name, category, pngUrl, zIndex }) => {
                                 return (
                                     <motion.div
-                                        key={name}
+                                        key={category + ' ' + name}
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0 }}
@@ -203,7 +203,7 @@ const PfpPreview = ({
                                             onLoad={() => {
                                                 setImagesLoaded((prev) => ++prev)
                                             }}
-                                            key={name}
+                                            key={category + ' ' + name}
                                             alt={`${name} ${category}`}
                                             src={pngUrl}
                                             fill

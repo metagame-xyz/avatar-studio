@@ -36,7 +36,6 @@ export const memberRouter = router({
             account.address = account.address.toLowerCase()
 
             delete account.chainId
-            delete account.walletType
 
             return account
         })

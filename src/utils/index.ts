@@ -97,10 +97,9 @@ export const IsNewComboAllowed = (
 }
 
 export const isComboAllowed = (
-    usedCombos: Record<string, string>[] | undefined,
+    usedCombos: Record<string, string>[],
     PfpState: TraitWithEarnedBool[] | undefined,
 ): boolean => {
-    if (!usedCombos) return true
     if (!PfpState) return false
     const combo: Record<string, string> = {}
 

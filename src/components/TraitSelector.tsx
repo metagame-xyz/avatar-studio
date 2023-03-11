@@ -64,12 +64,15 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelecto
                         .sort((a, b) => (a.earned === b.earned ? 0 : a.earned ? -1 : 1))
                         .map((trait, i) => (
                             <TraitImage
-                                key={`${trait.name} ${i}`}
+                                key={`${trait.category} ${trait.name}`}
                                 className="col-span-1"
                                 trait={trait}
                                 pfpState={pfpState}
                                 // also select the first in the traitOptions if none are selected
-                                selected={pfpState.filter((t) => t.name === trait.name).length > 0}
+                                selected={
+                                    pfpState.filter((t) => t.name === trait.name && traitCategory.name === t.category)
+                                        .length > 0
+                                }
                                 disabled={!IsNewComboAllowed(isModifiable, usedCombos, pfpState, trait)}
                                 disabledMessage={
                                     trait.earned === false

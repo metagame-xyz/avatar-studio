@@ -17,18 +17,19 @@ datasource db {
 }
 
 model Account {
-  id         String    @id @default(cuid())
-  userId     String
-  type       String // could be a privy enum 'email' | 'phone' | 'wallet'
-  subject    String?
-  email      String?
-  username   String?
-  name       String?
-  address    String?
-  number     String?
-  chainType  String?
-  verifiedAt DateTime?
-  user       User      @relation(fields: [userId], references: [privyDID], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String
+  type         String // could be a privy enum 'email' | 'phone' | 'wallet'
+  subject      String?
+  email        String?
+  username     String?
+  name         String?
+  address      String?
+  number       String?
+  chainType    String?
+  walletClient String? // currently only 'privy' or 'unknown'
+  verifiedAt   DateTime?
+  user         User      @relation(fields: [userId], references: [privyDID], onDelete: Cascade)
 }
 
 model User {
