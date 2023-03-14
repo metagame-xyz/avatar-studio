@@ -122,7 +122,7 @@ const EditAvatar = () => {
 
     // set initial pfpState
     useEffect(() => {
-        if (existingNftMetadata?.traits && assetData) {
+        if (existingNftMetadata?.traits && assetData && !createOrUpdateNftMetadata.isLoading) {
             setPfpState(existingNftMetadata.traits)
         } else if (assetData && !pfpState.length && usedCombos) {
             let defaultPfpState: TraitWithEarnedBool[] | undefined = undefined

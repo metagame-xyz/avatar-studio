@@ -16,6 +16,7 @@ export const Toaster = () => (
                 primary: '#4db6ac', // teal-300
                 secondary: '#e0f2f1', // teal-50
             },
+            duration: 4000,
             style: {
                 background: '#2D3836', // Dark-accent from figma
                 color: '#e0f2f1', // teal-50
