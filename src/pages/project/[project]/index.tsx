@@ -4,7 +4,6 @@ import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersMo
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
 import Loading from 'components/Loading'
-import MembersList from 'components/MembersList'
 import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
@@ -53,6 +52,10 @@ const Project: NextPage = () => {
     const isDataLoaded = isOrgAdmin && data && !data.error
     const isProjectConfigured = !!(isDataLoaded && data.members && data.achievementFields)
 
+    const handleEditAvatarClick = () => {
+        router.push(`/project/${slug}/edit-avatar`)
+    }
+
     return (
         <Shell pageTitle={name}>
             <>
@@ -96,9 +99,9 @@ const Project: NextPage = () => {
 
                     <div className="flex flex-col space-y-8">
                         <div>
-                            <a className="btn-primary w-full" href={`/project/${slug}/edit-avatar`}>
+                            <button className="btn-primary w-full" onClick={handleEditAvatarClick}>
                                 {hasMinted ? `Update Avatar` : `Mint Avatar`}
-                            </a>
+                            </button>
                         </div>
 
                         <div className="flex flex-col space-y-4">
@@ -164,9 +167,12 @@ const Project: NextPage = () => {
                     )}
                 </div>
                 <div className="flex flex-col space-y-4">
+                    <div className="text-lg font-bold md:text-xl">More Achievements coming soon...</div>
+                </div>
+                {/* <div className="flex flex-col space-y-4">
                     <div className="text-2xl font-bold md:text-3xl">Members</div>
                     <MembersList membersList={project.members} />
-                </div>
+                </div> */}
             </div>
         </Shell>
     )
