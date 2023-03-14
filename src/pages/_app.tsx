@@ -2,6 +2,7 @@ import { PrivyProvider, type User as PrivyUser } from '@privy-io/react-auth'
 import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
 import Footer from 'components/Footer'
 import Navbar from 'components/Navbar'
+import { Toaster } from 'components/Toast'
 import { env } from 'env/client.mjs'
 import { type AppType } from 'next/app'
 import 'styles/globals.css'
@@ -36,6 +37,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         <PrivyProvider appId={env.NEXT_PUBLIC_PRIVY_APP_ID} onSuccess={onLoginSuccess}>
             {/* <WagmiConfig client={wagmiClient}> */}
             <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
+                <Toaster />
                 <Navbar />
                 <Component {...pageProps} />
                 <Footer />

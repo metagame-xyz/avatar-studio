@@ -4,11 +4,11 @@ import Modal from 'components/Modal'
 import PfpPreview from 'components/PfpPreview'
 import Shell from 'components/Shell'
 import Title from 'components/Title'
-import Toast from 'components/Toast'
 import TraitSelector from 'components/TraitSelector'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import { NETWORK } from 'utils/constants'
 import {
     areTraitArraysEqual,
@@ -20,8 +20,8 @@ import {
 } from 'utils/index'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
-import type { Signature, ToastData, TraitWithEarnedBool } from 'utils/types'
-import { AllowedAction, Status } from 'utils/types'
+import type { Signature, Status, TraitWithEarnedBool } from 'utils/types'
+import { AllowedAction } from 'utils/types'
 import {
     goerli,
     mainnet,
@@ -117,11 +117,6 @@ const EditAvatar = () => {
     }, [existingNftMetadata])
 
     const [pfpState, setPfpState] = useState<TraitWithEarnedBool[]>([])
-    const [toast, setToast] = useState<ToastData>({
-        open: false,
-        message: '',
-        type: Status.error,
-    })
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [signatureForMint, setSignatureForMint] = useState<Signature>()
 
@@ -170,7 +165,7 @@ const EditAvatar = () => {
         },
         onError(error) {
             console.error(error)
-            triggerErrorToast('Error signing message.')
+            toast.error('Error signing message.')
         },
     })
 
@@ -178,19 +173,19 @@ const EditAvatar = () => {
     const createOrUpdateNftMetadata = trpc.member.createOrUpdateNftMetadata.useMutation({
         onSuccess: (data) => {
             if (nftState === NftState.hasDataAndNft) {
-                triggerSuccessToast(`Your ${project?.name} updated!`)
+                toast.success(`Your ${project?.name} updated!`)
             }
             if ([NftState.hasDataNoNft, NftState.noDataNoNft].includes(nftState)) {
                 setSignatureForMint(data)
                 setNftState(NftState.hasDataNoNft)
                 setAllowedAction(AllowedAction.mint)
-                triggerSuccessToast(`You may mint your ${project?.name} now`)
+                toast.success(`You may mint your ${project?.name} now`)
             }
             setIsUpdatingTraitsModalOpen(false)
             trpcUtils.member.nftMetadata.invalidate()
         },
         onError: (error) => {
-            triggerErrorToast(error.message)
+            toast.error(error.message)
         },
     })
     // TODO maybe un-hardcode homestead?
@@ -225,7 +220,7 @@ const EditAvatar = () => {
         hash: txResponse?.hash,
         onSuccess(txReceipt) {
             if (txReceipt.status === 0) {
-                triggerErrorToast('Transaction reverted. Please try again.')
+                toast.error('Transaction reverted. Please try again.')
             } else {
                 const { tokenId } = getDecodedTransferEvent(txReceipt.logs, llamaPfpABI)
                 console.log('tokenId:', tokenId)
@@ -238,7 +233,7 @@ const EditAvatar = () => {
         },
         onError(error) {
             console.log('error:', error)
-            triggerErrorToast(`Something went wrong. Please try again.`)
+            toast.error(`Something went wrong. Please try again.`)
         },
     })
 
@@ -246,27 +241,9 @@ const EditAvatar = () => {
         onSuccess: () => {
             trpcUtils.member.nftMetadata.invalidate()
             setNftState(NftState.hasDataAndNft)
-            triggerSuccessToast(`Your ${project?.name} was minted successfully!`)
+            toast.success(`Your ${project?.name} was minted successfully!`)
         },
     })
-
-    const triggerErrorToast = (message: string) => {
-        setToast({ message, open: true, type: Status.error })
-        const timeout = setTimeout(() => {
-            setToast((toast) => ({ ...toast, open: false }))
-        }, 4000)
-
-        return () => clearTimeout(timeout)
-    }
-
-    const triggerSuccessToast = (message: string) => {
-        setToast({ message, open: true, type: Status.success })
-        const timeout = setTimeout(() => {
-            setToast((toast) => ({ ...toast, open: false }))
-        }, 4000)
-
-        return () => clearTimeout(timeout)
-    }
 
     const updatePfpState = (newTrait: TraitWithEarnedBool): void => {
         if (!newTrait.category) {
@@ -296,7 +273,6 @@ const EditAvatar = () => {
     const Header = () => {
         return (
             <>
-                <Toast data={toast} setData={setToast} />
                 <div className="mx-auto flex items-center justify-center">
                     <div className="grid gap-y-2 text-center">
                         <Title level={3} className="font-title font-bold">
@@ -308,14 +284,6 @@ const EditAvatar = () => {
                         </Title>
                         <p className="text-md text-teal-50/75">Earn more traits over time</p>
                     </div>
-                    {/* <button
-                        className="btn-primary"
-                        onClick={() => {
-                            triggerSuccessToast(`hello ${Math.random()}`)
-                        }}
-                    >
-                        click me
-                    </button> */}
                 </div>
             </>
         )

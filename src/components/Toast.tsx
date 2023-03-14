@@ -1,87 +1,60 @@
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
-import * as ToastPrimitive from '@radix-ui/react-toast'
-import { keyframes, styled } from '@stitches/react'
-import Loader from 'components/Loader'
-import React from 'react'
-import type { Status, ToastData } from 'utils/types'
+import { keyframes } from '@stitches/react'
+import { toast, ToastBar, Toaster as HotToaster } from 'react-hot-toast'
 
-type ToastProps = {
-    data: ToastData
-    children?: React.ReactNode
-    setData: React.Dispatch<React.SetStateAction<ToastData>>
-}
+const start = `translateX(calc(100% + 24px))`
+const end = 'translateX(0)'
 
-const typeToIcon: Record<Status, React.ReactNode> = {
-    error: <XCircleIcon className="h-8 w-8 text-red-400" />,
-    success: <CheckCircleIcon className="text-ui-green h-8 w-8" />,
-    loading: <Loader />,
-    idle: <CheckCircleIcon className="h-8 w-8 text-red-400" />,
-}
+const slideIn = keyframes({ from: { transform: start }, to: { transform: end } })
 
-const hide = keyframes({
-    '0%': { opacity: 1 },
-    '100%': { opacity: 0 },
-})
+const swipeOut = keyframes({ from: { transform: end }, to: { transform: start } })
 
-const slideIn = keyframes({
-    from: { transform: `translateX(calc(100% + 24px))` },
-    to: { transform: 'translateX(0)' },
-})
+export const Toaster = () => (
+    <HotToaster
+        position="top-right"
+        toastOptions={{
+            iconTheme: {
+                primary: '#4db6ac', // teal-300
+                secondary: '#e0f2f1', // teal-50
+            },
+            style: {
+                background: '#2D3836', // Dark-accent from figma
+                color: '#e0f2f1', // teal-50
+                border: '1px solid #80cbc4', // teal-200
+                padding: '1rem',
+            },
+        }}
+    >
+        {(t) => {
+            switch (t.type) {
+                case 'error':
+                    t.iconTheme = {
+                        primary: '#e57373', // red-300
+                        secondary: '#ffebee', // red-50
+                    }
+                    t.style = {
+                        ...t.style,
+                        background: '#7C3A3A', // Dark-accent from figma
+                        color: '#ffebee',
+                        border: '1px solid #ef9a9a', // red-300
+                    }
+                // case 'loading':
+                default:
+                    break
+            }
 
-const swipeOut = keyframes({
-    from: { transform: 'translateX(var(--radix-toast-swipe-end-x))' },
-    to: { transform: `translateX(calc(100% + 24px))` },
-})
+            return (
+                <ToastBar
+                    toast={t}
+                    style={{
+                        ...t.style,
+                        animation: t.visible
+                            ? `${slideIn} 200ms cubic-bezier(0.16, 1, 0.3, 1)`
+                            : `${swipeOut} 100ms ease-out forwards`,
+                    }}
+                />
+            )
+        }}
+    </HotToaster>
+)
 
-const StyledToast = styled(ToastPrimitive.Root, {
-    boxShadow: 'hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px',
-    display: 'grid',
-    gridTemplateAreas: '"title action" "description action"',
-    gridTemplateColumns: 'auto max-content',
-    columnGap: 15,
-    alignItems: 'center',
-
-    '@media (prefers-reduced-motion: no-preference)': {
-        '&[data-state="open"]': {
-            animation: `${slideIn} 150ms cubic-bezier(0.16, 1, 0.3, 1)`,
-        },
-        '&[data-state="closed"]': {
-            animation: `${hide} 100ms ease-in`,
-        },
-        '&[data-swipe="move"]': {
-            transform: 'translateX(var(--radix-toast-swipe-move-x))',
-        },
-        '&[data-swipe="cancel"]': {
-            transform: 'translateX(0)',
-            transition: 'transform 200ms ease-out',
-        },
-        '&[data-swipe="end"]': {
-            animation: `${swipeOut} 100ms ease-out`,
-        },
-    },
-})
-
-const Toast = ({ children, data, setData }: ToastProps) => {
-    const setOpen = (open: boolean) => setData({ ...data, open })
-
-    return (
-        <ToastPrimitive.Provider swipeDirection="right">
-            {children}
-            <StyledToast
-                className={`flex rounded-lg border-2 border-gray-500 bg-ui-dark-jungle ${
-                    data.type === 'loading' ? 'p-0' : 'p-4'
-                } outline-none`}
-                open={data.open}
-                onOpenChange={setOpen}
-            >
-                <ToastPrimitive.Title className="flex items-center justify-between gap-x-2 font-medium">
-                    {typeToIcon[data.type]}
-                    <p>{data.message}</p>
-                </ToastPrimitive.Title>
-            </StyledToast>
-            <ToastPrimitive.Viewport className="fixed top-0 right-0 z-50 m-0 flex list-none flex-col gap-2.5 p-6 outline-none" />
-        </ToastPrimitive.Provider>
-    )
-}
-
-export default Toast
+export const customToast = () => toast
