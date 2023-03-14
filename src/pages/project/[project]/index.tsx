@@ -83,13 +83,13 @@ const Project: NextPage = () => {
                         />
                     </>
                 )}
-                {isOrgAdmin && data && data.error && (
+                {
                     <RelinkAirtableAuthModal
                         open={openRelinkAirtableModal}
                         setOpen={setOpenRelinkAirtableModal}
                         organizationSlug={project.organization.slug}
                     />
-                )}
+                }
 
                 <div className="flex flex-col">
                     <div className="pb-4 text-2xl font-bold md:text-3xl">{name}</div>

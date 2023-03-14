@@ -102,6 +102,7 @@ module.exports = {
                 // black: '#0b101a',
                 black: '#010505',
                 brand: '#85C9C1',
+                'dark-accent': '#2D3836',
                 // slate: colors.slate,
                 // neutral: colors.neutral,
                 'off-white': '#eeeeee',

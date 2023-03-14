@@ -24,10 +24,10 @@ export default function Dropdown<T extends { id: number | string; name: string }
             {({ open }) => (
                 <>
                     <div className="relative mt-3">
-                        <Listbox.Label className="absolute -top-2 left-2 z-10 -mt-px inline-block bg-black px-1 text-xs font-medium">
+                        <Listbox.Label className="absolute -top-2 left-2 z-10 -mt-px inline-block bg-dark-accent px-1 text-xs font-medium">
                             {label}
                         </Listbox.Label>
-                        <Listbox.Button className="relative min-h-[38px] w-full cursor-default rounded-md border border-gray-300 bg-black py-2 pl-3 pr-10 text-left shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm">
+                        <Listbox.Button className="relative min-h-[38px] w-full cursor-default rounded-md border border-gray-300 bg-dark-accent py-2 pl-3 pr-10 text-left shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm">
                             <span className="block truncate">{selected?.name}</span>
                             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                                 <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />

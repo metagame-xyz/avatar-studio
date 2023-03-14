@@ -6,7 +6,7 @@ import * as AWS from 'aws-sdk'
 import type { PutObjectRequest } from 'aws-sdk/clients/s3'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
-import { hashPermanentTraits, traitsToTraitsWithEarnedBool } from 'utils'
+import { hashPermanentTraits, traitsToTraitsWithEarnedBool, truncateAddress } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { cloudfrontFolderUrl } from 'utils/constants'
 import { getEns } from 'utils/needEnvUtils'
@@ -411,6 +411,8 @@ export const memberRouter = router({
                 ContentDisposition: 'inline',
             }
 
+            const userName = `${member.firstName}` || (await getEns(member.address)) || truncateAddress(member.address)
+
             timer.startTimer('nftMetadata.create')
             // add a new nftMetadata record
             await ctx.prisma.nftMetadata.create({
@@ -418,8 +420,8 @@ export const memberRouter = router({
                     userId: member.id,
                     projectSlug,
                     tokenId: existingNftData?.tokenId || null,
-                    name: `${member.firstName}'s ${project.name}`,
-                    description: `${member.firstName}'s ${project.name}, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
+                    name: `${userName}'s ${project.name}`,
+                    description: `${userName}'s ${project.name}, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
                     walletAddress: member.address,
                     image: `${cloudfrontFolderUrl}${imageFilePath}`,
                     network,

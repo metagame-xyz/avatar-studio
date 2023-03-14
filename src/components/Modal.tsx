@@ -76,7 +76,7 @@ export default function Modal({
                             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         >
                             <Dialog.Panel
-                                className={`relative w-full max-w-lg transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6 ${className} ${width}`}
+                                className={`relative w-full max-w-lg transform rounded-lg bg-dark-accent p-4 text-left shadow-xl transition-all sm:my-8 sm:p-6 ${className} ${width}`}
                             >
                                 <div>
                                     <div className="flex flex-col gap-4 text-center">

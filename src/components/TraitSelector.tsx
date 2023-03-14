@@ -62,7 +62,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelecto
                     {traitOptions
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .sort((a, b) => (a.earned === b.earned ? 0 : a.earned ? -1 : 1))
-                        .map((trait, i) => (
+                        .map((trait) => (
                             <TraitImage
                                 key={`${trait.category} ${trait.name}`}
                                 className="col-span-1"
