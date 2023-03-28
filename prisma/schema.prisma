@@ -167,6 +167,7 @@ model Trait {
   id                              Int           @id @unique @default(autoincrement())
   traitCategory                   TraitCategory @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
   name                            String
+  pngUrl                          String?
   ///                             [PngUrlMap]
   pngUrlMap                       Json
   isDefaultAchieved               Boolean?
