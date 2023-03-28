@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import type {
     Achievement,
     AchievementCategory,
@@ -52,8 +53,6 @@ export type ToastData = {
     type: Status
 }
 
-export type PfpUpdateRequest = TraitWithEarnedBool[]
-
 export type ProfileIconSizeType = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
 export type TraitWithEarnedBool = Prettify<
@@ -64,6 +63,12 @@ export type TraitWithEarnedBool = Prettify<
         isModifiable: boolean
     }
 >
+
+export type AssembledNftTraits = Prettify<
+    TraitWithEarnedBool & {
+        pngUrl: string
+    }
+>[]
 
 export type TraitCategoryWithTraitsWithEarned = Prettify<
     TraitCategory & {
@@ -196,3 +201,14 @@ export type Prettify<T> = {
 } & {}
 
 export type AchievementCategoryWithAs = Prettify<AchievementCategory & { achievements: Achievement[] }>
+
+type AtLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U]
+
+export type NonEmptyRecord<T extends string, V> = AtLeastOne<Record<T, V>>
+
+// for prisma-json-types-generator
+declare global {
+    namespace PrismaJson {
+        type PngUrlMap = NonEmptyRecord<string, string>
+    }
+}

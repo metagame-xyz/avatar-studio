@@ -51,7 +51,7 @@ const AchievementToTraitEditor = ({ traitCategory, achievementCategories }: Achi
                                         height={112}
                                         key={`${t.name} ${i}`}
                                         alt={`${t.traitCategoryName} ${t.name}`}
-                                        src={t.pngUrl}
+                                        src={t.pngUrlMap[Object.keys(t.pngUrlMap)[0] as string] as string}
                                         className="my-auto"
                                     />
                                 </div>

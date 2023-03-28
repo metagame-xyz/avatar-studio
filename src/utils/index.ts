@@ -6,7 +6,7 @@ import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
 import { z } from 'zod'
 import type { AirtableField } from './airtableFrontend'
-import type { RequestedTraits, TraitWithEarnedBool } from './types'
+import type { AssembledNftTraits, RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
     return classes.filter(Boolean).join(' ')
@@ -20,18 +20,44 @@ export const slugify = (name: string) => {
     })
 }
 
-export const traitsToTraitsWithEarnedBool = (
-    traits: (Trait & {
-        traitCategory: TraitCategory
-    })[],
-): TraitWithEarnedBool[] => {
+export const getBaseName = (
+    traits: (
+        | (Trait & {
+              traitCategory: TraitCategory
+          })
+        | TraitWithEarnedBool
+    )[],
+): string => {
+    const baseTrait = traits.find((trait) => {
+        return 'traitCategory' in trait
+            ? trait.traitCategory.name === 'Base' && trait.name
+            : trait.category === 'Base' && trait.name
+    })
+    return baseTrait?.name || 'defaultVariant'
+}
+
+export const traitsToAssembledNftTraits = (
+    traits: (
+        | (Trait & {
+              traitCategory: TraitCategory
+          })
+        | TraitWithEarnedBool
+    )[],
+): AssembledNftTraits => {
+    const baseName = getBaseName(traits)
     return traits.map((trait) => {
-        return {
-            ...trait,
-            earned: true,
-            category: trait.traitCategory.name,
-            zIndex: trait.traitCategory.zIndex,
-            isModifiable: trait.traitCategory.isModifiable,
+        const pngUrl = trait.pngUrlMap[baseName] || (trait.pngUrlMap['defaultVariant'] as string)
+        if ('earned' in trait) {
+            return { ...trait, pngUrl }
+        } else {
+            return {
+                ...trait,
+                earned: true,
+                category: trait.traitCategory.name,
+                zIndex: trait.traitCategory.zIndex,
+                isModifiable: trait.traitCategory.isModifiable,
+                pngUrl,
+            }
         }
     })
 }

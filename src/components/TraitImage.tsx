@@ -1,11 +1,12 @@
 import { LockClosedIcon } from '@heroicons/react/24/solid'
 import Tooltip from 'components/Tooltip'
 import Image from 'next/image'
-import type { TraitWithEarnedBool } from 'utils/types'
+import { getBaseName } from 'utils'
+import type { AssembledNftTraits, TraitWithEarnedBool } from 'utils/types'
 
 type TraitImageProps = {
     trait: TraitWithEarnedBool
-    pfpState: TraitWithEarnedBool[]
+    pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
     selected: boolean
     disabled?: boolean
@@ -22,6 +23,8 @@ const TraitImage = ({
     disabledMessage = '',
     className,
 }: TraitImageProps) => {
+    const isBaseCategory = trait.category === 'Base'
+    const baseName = isBaseCategory ? trait.name : getBaseName(pfpState)
     return (
         <div className="w-28">
             <button
@@ -34,6 +37,7 @@ const TraitImage = ({
                 {pfpState.map((existingTrait, i) => {
                     const useNewTrait = existingTrait.category === trait.category
                     const t = useNewTrait ? trait : existingTrait
+                    const pngUrl = (t.pngUrlMap[baseName] || t.pngUrlMap['defaultVariant']) as string
                     const style = 'absolute left-0 top-0 group-disabled:opacity-60 group-disabled:grayscale'
                     return (
                         <Image
@@ -41,7 +45,7 @@ const TraitImage = ({
                             height={112}
                             key={`${t.category} ${t.name} ${i}`}
                             alt={`${t.category} ${t.name}`}
-                            src={t.pngUrl}
+                            src={pngUrl}
                             style={{ zIndex: t.zIndex }}
                             className={style}
                         />

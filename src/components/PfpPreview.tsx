@@ -14,19 +14,19 @@ import upperRightArrow from 'public/icons/upperRightArrow.svg'
 import { useEffect, useState } from 'react'
 import { networkStrings } from 'utils/constants'
 import { areTraitsEqual, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
-import type { TraitWithEarnedBool } from 'utils/types'
+import type { AssembledNftTraits } from 'utils/types'
 import { AllowedAction, Status } from 'utils/types'
 import { useNetwork } from 'wagmi'
 import Loader from './Loader'
 import Loading from './Loading'
 
 type PfpPreviewProps = {
-    pfpState: TraitWithEarnedBool[]
+    pfpState: AssembledNftTraits
     txHash?: string
     openSeaUrl?: string | null
     signMessage: (args?: SignMessageArgs | undefined) => void
     userIsSigning: boolean
-    existingPfpState: TraitWithEarnedBool[] | null
+    existingPfpState: AssembledNftTraits | null
     mintFunction: ((overrideConfig?: undefined) => void) | undefined
     createNftMetadataStatus: Status
     mintStatus: Status

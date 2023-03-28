@@ -4,12 +4,12 @@ import { useState } from 'react'
 import AnimateHeight from 'react-animate-height'
 import { IsNewComboAllowed } from 'utils'
 import { trpc } from 'utils/trpc'
-import type { TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
+import type { AssembledNftTraits, TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
 import { useNetwork } from 'wagmi'
 
 type TraitSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
-    pfpState: TraitWithEarnedBool[]
+    pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
 }
 

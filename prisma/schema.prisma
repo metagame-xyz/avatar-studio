@@ -6,6 +6,10 @@ generator client {
   previewFeatures = ["orderByNulls", "extendedWhereUnique"]
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider  = "postgresql"
   // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
@@ -163,7 +167,8 @@ model Trait {
   id                              Int           @id @unique @default(autoincrement())
   traitCategory                   TraitCategory @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
   name                            String
-  pngUrl                          String
+  ///                             [PngUrlMap]
+  pngUrlMap                       Json
   isDefaultAchieved               Boolean?
   achievementsRequired            Achievement[]
   achievementsRequiredDescription String?

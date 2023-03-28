@@ -6,7 +6,7 @@ import * as AWS from 'aws-sdk'
 import type { PutObjectRequest } from 'aws-sdk/clients/s3'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
-import { hashPermanentTraits, traitsToTraitsWithEarnedBool, truncateAddress } from 'utils'
+import { hashPermanentTraits, traitsToAssembledNftTraits, truncateAddress } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
 import { cloudfrontFolderUrl } from 'utils/constants'
 import { getEns } from 'utils/needEnvUtils'
@@ -265,7 +265,7 @@ export const memberRouter = router({
 
             if (!member.nftMetadata[0]) return null
 
-            const traits = traitsToTraitsWithEarnedBool(member.nftMetadata[0].traits)
+            const traits = traitsToAssembledNftTraits(member.nftMetadata[0].traits)
 
             const nftMetadata = {
                 ...member.nftMetadata[0],
@@ -336,7 +336,7 @@ export const memberRouter = router({
                     throw new Error('No changes made')
                 }
 
-                const existingTraits = traitsToTraitsWithEarnedBool(existingNftData.traits)
+                const existingTraits = traitsToAssembledNftTraits(existingNftData.traits)
                 // add back existing non-modifiable traits
                 for (const existingTrait of existingTraits) {
                     if (!existingTrait.isModifiable) {
@@ -378,12 +378,15 @@ export const memberRouter = router({
             const canvas = createCanvas(2400, 2400)
             const canvasCtx = canvas.getContext('2d')
 
+            // get the correct pngUrl for each trait
+            const approvedTraitsWithPngUrl = traitsToAssembledNftTraits(approvedTraits)
+
             // // sort the layers by category z-index so that the background is drawn first
-            approvedTraits.sort((a, b) => a.zIndex - b.zIndex)
+            approvedTraitsWithPngUrl.sort((a, b) => a.zIndex - b.zIndex)
 
             timer.startTimer('load trait images')
 
-            const imagePromises = approvedTraits.map((layer) => loadImage(layer.pngUrl))
+            const imagePromises = approvedTraitsWithPngUrl.map((layer) => loadImage(layer.pngUrl))
             const images = await Promise.all(imagePromises)
             timer.stopTimer('load trait images')
 
@@ -400,7 +403,7 @@ export const memberRouter = router({
 
             const s3 = new AWS.S3({ useAccelerateEndpoint: true })
 
-            const permanentTraitsHash = hashPermanentTraits(approvedTraits)
+            const permanentTraitsHash = hashPermanentTraits(approvedTraitsWithPngUrl)
             const version = member.nftMetadata.length + 1
             const imageFilePath = `${projectSlug}/complete-images/${network}/${member.address}/${permanentTraitsHash}_v${version}.png`
             const params: PutObjectRequest = {
@@ -427,7 +430,7 @@ export const memberRouter = router({
                     network,
                     traitHash: permanentTraitsHash,
                     traits: {
-                        connect: approvedTraits.map((t) => {
+                        connect: approvedTraitsWithPngUrl.map((t) => {
                             return { id: t.id }
                         }),
                     },

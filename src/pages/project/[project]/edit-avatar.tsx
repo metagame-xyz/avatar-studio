@@ -9,7 +9,6 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { NETWORK } from 'utils/constants'
 import {
     areTraitArraysEqual,
     getDecodedTransferEvent,
@@ -17,10 +16,12 @@ import {
     isComboAllowed,
     pfpStateToRequestedTraits,
     springAnimation,
-} from 'utils/index'
+    traitsToAssembledNftTraits,
+} from 'utils'
+import { NETWORK } from 'utils/constants'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
-import type { Signature, Status, TraitWithEarnedBool } from 'utils/types'
+import type { AssembledNftTraits, Signature, Status, TraitWithEarnedBool } from 'utils/types'
 import { AllowedAction } from 'utils/types'
 import {
     goerli,
@@ -88,7 +89,7 @@ const EditAvatar = () => {
 
     const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
     const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create)
-    const [existingPfpState, setExistingPfpState] = useState<TraitWithEarnedBool[] | null>(null)
+    const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
     // set existing pfp state if user has an nft
     // set nft state (data in db, and then also if minted and has a tokenId)
     useEffect(() => {
@@ -116,29 +117,51 @@ const EditAvatar = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingNftMetadata])
 
-    const [pfpState, setPfpState] = useState<TraitWithEarnedBool[]>([])
+    const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [signatureForMint, setSignatureForMint] = useState<Signature>()
+
+    // upload data to db
+    const createOrUpdateNftMetadata = trpc.member.createOrUpdateNftMetadata.useMutation({
+        onSuccess: (data) => {
+            if (nftState === NftState.hasDataAndNft) {
+                toast.success(`Your ${project?.name} updated!`)
+            }
+            if ([NftState.hasDataNoNft, NftState.noDataNoNft].includes(nftState)) {
+                setSignatureForMint(data)
+                setNftState(NftState.hasDataNoNft)
+                setAllowedAction(AllowedAction.mint)
+                toast.success(`You may mint your ${project?.name} now`)
+            }
+            setIsUpdatingTraitsModalOpen(false)
+            trpcUtils.member.nftMetadata.invalidate()
+        },
+        onError: (error) => {
+            toast.error(error.message)
+        },
+    })
 
     // set initial pfpState
     useEffect(() => {
         if (existingNftMetadata?.traits && assetData && !createOrUpdateNftMetadata.isLoading) {
             setPfpState(existingNftMetadata.traits)
         } else if (assetData && !pfpState.length && usedCombos) {
-            let defaultPfpState: TraitWithEarnedBool[] | undefined = undefined
+            let defaultPfpState: AssembledNftTraits | undefined = undefined
 
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
                 console.log(defaultPfpState?.length)
                 // create a new combo for defaultPfPState if taken
-                defaultPfpState = assetData
-                    .map((traitCategory) => {
-                        const earnedTraits = traitCategory.traits.filter((t) => t.earned)
-                        if (!earnedTraits.length) return null
-                        const i = Math.floor(Math.random() * earnedTraits.length)
-                        return earnedTraits[i] as TraitWithEarnedBool
-                    })
-                    .filter((t) => !!t) as TraitWithEarnedBool[]
+                defaultPfpState = traitsToAssembledNftTraits(
+                    assetData
+                        .map((traitCategory) => {
+                            const earnedTraits = traitCategory.traits.filter((t) => t.earned)
+                            if (!earnedTraits.length) return null
+                            const i = Math.floor(Math.random() * earnedTraits.length)
+                            return earnedTraits[i] as TraitWithEarnedBool
+                        })
+                        .filter((t) => !!t) as TraitWithEarnedBool[],
+                )
 
                 safety++
                 if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
@@ -146,7 +169,7 @@ const EditAvatar = () => {
             if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
             setPfpState(defaultPfpState)
         }
-    }, [assetData, existingNftMetadata?.traits, pfpState.length, usedCombos])
+    }, [assetData, createOrUpdateNftMetadata.isLoading, existingNftMetadata?.traits, pfpState.length, usedCombos])
 
     // Signing transaction (pre-mint & for updating pfp)
     const { isLoading: userIsSigning, signMessage } = useSignMessage({
@@ -169,25 +192,6 @@ const EditAvatar = () => {
         },
     })
 
-    // upload data to db
-    const createOrUpdateNftMetadata = trpc.member.createOrUpdateNftMetadata.useMutation({
-        onSuccess: (data) => {
-            if (nftState === NftState.hasDataAndNft) {
-                toast.success(`Your ${project?.name} updated!`)
-            }
-            if ([NftState.hasDataNoNft, NftState.noDataNoNft].includes(nftState)) {
-                setSignatureForMint(data)
-                setNftState(NftState.hasDataNoNft)
-                setAllowedAction(AllowedAction.mint)
-                toast.success(`You may mint your ${project?.name} now`)
-            }
-            setIsUpdatingTraitsModalOpen(false)
-            trpcUtils.member.nftMetadata.invalidate()
-        },
-        onError: (error) => {
-            toast.error(error.message)
-        },
-    })
     // TODO maybe un-hardcode homestead?
     const contractAddress = network === 'homestead' ? project?.contractAddress : project?.testContractAddress
     const placeholderHex = '0x00' as `0x${string}`
@@ -261,7 +265,7 @@ const EditAvatar = () => {
         }
         setAllowedAction(stateToActionMap[nftState])
 
-        setPfpState([...oldStateMinusNewTrait, newTrait])
+        setPfpState(traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait]))
         return
     }
 
@@ -351,7 +355,7 @@ const EditAvatar = () => {
                     <div className={`relative flex w-full flex-col justify-between gap-4 py-2`}>
                         <div className="grid gap-y-2">
                             {assetData
-                                ?.sort((a, b) => b.zIndex - a.zIndex)
+                                ?.sort((a, b) => a.zIndex - b.zIndex)
                                 .map((tc) => {
                                     // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
                                     return !!existingPfpState && !tc.isModifiable ? null : (
