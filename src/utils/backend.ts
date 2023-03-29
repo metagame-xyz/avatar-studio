@@ -4,7 +4,7 @@ import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 import { ethers, Wallet } from 'ethers'
 import type { NextApiRequest } from 'next/types'
-import { goerli, mainnet } from 'wagmi/chains'
+import { mainnet, sepolia } from 'wagmi/chains'
 import type { NewAirtableMember, Signature } from './types'
 
 export const privy = new PrivyClient(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET)
@@ -18,7 +18,7 @@ export const createDomainSeparator = (
     // tokenId is use for 1155s, where each tokenId has different mint requirements.
     // for 712s, tokenId is always 1.
 
-    const networkId = network === 'homestead' ? mainnet.id : goerli.id
+    const networkId = network === 'homestead' ? mainnet.id : sepolia.id
 
     const DOMAIN_SEPARATOR = ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(

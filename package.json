@@ -57,7 +57,7 @@
         "slugify": "^1.6.5",
         "superjson": "1.9.1",
         "ts-case-convert": "^2.0.2",
-        "wagmi": "^0.10.10",
+        "wagmi": "^0.12.7",
         "zod": "^3.18.0"
     },
     "devDependencies": {

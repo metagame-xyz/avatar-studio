@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const address = minterAddress.toLowerCase()
 
     const isProd = process.env.VERCEL_ENV === 'production' // TODO confirm
-    const network = isProd ? 'homestead' : 'goerli'
+    const network = isProd ? 'homestead' : 'sepolia'
 
     // const logData: LogData = {
     //     level: 'info',

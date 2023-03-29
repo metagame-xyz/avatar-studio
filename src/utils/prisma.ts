@@ -5,7 +5,7 @@ export const getMemberWithProject = (
     prisma: PrismaClient,
     privyDID: string,
     projectSlug: string,
-    network = 'goerli',
+    network = 'sepolia',
 ): Promise<MemberWithAProject> => {
     return prisma.user.findUniqueOrThrow({
         where: {
@@ -52,7 +52,7 @@ export const getMemberWithProject = (
     }) as Promise<MemberWithAProject>
 }
 
-// export const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'goerli')
+// export const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'sepolia')
 export const getNetworkName = (chainNetwork: string) => chainNetwork
 
 export const getEarnedTraits = (member: MemberWithAProject): TraitCategoryWithTraitsWithEarned[] => {

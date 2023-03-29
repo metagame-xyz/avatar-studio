@@ -343,14 +343,12 @@ export const projectRouter = router({
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
 
             const { airtableFields, airtableMembers } = input
-
             const project = await ctx.prisma.project.findUniqueOrThrow({
                 where: { slug: ctx.projectSlug },
                 include: { airtableProject: true },
             })
 
             const { walletAddressFieldName } = project.airtableProject ?? {}
-
             if (!walletAddressFieldName) {
                 throw new Error(`Project's airtableProject not found`)
             }

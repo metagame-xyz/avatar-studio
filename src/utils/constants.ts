@@ -7,7 +7,7 @@ export const INFURA_IPFS_SECRET_HEADER = `x-ipfs-project-secret`
 
 // Prod vs Dev constants
 export const isProdEnv = process.env.NODE_ENV === 'production'
-export const NETWORK = process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() || 'goerli'
+export const NETWORK = process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() || 'sepolia'
 export const networkStrings = getNetworkString(NETWORK)
 
 type NetworkStrings = {
@@ -49,8 +49,8 @@ function getNetworkString(network: string): NetworkStrings {
                 web3Modal: 'mainnet',
                 networkId: 1,
             }
-        case 'goerli':
-            return { ...defaultStrings, networkId: 5 }
+        case 'sepolia':
+            return { ...defaultStrings, networkId: 11155111 }
         default:
             return defaultStrings
     }

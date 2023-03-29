@@ -106,10 +106,10 @@ const isProjectOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     return next({ ctx })
 })
 
-const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'goerli')
+const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'sepolia')
 
 const getNetwork = t.middleware(async ({ ctx, next, rawInput }) => {
-    const chainNetwork = ((rawInput as Record<string, unknown>)?.chainNetwork || 'goerli') as string
+    const chainNetwork = ((rawInput as Record<string, unknown>)?.chainNetwork || 'sepolia') as string
     return next({
         ctx: {
             ...ctx,

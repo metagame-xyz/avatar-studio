@@ -24,7 +24,6 @@ import { trpc } from 'utils/trpc'
 import type { AssembledNftTraits, Signature, Status, TraitWithEarnedBool } from 'utils/types'
 import { AllowedAction } from 'utils/types'
 import {
-    goerli,
     mainnet,
     useAccount,
     useContractWrite,
@@ -34,6 +33,7 @@ import {
     useSwitchNetwork,
     useWaitForTransaction,
 } from 'wagmi'
+import { sepolia } from 'wagmi/chains'
 
 const EditAvatar = () => {
     const router = useRouter()
@@ -48,7 +48,7 @@ const EditAvatar = () => {
     const { data: project } = trpc.project.getProject.useQuery()
     const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
-    const correctChain = [goerli, mainnet].find((chain) => chain.network === NETWORK) || goerli
+    const correctChain = [sepolia, mainnet].find((chain) => chain.network === NETWORK) || sepolia
     const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(!!(chain?.id !== correctChain?.id))
     const [isUpdatingTraitsModalOpen, setIsUpdatingTraitsModalOpen] = useState<boolean>(false)
     useEffect(() => {

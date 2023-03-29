@@ -132,8 +132,8 @@ export const privyAddUser = async (
 
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
 const brennerEmail = 'brenner@themetagame.xyz'
-const goerliTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
-const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
+const aliceTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
+const bobTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
 
 const goerliContractAddress = '0x2ba797c234c8fe25847225b11b616bce729b0b53'
 
@@ -144,19 +144,19 @@ const metagameAdmin = {
     ['last-name']: 'Admin',
 }
 
-const goerliTestUser = {
-    ['wallet-address']: goerliTestAddress,
-    ['first-name']: 'Goerli',
+const AliceTestUser = {
+    ['wallet-address']: aliceTestAddress,
+    ['first-name']: 'Alice',
     ['last-name']: 'Test',
 }
 
-const rinkebyTestUser = {
-    ['wallet-address']: rinkebyTestAddress,
-    ['first-name']: 'Rinkeby',
+const bobTestUser = {
+    ['wallet-address']: bobTestAddress,
+    ['first-name']: 'Bob',
     ['last-name']: 'Test',
 }
 
-const seedMembers = [metagameAdmin, goerliTestUser, rinkebyTestUser]
+const seedMembers = [metagameAdmin, AliceTestUser, bobTestUser]
 
 async function main() {
     const oldPrivyUsers = await privyGetAllUsers(privyAppId, privyAppSecret)
@@ -195,40 +195,40 @@ async function main() {
         },
     })
 
-    const goerli = await prisma.user.create({
+    const alice = await prisma.user.create({
         data: {
-            address: goerliTestAddress,
-            privyDID: privyUsers.find((user) => user.address === goerliTestAddress)?.id,
+            address: aliceTestAddress,
+            privyDID: privyUsers.find((user) => user.address === aliceTestAddress)?.id,
             accounts: {
                 create: [
                     {
                         type: 'wallet',
-                        address: goerliTestAddress,
+                        address: aliceTestAddress,
                         chainType: 'ethereum',
                         verifiedAt: '2023-01-11T20:23:17.000Z',
                     },
                 ],
             },
-            firstName: 'Goerli',
+            firstName: 'Alice',
             lastName: 'Test',
         },
     })
 
-    const rinkeby = await prisma.user.create({
+    const bob = await prisma.user.create({
         data: {
-            address: rinkebyTestAddress,
-            privyDID: privyUsers.find((user) => user.address === rinkebyTestAddress)?.id,
+            address: bobTestAddress,
+            privyDID: privyUsers.find((user) => user.address === bobTestAddress)?.id,
             accounts: {
                 create: [
                     {
                         type: 'wallet',
-                        address: rinkebyTestAddress,
+                        address: bobTestAddress,
                         chainType: 'ethereum',
                         verifiedAt: '2023-01-11T20:25:17.000Z',
                     },
                 ],
             },
-            firstName: 'Rinkeby',
+            firstName: 'Bob',
             lastName: 'Test',
         },
     })
@@ -293,6 +293,53 @@ async function main() {
             organizationId: brassFactory.id,
         },
     })
+
+    const axolotls = await prisma.project.upsert({
+        where: { slug: 'cdmx-axolotls' },
+        update: {},
+        create: {
+            name: 'CDMX Axolotls',
+            slug: 'cdmx-axolotls',
+            organizationId: haabGoblins.id,
+        },
+    })
+
+    const { traitCategories: axolotlTraitCategories } = await getFromS3(AWS, prisma, axolotls.slug)
+
+    for (const axolotlTraitCategory of axolotlTraitCategories) {
+        const zMap = {
+            Background: 0,
+            Base: 1,
+            Eyes: 2,
+            Ears: 3,
+            Mouth: 4,
+            Headwear: 5,
+            Clothes: 6,
+        } as Record<string, number>
+
+        await prisma.traitCategory.update({
+            where: {
+                projectId_name: {
+                    projectId: axolotlTraitCategory.projectId,
+                    name: axolotlTraitCategory.name,
+                },
+            },
+            data: {
+                zIndex: zMap[axolotlTraitCategory.name],
+            },
+        })
+    }
+
+    for (const member of [metagameAdmin, alice, bob]) {
+        await prisma.membersOfProjects.create({
+            data: {
+                projectSlug: axolotls.slug,
+                userId: member.id,
+                role: 'MEMBER',
+            },
+        })
+    }
+
     const llamaPfp = await prisma.project.upsert({
         where: { slug: 'llama-pfp' },
         update: {},
@@ -304,7 +351,7 @@ async function main() {
         },
     })
 
-    for (const member of [metagameAdmin, goerli, rinkeby]) {
+    for (const member of [metagameAdmin, alice, bob]) {
         await prisma.membersOfProjects.create({
             data: {
                 projectSlug: llamaPfp.slug,
@@ -357,7 +404,7 @@ async function main() {
     })
     await prisma.memberAchievements.create({
         data: {
-            userId: goerli.id,
+            userId: alice.id,
             achievementId: (achievements[2] as Achievement).id,
             status: true,
         },
@@ -483,7 +530,7 @@ async function main() {
     const traitsToConnectArr = [traitsToConnect, traitsToConnect2, traitsToConnect3, traitsToConnect4]
 
     for (const [i, traits] of traitsToConnectArr.entries()) {
-        const member = i % 2 === 0 ? metagameAdmin : goerli
+        const member = i % 2 === 0 ? metagameAdmin : alice
         const traitsWithEarnedBool = traits?.map((t) => {
             return {
                 ...t,

@@ -122,7 +122,7 @@ model Project {
   contractAddress     String? @unique
   network             String? @default("ethereum")
   testContractAddress String? @unique
-  testNetwork         String? @default("goerli")
+  testNetwork         String? @default("sepolia")
 
   airtableProject AirtableProject?
 }
@@ -239,7 +239,7 @@ model NftMetadata {
   traits        Trait[]
   traitHash     String
 
-  network String @default("goerli")
+  network String @default("sepolia")
 
   userId      String
   projectSlug String

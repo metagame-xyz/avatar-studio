@@ -8,13 +8,13 @@ import { type AppType } from 'next/app'
 import 'styles/globals.css'
 import { trpc } from 'utils/trpc'
 import { configureChains } from 'wagmi'
-import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
+import { mainnet, optimism, polygon, sepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 
 // export const { chains, provider } = configureChains(
 export const configureChainsConfig = configureChains(
-    [mainnet, goerli, polygon, optimism],
+    [mainnet, sepolia, polygon, optimism],
     [alchemyProvider({ apiKey: env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID }), publicProvider()],
 )
 

@@ -257,7 +257,7 @@ export const memberRouter = router({
     nftMetadata: protectedProcedure
         .input(z.object({ projectSlug: z.string(), chainNetwork: z.string() }))
         .query(async ({ ctx, input }) => {
-            // if node env isn't prod, use goerli, else, use chainNetwork
+            // if node env isn't prod, use sepolia, else, use chainNetwork
             const network = getNetworkName(input.chainNetwork)
             // get the latest version of the user's nftMetadata for the project
 
