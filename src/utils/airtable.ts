@@ -283,13 +283,18 @@ class Airtable {
         const memberRecords = await membersTable.select({}).all()
         const members = memberRecords.map((record) => record.fields)
 
-        const slugifyKeys = (arr: Record<string, MostTypes>[] | FieldSet[]): Record<string, MostTypes>[] => {
-            return arr.map((obj) => {
+        const slugifyKeys = (fields: Record<string, MostTypes>[] | FieldSet[]): Record<string, MostTypes>[] => {
+            return fields.map((field) => {
                 const transformedObj: Record<string, MostTypes> = {}
-                Object.keys(obj).forEach((key) => {
-                    const value = obj[key]
-                    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-                        transformedObj[slugify(key)] = value
+                Object.keys(field).forEach((fieldName) => {
+                    const value = field[fieldName]
+                    if (
+                        typeof value === 'string' ||
+                        typeof value === 'number' ||
+                        typeof value === 'boolean' ||
+                        Array.isArray(value)
+                    ) {
+                        transformedObj[slugify(fieldName)] = value
                     }
                 })
                 return transformedObj

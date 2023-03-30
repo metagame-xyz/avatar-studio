@@ -3,7 +3,9 @@ import { OrganizationRole } from '@prisma/client'
 import AchievementToTraitEditor from 'components/AchievementToTraitEditor'
 import Input from 'components/Input'
 import Shell from 'components/Shell'
+import ToggleWithIcon from 'components/Toggle'
 import { type NextPage } from 'next'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { truncateAddress } from 'utils'
 import { getEns } from 'utils/needEnvUtils'
@@ -132,15 +134,20 @@ const AdminDashboard: NextPage = () => {
         return projects && projects.length > 0 ? (
             <div className="flex flex-col space-y-2">
                 {projects.map((project) => (
-                    <span onClick={() => setSelectedProject(project)} key={project.name}>
-                        <div
-                            className={`text-xl hover:cursor-pointer hover:text-teal-200${
-                                project.slug === selectedProject?.slug ? ' text-teal-300' : ''
-                            }`}
-                        >
-                            {project.name}
-                        </div>
-                    </span>
+                    <div className="flex items-center gap-2" key={project.name}>
+                        <span onClick={() => setSelectedProject(project)} key={project.name}>
+                            <div
+                                className={`text-xl hover:cursor-pointer hover:text-teal-200${
+                                    project.slug === selectedProject?.slug ? ' text-teal-300' : ''
+                                }`}
+                            >
+                                {project.name}
+                            </div>
+                        </span>
+                        <Link target="_blank" href={`/project/${project.slug}`}>
+                            (project page)
+                        </Link>
+                    </div>
                 ))}
             </div>
         ) : (
@@ -220,32 +227,20 @@ const AdminDashboard: NextPage = () => {
                                         </select>
                                     </td>
                                     <td className="td-primary">
-                                        <select
-                                            className="bg-black"
-                                            value={traitCategory.isModifiable ? 'true' : ''}
-                                            onChange={(event) =>
-                                                handleUpgradeableChange(traitCategory, Boolean(event.target.value))
+                                        <ToggleWithIcon
+                                            enabled={traitCategory.isModifiable}
+                                            setEnabled={(isEnabled: boolean) =>
+                                                handleUpgradeableChange(traitCategory, isEnabled)
                                             }
-                                        >
-                                            <>
-                                                <option value="true">Yes</option>
-                                                <option value="">No</option>
-                                            </>
-                                        </select>
+                                        />
                                     </td>
                                     <td className="td-primary">
-                                        <select
-                                            className="bg-black"
-                                            value={traitCategory.isDefaultAchieved ? 'true' : ''}
-                                            onChange={(event) =>
-                                                handleDefaultAchievedChange(traitCategory, Boolean(event.target.value))
+                                        <ToggleWithIcon
+                                            enabled={traitCategory.isDefaultAchieved}
+                                            setEnabled={(isEnabled: boolean) =>
+                                                handleDefaultAchievedChange(traitCategory, isEnabled)
                                             }
-                                        >
-                                            <>
-                                                <option value="true">Yes</option>
-                                                <option value="">No</option>
-                                            </>
-                                        </select>
+                                        />
                                     </td>
                                 </tr>
                             ))}

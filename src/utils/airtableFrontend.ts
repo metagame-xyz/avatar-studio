@@ -78,7 +78,7 @@ export class AirtableLockError extends Error {
     }
 }
 
-export type AirtableFieldType = 'checkbox' | 'number' | 'singleSelect'
+export type AirtableFieldType = 'checkbox' | 'number' | 'singleSelect' | 'multipleSelects'
 
 type AirtableFieldBase = {
     id: string
@@ -89,7 +89,7 @@ type AirtableFieldBase = {
 
 type AirtableCheckbox = { icon?: string; color?: string }
 type AirtableNumber = { precision?: number }
-type AirtableSingleSelect = { choices: { id: string; name: string; color?: string }[] }
+type AirtableSelect = { choices: { id: string; name: string; color?: string }[] }
 
 type AirtableFieldCheckbox = AirtableFieldBase & {
     type: 'checkbox'
@@ -103,10 +103,17 @@ type AirtableFieldNumber = AirtableFieldBase & {
 
 type AirtableFieldSingleSelect = AirtableFieldBase & {
     type: 'singleSelect'
-    options: AirtableSingleSelect
+    options: AirtableSelect
 }
 
-export type AirtableField = Prettify<AirtableFieldCheckbox | AirtableFieldNumber | AirtableFieldSingleSelect>
+type AirtableFieldMultipleSelects = AirtableFieldBase & {
+    type: 'multipleSelects'
+    options: AirtableSelect
+}
+
+export type AirtableField = Prettify<
+    AirtableFieldCheckbox | AirtableFieldNumber | AirtableFieldSingleSelect | AirtableFieldMultipleSelects
+>
 
 export const airtableOAuthResponseSchema = z.object({
     token_type: z.string(),
@@ -117,7 +124,12 @@ export const airtableOAuthResponseSchema = z.object({
     refresh_expires_in: z.number(),
 })
 
-const airtableFieldTypeSchema = z.union([z.literal('checkbox'), z.literal('number'), z.literal('singleSelect')])
+const airtableFieldTypeSchema = z.union([
+    z.literal('checkbox'),
+    z.literal('number'),
+    z.literal('singleSelect'),
+    z.literal('multipleSelects'),
+])
 
 const airtableFieldBaseSchema = z.object({
     id: z.string(),
@@ -135,7 +147,7 @@ const airtableNumberSchema = z.object({
     precision: z.number().optional(),
 })
 
-const airtableSingleSelectSchema = z.object({
+const airtableSelectSchema = z.object({
     choices: z.array(
         z.object({
             id: z.string(),
@@ -162,7 +174,14 @@ const airtableFieldNumberSchema = airtableFieldBaseSchema.and(
 const airtableFieldSingleSelectSchema = airtableFieldBaseSchema.and(
     z.object({
         type: z.literal('singleSelect'),
-        options: airtableSingleSelectSchema,
+        options: airtableSelectSchema,
+    }),
+)
+
+const airtableFieldMultipleSelectsSchema = airtableFieldBaseSchema.and(
+    z.object({
+        type: z.literal('multipleSelects'),
+        options: airtableSelectSchema,
     }),
 )
 
@@ -170,6 +189,7 @@ export const airtableFieldSchema = z.union([
     airtableFieldCheckboxSchema,
     airtableFieldNumberSchema,
     airtableFieldSingleSelectSchema,
+    airtableFieldMultipleSelectsSchema,
 ])
 
 export const airtableViewSchema = z.object({

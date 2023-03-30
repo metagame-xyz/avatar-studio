@@ -361,6 +361,7 @@ export const projectRouter = router({
                         return 'LEVEL'
                     case 'checkbox':
                     case 'singleSelect':
+                    case 'multipleSelects':
                         return 'SPECIFIC_ACHIEVEMENT'
                     default:
                         return 'SPECIFIC_ACHIEVEMENT'
@@ -370,7 +371,7 @@ export const projectRouter = router({
             const achievementCategoriesToCreate = achievementFields.map((field) => {
                 let achievements: { name: string; id: string }[] = []
                 // TODO: add support for other field types
-                if (field.type === 'singleSelect') {
+                if (field.type === 'singleSelect' || field.type === 'multipleSelects') {
                     achievements = field.options?.choices?.map((choice) => ({ name: choice.name, id: choice.id })) || []
                 }
 
@@ -441,19 +442,37 @@ export const projectRouter = router({
                         continue
                     }
 
-                    const achievement = prismaAC.achievements.find(
-                        (prismaAchievement) => prismaAchievement.name === airtableMember[slugify(field.name)],
-                    )
+                    const fieldSlug = slugify(field.name)
 
-                    if (!achievement) {
-                        console.error(`Achievement for category ${field.name} not found`)
-                        continue
+                    if (field.type === 'multipleSelects' && airtableMember[fieldSlug]) {
+                        const achievementNames = airtableMember[fieldSlug]
+
+                        const achievements = prismaAC.achievements.filter((prismaAchievement) =>
+                            achievementNames.includes(prismaAchievement.name),
+                        )
+
+                        achievements.forEach((achievement) => {
+                            memberAchievementData.push({
+                                userId: prismaMember.id,
+                                achievementId: achievement.id,
+                            })
+                        })
+                        // singleSelect, number, checkbox
+                    } else {
+                        const achievement = prismaAC.achievements.find(
+                            (prismaAchievement) => prismaAchievement.name === airtableMember[fieldSlug],
+                        )
+
+                        if (!achievement) {
+                            console.log(`Achievement for category ${field.name} not found`)
+                            continue
+                        }
+
+                        memberAchievementData.push({
+                            userId: prismaMember.id,
+                            achievementId: achievement.id,
+                        })
                     }
-
-                    memberAchievementData.push({
-                        userId: prismaMember.id,
-                        achievementId: achievement.id,
-                    })
                 }
             }
 

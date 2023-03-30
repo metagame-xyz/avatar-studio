@@ -52,17 +52,18 @@ export default function AirtableAchievementsModal({
                                 <td className="td-primary">{description}</td>
                                 <td className="td-primary">{id}</td>
                                 <td className="td-primary">
-                                    {type === 'singleSelect' && options.choices.length > 0 && (
-                                        <div className="ml-6 flex flex-col gap-2">
-                                            {options.choices.map((choice) => {
-                                                return (
-                                                    <div className="mt-2 flex items-center" key={choice.id}>
-                                                        {choice.name}
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    )}
+                                    {(type === 'singleSelect' || type === 'multipleSelects') &&
+                                        options.choices.length > 0 && (
+                                            <div className="ml-6 flex flex-col gap-2">
+                                                {options.choices.map((choice) => {
+                                                    return (
+                                                        <div className="mt-2 flex items-center" key={choice.id}>
+                                                            {choice.name}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
                                 </td>
                             </tr>
                         ))}

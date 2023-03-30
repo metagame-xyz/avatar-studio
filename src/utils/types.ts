@@ -30,7 +30,7 @@ export type Signature = {
     compact: string
 }
 
-export type MostTypes = string | number | boolean | null | undefined
+export type MostTypes = string | number | boolean | null | undefined | unknown[]
 
 export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never
 
