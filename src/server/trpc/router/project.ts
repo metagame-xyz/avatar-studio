@@ -370,7 +370,7 @@ export const projectRouter = router({
 
             const achievementCategoriesToCreate = achievementFields.map((field) => {
                 let achievements: { name: string; id: string }[] = []
-                // TODO: add support for other field types
+                // TODO: add support for checkbox
                 if (field.type === 'singleSelect' || field.type === 'multipleSelects') {
                     achievements = field.options?.choices?.map((choice) => ({ name: choice.name, id: choice.id })) || []
                 }
@@ -457,7 +457,51 @@ export const projectRouter = router({
                                 achievementId: achievement.id,
                             })
                         })
-                        // singleSelect, number, checkbox
+                    } else if (field.type === 'number') {
+                        const memberLevel = Number(airtableMember[fieldSlug])
+
+                        const padWithZeros = (num: number, sigFigs = 5): string => {
+                            const numString = num.toString()
+                            const numLength = numString.length
+                            const numZeros = sigFigs - numLength
+                            return '0'.repeat(numZeros) + numString
+                        }
+
+                        const fakeAirtableId = `${padWithZeros(prismaAC.id)}${padWithZeros(memberLevel)}`
+
+                        const achievementData = {
+                            achievementCategoryId: prismaAC.id,
+                            name: `${prismaAC.name} ${memberLevel}`,
+                            level: memberLevel,
+                            airtableId: fakeAirtableId,
+                        }
+
+                        const achievement = await ctx.prisma.achievement.upsert({
+                            where: achievementData,
+                            create: achievementData,
+                            update: achievementData,
+                        })
+
+                        memberAchievementData.push({
+                            userId: prismaMember.id,
+                            achievementId: achievement.id,
+                        })
+
+                        await ctx.prisma.memberAchievements.updateMany({
+                            where: {
+                                userId: prismaMember.id,
+                                achievement: {
+                                    achievementCategory: {
+                                        id: prismaAC.id,
+                                    },
+                                },
+                            },
+                            data: {
+                                status: false,
+                            },
+                        })
+
+                        // singleSelect
                     } else {
                         const achievement = prismaAC.achievements.find(
                             (prismaAchievement) => prismaAchievement.name === airtableMember[fieldSlug],

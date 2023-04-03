@@ -166,7 +166,7 @@ async function main() {
             privyDeleteUser(user.id, privyAppId, privyAppSecret)
         }),
     )
-    await sleep(2000)
+    await sleep(3000)
     const privyUsers = await Promise.all(seedMembers.map((member) => privyAddUser(member, privyAppId, privyAppSecret)))
 
     const metagameAdmin = await prisma.user.create({
@@ -476,7 +476,7 @@ async function main() {
             data: {
                 isDefaultAchieved: false,
                 levelRequired: Math.floor(i / 2) + 1,
-                levelLogic: LevelLogic.MORE_THAN_OR_EQUAL_TO,
+                levelLogic: LevelLogic.GREATER_THAN_OR_EQUAL_TO,
                 levelCategory: {
                     connect: {
                         id: llamaLevel.id,

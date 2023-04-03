@@ -178,6 +178,7 @@ export type MemberWithAProject = Prettify<
         achievements: (MemberAchievements & {
             achievement: Achievement & {
                 traits: Trait[]
+                achievementCategory: AchievementCategory
             }
         })[]
         nftMetadata: (NftMetadata & {

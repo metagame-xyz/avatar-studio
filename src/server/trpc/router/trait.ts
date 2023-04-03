@@ -1,10 +1,10 @@
+import { LevelLogic } from '@prisma/client'
+import * as AWS from 'aws-sdk'
 import { env } from 'env/server.mjs'
 import { getFromS3, getTraitCategoriesAndNames } from 'utils/s3'
+import { traitCategorySchema } from 'utils/types'
 import { z } from 'zod'
 import { protectedMetagameAdminProcedure, protectedProjectProcedure, publicProcedure, router } from '../trpc'
-
-import * as AWS from 'aws-sdk'
-import { traitCategorySchema } from 'utils/types'
 
 AWS.config.update({
     accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
@@ -81,6 +81,40 @@ export const traitRouter = router({
                         set: [],
                     },
                     achievementsRequiredDescription: null,
+                    levelLogic: null,
+                    levelRequired: null,
+                },
+                include: {
+                    achievementsRequired: true,
+                },
+            })
+        }),
+    connectLevelAchievement: protectedMetagameAdminProcedure
+        .input(
+            z.object({
+                traitId: z.number(),
+                levelRequired: z.number(),
+                levelLogic: z.enum([
+                    LevelLogic.GREATER_THAN_OR_EQUAL_TO,
+                    LevelLogic.LESS_THAN_OR_EQUAL_TO,
+                    LevelLogic.EQUAL_TO,
+                    LevelLogic.MORE_THAN_OR_EQUAL_TO, // TODO remove this
+                ]),
+                achievementsRequiredDescription: z.string(),
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const { traitId, levelRequired, levelLogic, achievementsRequiredDescription } = input
+
+            return ctx.prisma.trait.update({
+                where: {
+                    id: traitId,
+                },
+                data: {
+                    isDefaultAchieved: false,
+                    levelLogic,
+                    levelRequired,
+                    achievementsRequiredDescription,
                 },
                 include: {
                     achievementsRequired: true,

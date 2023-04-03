@@ -1,4 +1,4 @@
-import { AchievementType } from '@prisma/client'
+import { AchievementType, LevelLogic } from '@prisma/client'
 import { useState } from 'react'
 import { trpc } from 'utils/trpc'
 import type { AchievementCategoryWithAs, TraitWithAchievements } from 'utils/types'
@@ -12,6 +12,7 @@ type Props = {
 export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }: Props) => {
     const connectAchievement = trpc.trait.connectAchievement.useMutation({})
     const removeAchievement = trpc.trait.removeAchievement.useMutation({})
+    const connectLevelAchievement = trpc.trait.connectLevelAchievement.useMutation({})
     const makeTraitComplimentary = trpc.trait.toggleTraitComplimentary.useMutation({})
 
     const [earnable, setEarnable] = useState(trait.achievementsRequired.length > 0 || !!trait.isDefaultAchieved)
@@ -28,6 +29,9 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
     const [selectedCategory, setSelectedCategory] = useState(existingCategory || achievementCategoryOptions[0] || null)
     const [selectedAchievement, setSelectedAchievement] = useState(existingAchievement || null)
     const [selectedLevel, setSelectedLevel] = useState(trait.levelRequired || undefined)
+    const [selectedLevelLogic, setSelectedLevelLogic] = useState(
+        trait.levelLogic || LevelLogic.GREATER_THAN_OR_EQUAL_TO,
+    )
 
     // console.log('selectedCategory', selectedCategory)
 
@@ -36,6 +40,7 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
             removeAchievement.mutate({ traitId: trait.id })
             setSelectedCategory(existingCategory || achievementCategoryOptions[0] || null)
             setSelectedAchievement(null)
+            setSelectedLevel(undefined)
         }
         setEarnable(earnable)
     }
@@ -45,6 +50,7 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
 
         setSelectedCategory(existingCategory || achievementCategoryOptions[0] || null)
         setSelectedAchievement(null)
+        setSelectedLevel(undefined)
         setIsComplimentary(isComplimentary)
     }
 
@@ -52,6 +58,8 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
         const category = achievementCategoryOptions.find((ac) => ac.id === Number(event.target.value)) || null
         setSelectedCategory(category)
         setSelectedAchievement(null)
+        setSelectedLevel(undefined)
+        removeAchievement.mutate({ traitId: trait.id })
     }
     const handleAchievementChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const achievement = selectedCategory?.achievements.find((a) => a.id === Number(event.target.value)) || null
@@ -60,17 +68,45 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
             connectAchievement.mutate({
                 traitId: trait.id,
                 achievementId: achievement.id,
-                achievementsRequiredDescription: achievement.name,
+                achievementsRequiredDescription: `requires ${achievement.name}`,
             })
         } else {
             removeAchievement.mutate({ traitId: trait.id })
         }
     }
 
-    // TODO
     const handleLevelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        // const achievement = selectedCategory?.achievements.find((a) => a.id === Number(event.target.value)) || null
-        setSelectedLevel(event.target.valueAsNumber)
+        const level = event.target.valueAsNumber
+
+        setSelectedLevel(level)
+
+        if (level && selectedLevelLogic) {
+            connectLevelAchievement.mutate({
+                traitId: trait.id,
+                levelRequired: level,
+                levelLogic: selectedLevelLogic,
+                achievementsRequiredDescription: `requires ${selectedCategory?.name} ${levelLogicString[selectedLevelLogic]} ${level}`,
+            })
+        } else {
+            removeAchievement.mutate({ traitId: trait.id })
+        }
+    }
+
+    const handleLevelLogicChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const levelLogic = LevelLogic[event.target.value as keyof typeof LevelLogic]
+
+        setSelectedLevelLogic(levelLogic)
+
+        if (selectedLevel && levelLogic) {
+            connectLevelAchievement.mutate({
+                traitId: trait.id,
+                levelRequired: selectedLevel,
+                levelLogic: levelLogic,
+                achievementsRequiredDescription: `requires ${selectedCategory?.name} ${levelLogicString[levelLogic]} ${selectedLevel}`,
+            })
+        } else {
+            removeAchievement.mutate({ traitId: trait.id })
+        }
     }
 
     const SpecificAchievementSelector = () => (
@@ -87,12 +123,31 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
         </>
     )
 
-    const mtoet = '≥'
+    const levelLogicString = {
+        [LevelLogic.GREATER_THAN_OR_EQUAL_TO]: '≥',
+        [LevelLogic.LESS_THAN_OR_EQUAL_TO]: '≤',
+        [LevelLogic.EQUAL_TO]: '=',
+        [LevelLogic.MORE_THAN_OR_EQUAL_TO]: '≥',
+    }
+
+    const gtoet = '≥'
     const ltoet = '≤'
+    const eq = '='
 
     const LevelAchievementSelector = () => (
         <>
-            <div className="flex items-center text-xl">{`is ${mtoet}`}</div>
+            <select className="bg-black" value={selectedLevelLogic} onChange={handleLevelLogicChange}>
+                <option key={gtoet} value={LevelLogic.GREATER_THAN_OR_EQUAL_TO}>
+                    {gtoet}
+                </option>
+                <option key={ltoet} value={LevelLogic.LESS_THAN_OR_EQUAL_TO}>
+                    {ltoet}
+                </option>
+                <option key={eq} value={LevelLogic.EQUAL_TO}>
+                    {eq}
+                </option>
+            </select>
+            {/* <div className="flex items-center text-xl">{`is ${mtoet}`}</div> */}
             <input className="bg-black" value={selectedLevel} onChange={handleLevelChange} type="number" step="1" />
         </>
     )

@@ -164,18 +164,17 @@ model TraitCategory {
 }
 
 model Trait {
-  id                              Int           @id @unique @default(autoincrement())
-  traitCategory                   TraitCategory @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
+  id                              Int                  @id @unique @default(autoincrement())
+  traitCategory                   TraitCategory        @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
   name                            String
   ///                             [PngUrlMap]
   pngUrlMap                       Json
   isDefaultAchieved               Boolean?
-  achievementsRequired            Achievement[]
-  achievementsRequiredDescription String?
+  achievementsRequired            Achievement[] // is empty if we're using levelLogic
   levelLogic                      LevelLogic?
-
-  levelCategory AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
-  levelRequired Int?
+  levelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
+  levelRequired                   Int?
+  achievementsRequiredDescription String?
 
   projectId             Int
   traitCategoryName     String
@@ -257,8 +256,10 @@ enum ProjectRole {
 }
 
 enum LevelLogic {
+  GREATER_THAN_OR_EQUAL_TO
   MORE_THAN_OR_EQUAL_TO
   LESS_THAN_OR_EQUAL_TO
+  EQUAL_TO
 }
 
 enum AchievementType {

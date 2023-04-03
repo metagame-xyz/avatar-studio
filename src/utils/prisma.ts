@@ -1,13 +1,13 @@
-import type { PrismaClient, Trait } from '@prisma/client'
+import { LevelLogic, PrismaClient, Trait } from '@prisma/client'
 import type { MemberWithAProject, TraitCategoryWithTraitsWithEarned } from './types'
 
-export const getMemberWithProject = (
+export const getMemberWithProject = async (
     prisma: PrismaClient,
     privyDID: string,
     projectSlug: string,
     network = 'sepolia',
 ): Promise<MemberWithAProject> => {
-    return prisma.user.findUniqueOrThrow({
+    const memberWithAProject = (await prisma.user.findUniqueOrThrow({
         where: {
             privyDID,
         },
@@ -17,6 +17,7 @@ export const getMemberWithProject = (
                     achievement: {
                         include: {
                             traits: true,
+                            achievementCategory: true,
                         },
                     },
                 },
@@ -49,21 +50,50 @@ export const getMemberWithProject = (
                 orderBy: { timestamp: 'desc' },
             },
         },
-    }) as Promise<MemberWithAProject>
+    })) as MemberWithAProject
+
+    memberWithAProject.achievements = memberWithAProject.achievements.filter(
+        (a) => a.achievement.achievementCategory.projectId === memberWithAProject.projects[0]?.project.id,
+    )
+
+    return memberWithAProject
 }
 
 // export const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'sepolia')
 export const getNetworkName = (chainNetwork: string) => chainNetwork
 
+export const hasCorrectLevelForTrait = (trait: Trait, level: number) => {
+    if (!trait.levelRequired) return false
+    switch (trait.levelLogic) {
+        case LevelLogic.EQUAL_TO:
+            return level === trait.levelRequired
+        case LevelLogic.GREATER_THAN_OR_EQUAL_TO:
+            return level >= trait.levelRequired
+        case LevelLogic.LESS_THAN_OR_EQUAL_TO:
+            return level <= trait.levelRequired
+    }
+}
+
 export const getEarnedTraits = (member: MemberWithAProject): TraitCategoryWithTraitsWithEarned[] => {
     const project = member.projects[0]?.project
     if (!project) throw new Error('Project not found')
-    // get all traits from the specific project that have been earned by this member
-    const earnedTraits = member.achievements
-        .reduce((acc, a) => {
-            return [...acc, ...a.achievement.traits]
-        }, [] as Trait[])
-        .filter((t) => t.projectId === project.id)
+
+    const achievements = member.achievements
+        .filter((memberAchievement) => !!memberAchievement.status)
+        .flatMap((a) => a.achievement)
+
+    // get all traits from the specific project that have been earned by this member via specific achievements
+    const earnedTraits = achievements.flatMap((a) => a.traits)
+
+    // get traits that have been earned via level logic
+    const levelLogicTraits = project.traitCategories.flatMap((tc) => tc.traits).filter((t) => !!t.levelLogic)
+
+    levelLogicTraits.forEach((t) => {
+        const level = achievements.find((a) => a.achievementCategoryId === t.achievementCategoryId)?.level
+        if (level && hasCorrectLevelForTrait(t, level)) {
+            earnedTraits.push(t)
+        }
+    })
 
     const earnedTraitIdSet = new Set(earnedTraits.map((t) => t.id))
 
