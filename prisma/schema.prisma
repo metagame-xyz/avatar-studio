@@ -137,6 +137,8 @@ model AirtableProject {
   tableName              String
   walletAddressFieldId   String
   walletAddressFieldName String
+  webhookId              String?
+  macSecretBase64        String?
 }
 
 model MembersOfProjects {

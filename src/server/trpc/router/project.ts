@@ -139,23 +139,42 @@ export const projectRouter = router({
             }),
         )
         .mutation(async ({ ctx, input }) => {
-            const { projectSlug, baseName, tableName, baseId, tableId, walletAddressFieldId, walletAddressFieldName } =
-                input
+            const {
+                projectSlug,
+                baseName,
+                tableName,
+                baseId,
+                tableId,
+                walletAddressFieldId,
+                walletAddressFieldName,
+                organizationSlug,
+            } = input
             const project = await ctx.prisma.project.findUniqueOrThrow({
                 where: { slug: projectSlug },
                 select: { id: true },
             })
+
+            await airtable.setOrg(organizationSlug, 'createWebhook via addAirtableProject')
+            const webhookData = await airtable.createWebhook(baseId, tableId)
+
+            const data = {
+                baseName,
+                tableName,
+                baseId,
+                tableId,
+                walletAddressFieldId,
+                walletAddressFieldName,
+                webhookId: webhookData.id,
+                macSecretBase64: webhookData.macSecretBase64,
+                project: { connect: { id: project.id } },
+            }
             // add AirtableProject and connect it to the project
-            return ctx.prisma.airtableProject.create({
-                data: {
-                    baseName,
-                    tableName,
-                    baseId,
-                    tableId,
-                    walletAddressFieldId,
-                    walletAddressFieldName,
-                    project: { connect: { id: project.id } },
+            return ctx.prisma.airtableProject.upsert({
+                where: {
+                    projectId: project.id,
                 },
+                update: data,
+                create: data,
             })
         }),
     getAllAirtableData: protectedOrgProcedure
