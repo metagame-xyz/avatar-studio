@@ -70,7 +70,7 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
             connectAchievement.mutate({
                 traitId: trait.id,
                 achievementId: achievement.id,
-                achievementsRequiredDescription: `requires ${achievement.name}`,
+                achievementsRequiredDescription: `requires ${selectedCategory?.name}: ${achievement.name}`,
             })
         } else {
             removeAchievement.mutate({ traitId: trait.id })
@@ -82,7 +82,7 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
 
         setSelectedLevel(level)
 
-        if (level && selectedLevelLogic && selectedCategory) {
+        if (typeof level === 'number' && selectedLevelLogic && selectedCategory) {
             connectLevelAchievement.mutate({
                 traitId: trait.id,
                 levelRequired: level,

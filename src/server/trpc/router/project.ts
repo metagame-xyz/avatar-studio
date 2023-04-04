@@ -444,7 +444,9 @@ export const projectRouter = router({
 
                     const fieldSlug = slugify(field.name)
 
-                    if (field.type === 'multipleSelects' && airtableMember[fieldSlug]) {
+                    if (!airtableMember[fieldSlug]) continue
+
+                    if (field.type === 'multipleSelects') {
                         const achievementNames = airtableMember[fieldSlug]
 
                         const achievements = prismaAC.achievements.filter((prismaAchievement) =>
@@ -461,7 +463,7 @@ export const projectRouter = router({
                         const memberLevel = Number(airtableMember[fieldSlug])
 
                         const padWithZeros = (num: number, sigFigs = 5): string => {
-                            const numString = num.toString()
+                            const numString = num.toFixed(0)
                             const numLength = numString.length
                             const numZeros = sigFigs - numLength
                             return '0'.repeat(numZeros) + numString
@@ -471,7 +473,7 @@ export const projectRouter = router({
 
                         const achievementData = {
                             achievementCategoryId: prismaAC.id,
-                            name: `${prismaAC.name} ${memberLevel}`,
+                            name: `${prismaAC.name}: ${memberLevel}`,
                             level: memberLevel,
                             airtableId: fakeAirtableId,
                         }

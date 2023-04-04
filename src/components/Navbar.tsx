@@ -27,7 +27,7 @@ export default function Navbar() {
     const router = useRouter()
     const { logout: privyLogout } = usePrivy()
     // const address = user?.wallet?.address as `0x${string}`
-    const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address })
+    const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address, chainId: 1 })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
