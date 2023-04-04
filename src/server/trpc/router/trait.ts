@@ -80,6 +80,9 @@ export const traitRouter = router({
                     achievementsRequired: {
                         set: [],
                     },
+                    levelCategory: {
+                        disconnect: true,
+                    },
                     achievementsRequiredDescription: null,
                     levelLogic: null,
                     levelRequired: null,
@@ -100,11 +103,12 @@ export const traitRouter = router({
                     LevelLogic.EQUAL_TO,
                     LevelLogic.MORE_THAN_OR_EQUAL_TO, // TODO remove this
                 ]),
+                levelCategoryId: z.number(),
                 achievementsRequiredDescription: z.string(),
             }),
         )
         .mutation(async ({ ctx, input }) => {
-            const { traitId, levelRequired, levelLogic, achievementsRequiredDescription } = input
+            const { traitId, levelRequired, levelLogic, achievementsRequiredDescription, levelCategoryId } = input
 
             return ctx.prisma.trait.update({
                 where: {
@@ -114,6 +118,11 @@ export const traitRouter = router({
                     isDefaultAchieved: false,
                     levelLogic,
                     levelRequired,
+                    levelCategory: {
+                        connect: {
+                            id: levelCategoryId,
+                        },
+                    },
                     achievementsRequiredDescription,
                 },
                 include: {

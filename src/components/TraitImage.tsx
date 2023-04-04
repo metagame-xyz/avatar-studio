@@ -58,7 +58,7 @@ const TraitImage = ({
                     </div>
                 )}
             </button>
-            <div className="text-center text-xs text-teal-50">{trait.name}</div>
+            <div className="pt-1 text-center text-xs text-teal-50">{trait.name}</div>
         </div>
     )
 }

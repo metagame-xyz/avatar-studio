@@ -15,7 +15,9 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
     const connectLevelAchievement = trpc.trait.connectLevelAchievement.useMutation({})
     const makeTraitComplimentary = trpc.trait.toggleTraitComplimentary.useMutation({})
 
-    const [earnable, setEarnable] = useState(trait.achievementsRequired.length > 0 || !!trait.isDefaultAchieved)
+    const [earnable, setEarnable] = useState(
+        trait.achievementsRequired.length > 0 || !!trait.levelLogic || !!trait.isDefaultAchieved,
+    )
     const [isComplimentary, setIsComplimentary] = useState(!!trait.isDefaultAchieved)
 
     const levelCategoryId = trait.levelCategory?.id
@@ -80,11 +82,12 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
 
         setSelectedLevel(level)
 
-        if (level && selectedLevelLogic) {
+        if (level && selectedLevelLogic && selectedCategory) {
             connectLevelAchievement.mutate({
                 traitId: trait.id,
                 levelRequired: level,
                 levelLogic: selectedLevelLogic,
+                levelCategoryId: selectedCategory.id,
                 achievementsRequiredDescription: `requires ${selectedCategory?.name} ${levelLogicString[selectedLevelLogic]} ${level}`,
             })
         } else {
@@ -97,11 +100,12 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
 
         setSelectedLevelLogic(levelLogic)
 
-        if (selectedLevel && levelLogic) {
+        if (selectedLevel && levelLogic && selectedCategory) {
             connectLevelAchievement.mutate({
                 traitId: trait.id,
                 levelRequired: selectedLevel,
                 levelLogic: levelLogic,
+                levelCategoryId: selectedCategory.id,
                 achievementsRequiredDescription: `requires ${selectedCategory?.name} ${levelLogicString[levelLogic]} ${selectedLevel}`,
             })
         } else {
