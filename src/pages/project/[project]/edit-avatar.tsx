@@ -73,7 +73,6 @@ const EditAvatar = () => {
     useEffect(() => {
         if (signature) setSignatureForMint(signature)
     }, [signature])
-    // console.log(existingNftMetadata)
 
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         { chainNetwork: network },
@@ -150,7 +149,6 @@ const EditAvatar = () => {
 
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
-                console.log(defaultPfpState?.length)
                 // create a new combo for defaultPfPState if taken
                 defaultPfpState = traitsToAssembledNftTraits(
                     assetData
@@ -271,7 +269,6 @@ const EditAvatar = () => {
 
     if (!assetData || !chain) return <FullPageLoading />
 
-    // console.log(chain, contractAddress, existingNftMetadata?.tokenId)
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 
     const Header = () => {

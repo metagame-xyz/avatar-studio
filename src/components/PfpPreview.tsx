@@ -67,9 +67,10 @@ const PfpPreview = ({
 
     const createImageDownload = async () => {
         if (!existingPfpState) return
+        // the "&" in some of the file names doesn't get encoded properly by mergeImages because it's a valid character but not being used the way we want here
         const links = existingPfpState
             .sort((a, b) => a.zIndex - b.zIndex)
-            .map((trait) => '/_next/image?url=' + trait.pngUrl + '&w=3840&q=75')
+            .map((trait) => '/_next/image?url=' + trait.pngUrl.replace(/&/g, encodeURIComponent('&')) + '&w=3840&q=75')
 
         mergeImages(links, { crossOrigin: 'anonymous' }).then((b64: string) => {
             const a = document.createElement('a')
