@@ -1,4 +1,5 @@
-import { LevelLogic, PrismaClient, Trait } from '@prisma/client'
+import type { PrismaClient, Trait } from '@prisma/client'
+import { LevelLogic } from '@prisma/client'
 import type { MemberWithAProject, TraitCategoryWithTraitsWithEarned } from './types'
 
 export const getMemberWithProject = async (

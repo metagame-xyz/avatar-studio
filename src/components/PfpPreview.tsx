@@ -299,7 +299,11 @@ const PfpPreview = ({
                                                     <>
                                                         <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
                                                         <Tooltip
-                                                            text="You must save your trait choices before you mint."
+                                                            text={
+                                                                !contractAddress
+                                                                    ? 'Contract Address missing'
+                                                                    : 'You must save your trait choices before you mint.'
+                                                            }
                                                             withInfoIcon
                                                         />
                                                     </>

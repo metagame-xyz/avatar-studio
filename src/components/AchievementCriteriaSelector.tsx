@@ -35,8 +35,6 @@ export const AchievementCriteriaToggle = ({ achievementCategoryOptions, trait }:
         trait.levelLogic || LevelLogic.GREATER_THAN_OR_EQUAL_TO,
     )
 
-    // console.log('selectedCategory', selectedCategory)
-
     const handleSetEarnable = (earnable: boolean) => {
         if (!earnable) {
             removeAchievement.mutate({ traitId: trait.id })

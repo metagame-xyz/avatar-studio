@@ -90,6 +90,20 @@ const Home: NextPage = () => {
             <></>
         )
     }
+    const Projects = () => {
+        const projects = user?.projects || []
+        return projects.length > 0 ? (
+            <div className="flex flex-col space-y-2">
+                {projects.map(({ name, slug }) => (
+                    <Link className="block text-lg hover:text-teal-200" key={slug} href={`/project/${slug}`}>
+                        {name}
+                    </Link>
+                ))}
+            </div>
+        ) : (
+            <></>
+        )
+    }
 
     if (!userHasOrgOrProject)
         return (
@@ -167,14 +181,22 @@ const Home: NextPage = () => {
     return (
         <Shell pageTitle="Earnable Avatar Studio">
             <div className="flex flex-col space-y-12">
-                <div className="flex flex-col space-y-4">
-                    <div className="text-2xl font-bold md:text-3xl">Organizations</div>
-                    <Organizations />
-                </div>
+                {user.organizations.length > 0 && (
+                    <div className="flex flex-col space-y-4">
+                        <div className="text-2xl font-bold md:text-3xl">Organizations</div>
+                        <Organizations />
+                    </div>
+                )}
                 {pendingInvites.length > 0 && (
                     <div className="flex flex-col space-y-4">
                         <div className="text-xl font-bold md:text-2xl">Pending Invitations</div>
                         <Invitations />
+                    </div>
+                )}
+                {user.projects.length > 0 && (
+                    <div className="flex flex-col space-y-4">
+                        <div className="text-2xl font-bold md:text-3xl">Projects</div>
+                        <Projects />
                     </div>
                 )}
             </div>
