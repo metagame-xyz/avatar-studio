@@ -44,6 +44,10 @@ export type AirtableWebhookResponse = {
     macSecretBase64: string
 }
 
+export type AirtableWebhookRefreshResponse = {
+    expirationTime: string
+}
+
 export type AirtableOAuthError = {
     error: 'invalid_request' | 'invalid_client' | 'invalid_grant' | 'unsupported_grant_type'
     error_description: string

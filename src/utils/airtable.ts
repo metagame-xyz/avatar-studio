@@ -13,6 +13,7 @@ import type {
     AirtableOAuthResponse,
     AirtableTable,
     AirtableWebhookError,
+    AirtableWebhookRefreshResponse,
     AirtableWebhookResponse,
 } from './airtableFrontend'
 import { AirtableAuthError, AirtableLockError } from './airtableFrontend'
@@ -110,52 +111,6 @@ class Airtable {
                 this.lockAcquired = false
             }
         }
-    }
-
-    async createWebhook(baseId: string, tableId: string): Promise<AirtableWebhookResponse> {
-        if (!this.airtableAuth) {
-            throw new Error('No Airtable Auth yet')
-        }
-
-        let airtableResponse: AirtableWebhookResponse | AirtableWebhookError
-
-        const appUrl = process.env.VERCEL_URL || 'https://avatar-studio.loca.lt'
-
-        const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks`
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.airtableAuth.accessToken}`,
-        }
-        const notificationUrl = `${appUrl}/api/airtable/webhook`
-        const body = {
-            notificationUrl,
-            specification: {
-                options: {
-                    filters: {
-                        dataTypes: ['tableData', 'tableFields', 'tableMetadata'],
-                        recordChangeScope: tableId,
-                    },
-                },
-            },
-        }
-
-        try {
-            airtableResponse = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            }).then((res) => res.json() as Promise<AirtableWebhookResponse>)
-
-            if ('error' in airtableResponse) {
-                console.log('Webhook Create Error', airtableResponse)
-                throw new Error(airtableResponse.error.message)
-            }
-        } catch (error) {
-            console.log(error)
-            throw new Error('Webhook Create Error')
-        }
-
-        return airtableResponse
     }
 
     private async refreshAirtableAuth(): Promise<void> {
@@ -349,6 +304,81 @@ class Airtable {
             })
         }
         return slugifyKeys(members)
+    }
+
+    async createWebhook(baseId: string, tableId: string): Promise<AirtableWebhookResponse> {
+        if (!this.airtableAuth) {
+            throw new Error('No Airtable Auth yet')
+        }
+
+        let airtableResponse: AirtableWebhookResponse | AirtableWebhookError
+
+        const appUrl = process.env.VERCEL_URL || 'https://avatar-studio.loca.lt'
+
+        const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks`
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+        }
+        const notificationUrl = `${appUrl}/api/airtable/webhook`
+        const body = {
+            notificationUrl,
+            specification: {
+                options: {
+                    filters: {
+                        dataTypes: ['tableData', 'tableFields', 'tableMetadata'],
+                        recordChangeScope: tableId,
+                    },
+                },
+            },
+        }
+
+        try {
+            airtableResponse = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            }).then((res) => res.json() as Promise<AirtableWebhookResponse>)
+
+            if ('error' in airtableResponse) {
+                console.log('Webhook Create Error', airtableResponse)
+                throw new Error(airtableResponse.error.message)
+            }
+        } catch (error) {
+            console.log(error)
+            throw new Error('Webhook Create Error')
+        }
+
+        return airtableResponse
+    }
+
+    async refreshWebhook(baseId: string, webhookId: string): Promise<AirtableWebhookRefreshResponse> {
+        if (!this.airtableAuth) {
+            throw new Error('No Airtable Auth yet')
+        }
+
+        let airtableResponse: AirtableWebhookRefreshResponse | AirtableWebhookError
+
+        const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks/${webhookId}/refresh`
+        const headers = {
+            Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+        }
+
+        try {
+            airtableResponse = await fetch(url, {
+                headers,
+            }).then((res) => res.json() as Promise<AirtableWebhookRefreshResponse | AirtableWebhookError>)
+
+            if ('error' in airtableResponse) {
+                console.log('Webhook Refresh Error', airtableResponse)
+                throw new Error(airtableResponse.error.message)
+            }
+        } catch (error) {
+            console.log(error)
+            throw new Error('Webhook Refresh Error')
+        }
+
+        return airtableResponse
     }
 }
 
