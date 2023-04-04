@@ -32,6 +32,7 @@ type PfpPreviewProps = {
     mintStatus: Status
     allowedAction: AllowedAction
     projectName: string
+    contractAddress: string | null | undefined
 }
 
 const PfpPreview = ({
@@ -46,6 +47,7 @@ const PfpPreview = ({
     existingPfpState,
     allowedAction,
     projectName,
+    contractAddress,
 }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     // const { data: user } = trpc.member.me.useQuery()
@@ -281,7 +283,8 @@ const PfpPreview = ({
                                             disabled={
                                                 areTraitsEqual(pfpState, existingPfpState) ||
                                                 userIsSigning ||
-                                                createNftMetadataStatus === Status.loading
+                                                createNftMetadataStatus === Status.loading ||
+                                                !contractAddress
                                             }
                                         >
                                             <>

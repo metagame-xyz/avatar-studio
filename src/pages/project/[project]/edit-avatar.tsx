@@ -349,6 +349,7 @@ const EditAvatar = () => {
                         mintFunction={mint}
                         mintStatus={mintStatus as Status}
                         projectName={project?.name || ''}
+                        contractAddress={contractAddress}
                     />
                 </motion.div>
                 <motion.div transition={springAnimation}>
