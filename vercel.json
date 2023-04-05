@@ -3,6 +3,10 @@
         {
             "path": "/api/cron/airtableWebhooks",
             "schedule": "0 22 * * * *"
+        },
+        {
+            "path": "/api/cron/airtableRefreshAuth",
+            "schedule": "0 22 * * 0"
         }
     ]
 }

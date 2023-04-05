@@ -177,6 +177,16 @@ class Airtable {
         } catch (error) {}
     }
 
+    public async safeRefreshAirtableAuth(): Promise<void> {
+        if (!this.organizationSlug) {
+            throw new Error('No Org Slug yet')
+        }
+        this.airtableAuth = await this.getOrgAirtableAuth()
+        await this.acquireLock('safeRefreshAirtableAuth')
+        await this.refreshAirtableAuth()
+        await this.releaseLock('safeRefreshAirtableAuth')
+    }
+
     public async getAirtableAuth(
         code: string,
         codeVerifier: string,
