@@ -157,6 +157,9 @@ export const isValidAirtableWebhook = (request: NextApiRequest, macSecret: strin
     const signature = request.headers['x-airtable-content-mac']
     console.log('airtable signature', signature)
 
+    console.log(request.body)
+    console.log(request.body.toString())
+
     const hmac = createHmac('sha256', macSecret)
     hmac.update(request.body.toString(), 'ascii')
     const expectedContentHmac = 'hmac-sha256=' + hmac.digest('hex')
