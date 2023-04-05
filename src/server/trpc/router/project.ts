@@ -5,7 +5,7 @@ import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { filterToAchievementFields, slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
-import type { AirtableFieldType } from 'utils/airtableFrontend'
+import type { AirtableFieldType, AirtableWebhookResponse } from 'utils/airtableFrontend'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privyAddUser } from 'utils/backend'
 import { getAddressFromString } from 'utils/needEnvUtils'
@@ -151,11 +151,16 @@ export const projectRouter = router({
             } = input
             const project = await ctx.prisma.project.findUniqueOrThrow({
                 where: { slug: projectSlug },
-                select: { id: true },
+                include: { airtableProject: true },
             })
 
-            await airtable.setOrg(organizationSlug, 'createWebhook via addAirtableProject')
-            const webhookData = await airtable.createWebhook(baseId, tableId)
+            let webhookData: AirtableWebhookResponse | null = null
+
+            //only create a new webhook if there is no existing one
+            if (!project.airtableProject?.webhookId) {
+                await airtable.setOrg(organizationSlug, 'createWebhook via addAirtableProject')
+                webhookData = await airtable.createWebhook(baseId, tableId)
+            }
 
             const data = {
                 baseName,
@@ -164,10 +169,11 @@ export const projectRouter = router({
                 tableId,
                 walletAddressFieldId,
                 walletAddressFieldName,
-                webhookId: webhookData.id,
-                macSecretBase64: webhookData.macSecretBase64,
                 project: { connect: { id: project.id } },
+                webhookId: project.airtableProject?.webhookId || webhookData?.id,
+                macSecretBase64: project.airtableProject?.macSecretBase64 || webhookData?.macSecretBase64,
             }
+
             // add AirtableProject and connect it to the project
             return ctx.prisma.airtableProject.upsert({
                 where: {

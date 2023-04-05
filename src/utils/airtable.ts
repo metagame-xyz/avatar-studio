@@ -323,14 +323,12 @@ class Airtable {
 
         let airtableResponse: AirtableWebhookResponse | AirtableWebhookError
 
-        const appUrl = process.env.VERCEL_URL || 'https://avatar-studio.loca.lt'
-
         const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks`
         const headers = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.airtableAuth.accessToken}`,
         }
-        const notificationUrl = `${appUrl}/api/airtable/webhook`
+        const notificationUrl = `${serverEnv.BASE_URL}/api/airtable/webhook`
         const body = {
             notificationUrl,
             specification: {
