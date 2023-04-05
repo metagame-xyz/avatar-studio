@@ -366,6 +366,7 @@ class Airtable {
 
         try {
             airtableResponse = await fetch(url, {
+                method: 'POST',
                 headers,
             }).then((res) => res.json() as Promise<AirtableWebhookRefreshResponse | AirtableWebhookError>)
 
@@ -379,6 +380,34 @@ class Airtable {
         }
 
         return airtableResponse
+    }
+
+    async deleteWebhook(baseId: string, webhookId: string): Promise<void> {
+        if (!this.airtableAuth) {
+            throw new Error('No Airtable Auth yet')
+        }
+
+        let airtableResponse: unknown
+
+        const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks/${webhookId}`
+        const headers = {
+            Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+        }
+
+        try {
+            airtableResponse = await fetch(url, {
+                method: 'DELETE',
+                headers,
+            }).then((res) => res.json() as Promise<null | AirtableWebhookError>)
+
+            if (airtableResponse) {
+                console.log('Webhook Delete Error', airtableResponse)
+                throw new Error('Webhook Delete Error')
+            }
+        } catch (error) {
+            console.log(error)
+            throw new Error('Webhook Delete Error')
+        }
     }
 }
 
