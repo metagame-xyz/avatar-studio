@@ -154,10 +154,13 @@ export const isValidEventForwarderSignature = (request: NextApiRequest) => {
 }
 
 export const isValidAirtableWebhook = (request: NextApiRequest, macSecret: string) => {
-    const signature = request.headers['X-Airtable-Content-MAC']
+    const signature = request.headers['x-airtable-content-mac']
+    console.log('airtable signature', signature)
 
     const hmac = createHmac('sha256', macSecret)
     hmac.update(request.body.toString(), 'ascii')
     const expectedContentHmac = 'hmac-sha256=' + hmac.digest('hex')
+
+    console.log('expectedContentHmac', expectedContentHmac)
     return signature === expectedContentHmac
 }

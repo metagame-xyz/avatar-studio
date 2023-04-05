@@ -10,15 +10,6 @@ import { z } from 'zod'
 //     runtime: 'edge',
 // }
 
-const projectTrpc = projectRouter.createCaller({
-    session: null,
-    prisma: prisma,
-    projectSlug: null,
-    organizationSlug: null,
-    network: null,
-    webhookPassword: env.WEBHOOK_PASSWORD,
-})
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         return res.status(404).send({})
@@ -71,6 +62,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const organizationSlug = airtableProject.project.organization.slug
+    const projectSlug = airtableProject.project.slug
+
+    const projectTrpc = projectRouter.createCaller({
+        session: null,
+        prisma: prisma,
+        projectSlug,
+        organizationSlug,
+        network: null,
+        webhookPassword: env.WEBHOOK_PASSWORD,
+    })
 
     const data = await projectTrpc.getAllAirtableData({ organizationSlug })
 
