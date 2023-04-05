@@ -15,6 +15,7 @@ export const serverSchema = z.object({
     VALIDATOR_PRIVATE_KEY: z.string(),
     AIRTABLE_CLIENT_SECRET: z.string(),
     EVENT_FORWARDER_AUTH_TOKEN: z.string(),
+    WEBHOOK_PASSWORD: z.string(),
 })
 
 /**

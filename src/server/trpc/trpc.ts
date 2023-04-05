@@ -136,6 +136,49 @@ const isMetagameAdmin = t.middleware(async ({ ctx, next }) => {
     return next({ ctx })
 })
 
+const isWebhookOrOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
+    const isOrgAdminInput = z.object({ organizationSlug: z.string() })
+    const input = isOrgAdminInput.parse(rawInput)
+
+    // TODO calling ctx here creates an issue:
+    // This is caused by either a bug in Node.js or incorrect usage of Node.js internals.
+    // Please open an issue with this stack trace at https://github.com/nodejs/node/issues
+    // console.log('ctx', ctx.organizationSlug)
+    // console.log('input', input)
+
+    // only for
+    if (ctx.webhookPassword === env.WEBHOOK_PASSWORD) {
+        return next({ ctx })
+    }
+
+    const organization = await ctx.prisma.organization.findUniqueOrThrow({
+        where: {
+            slug: input.organizationSlug,
+        },
+        include: {
+            admins: { include: { member: true } },
+            projects: true,
+        },
+    })
+
+    const admins = organization.admins.map((admin) => admin.member)
+
+    if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
+        // then check for metagame admin only if the user is not an org admin to save a
+        const user = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session?.userId,
+            },
+        })
+
+        if (!user || !(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' })
+        }
+    }
+
+    return next({ ctx })
+})
+
 const eventForwarderProtection = t.middleware(async ({ ctx, next, rawInput }) => {
     const input = z.object({ authToken: z.string(), signature: z.string(), body: z.any() }).parse(rawInput)
     const { authToken, signature, body } = input
@@ -163,3 +206,4 @@ export const protectedOrgProcedure = t.procedure.use(getNetwork).use(isAuthed).u
 export const protectedProjectProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isProjectOrgAdmin)
 export const protectedMetagameAdminProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isMetagameAdmin)
 export const eventForwarderProcedure = t.procedure.use(eventForwarderProtection)
+export const webhookOrOrgAdminProcedure = t.procedure.use(isWebhookOrOrgAdmin)

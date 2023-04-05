@@ -9,6 +9,7 @@ type CreateContextOptions = {
     projectSlug: string | null
     organizationSlug: string | null
     network: string | null
+    webhookPassword: string | null
 }
 
 /** Use this helper for:
@@ -23,6 +24,7 @@ export const createContextInner = async (opts: CreateContextOptions) => {
         projectSlug: opts.projectSlug,
         organizationSlug: opts.organizationSlug,
         network: opts.network,
+        webhookPassword: opts.webhookPassword,
     }
 }
 
@@ -37,6 +39,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
     const projectSlug = (req.headers?.projectslug || null) as string | null
     const organizationSlug = (req.headers?.orgslug || null) as string | null
     const network = (req.headers?.chain || null) as string | null
+    const webhookPassword = (req.headers?.webhookPassword || null) as string | null
 
     // console.log('headers', req.headers)
 
@@ -48,7 +51,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
         console.log(`Token verification failed with error ${error}.`)
     }
 
-    return await createContextInner({ verifiedClaims, projectSlug, organizationSlug, network })
+    return await createContextInner({ verifiedClaims, projectSlug, organizationSlug, network, webhookPassword })
     // Get the session from the server using the unstable_getServerSession wrapper function
     // const session = await getServerAuthSession({ req, res })
 }

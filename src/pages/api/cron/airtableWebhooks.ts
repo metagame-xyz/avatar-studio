@@ -26,8 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             continue
         }
 
-        webhookIds[`${airtableProject.project.organization.slug}/${airtableProject.project.slug}`] =
-            airtableProject.webhookId
+        webhookIds[
+            `${airtableProject.project.organization.slug}/${airtableProject.project.slug}/${airtableProject.baseName}`
+        ] = airtableProject.webhookId
 
         await airtable.setOrg(airtableProject.project.organization.slug)
         // console.log(

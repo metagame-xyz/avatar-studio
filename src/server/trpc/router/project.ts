@@ -12,7 +12,7 @@ import { getAddressFromString } from 'utils/needEnvUtils'
 import type { MostTypes } from 'utils/types'
 import { newAirtableMemberSchema } from 'utils/types'
 import { z } from 'zod'
-import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
+import { protectedOrgProcedure, publicProcedure, router, webhookOrOrgAdminProcedure } from '../trpc'
 
 export const projectRouter = router({
     getProject: publicProcedure.query(async ({ ctx }) => {
@@ -177,7 +177,7 @@ export const projectRouter = router({
                 create: data,
             })
         }),
-    getAllAirtableData: protectedOrgProcedure
+    getAllAirtableData: webhookOrOrgAdminProcedure
         .input(z.object({ organizationSlug: z.string() })) // for protectedOrgProcedure to work
         .query(async ({ ctx }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
@@ -259,7 +259,7 @@ export const projectRouter = router({
                 airtable.postCallCleanup('getAllAirtableData')
             }
         }),
-    syncAirtableMembers: protectedOrgProcedure
+    syncAirtableMembers: webhookOrOrgAdminProcedure
         .input(z.object({ organizationSlug: z.string(), airtableMembers: z.array(newAirtableMemberSchema) }))
         .mutation(async ({ ctx, input }) => {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
@@ -350,7 +350,7 @@ export const projectRouter = router({
                 }),
             )
         }),
-    syncAirtableAchievements: protectedOrgProcedure
+    syncAirtableAchievements: webhookOrOrgAdminProcedure
         .input(
             z.object({
                 organizationSlug: z.string(),

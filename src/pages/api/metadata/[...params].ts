@@ -8,6 +8,7 @@ const nftMetadataTrpc = nftMetadataRouter.createCaller({
     projectSlug: null,
     organizationSlug: null,
     network: null,
+    webhookPassword: null,
 })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
