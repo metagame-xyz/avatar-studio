@@ -160,6 +160,7 @@ export const projectRouter = router({
             if (!project.airtableProject?.webhookId) {
                 await airtable.setOrg(organizationSlug, 'createWebhook via addAirtableProject')
                 webhookData = await airtable.createWebhook(baseId, tableId)
+                await airtable.postCallCleanup('createWebhook via addAirtableProject')
             }
 
             const data = {
@@ -182,6 +183,41 @@ export const projectRouter = router({
                 update: data,
                 create: data,
             })
+        }),
+    addAirtableWebhook: protectedOrgProcedure
+        .input(
+            z.object({
+                organizationSlug: z.string(),
+                projectSlug: z.string(),
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const { projectSlug, organizationSlug } = input
+            const project = await ctx.prisma.project.findUnique({
+                where: { slug: projectSlug },
+                include: { airtableProject: true },
+            })
+
+            if (!project?.airtableProject) throw new Error('Airtable project not found')
+
+            if (!project.airtableProject.webhookId) {
+                await airtable.setOrg(organizationSlug, 'createWebhook via addAirtableWebhook')
+                const webhookData = await airtable.createWebhook(
+                    project.airtableProject.baseId,
+                    project.airtableProject.tableId,
+                )
+                await airtable.postCallCleanup('createWebhook via addAirtableWebhook')
+
+                return ctx.prisma.airtableProject.update({
+                    where: {
+                        projectId: project.id,
+                    },
+                    data: {
+                        webhookId: webhookData.id,
+                        macSecretBase64: webhookData.macSecretBase64,
+                    },
+                })
+            }
         }),
     getAllAirtableData: webhookOrOrgAdminProcedure
         .input(z.object({ organizationSlug: z.string(), projectSlug: z.string().optional() })) // for protectedOrgProcedure to work

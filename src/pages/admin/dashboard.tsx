@@ -79,6 +79,7 @@ const AdminDashboard: NextPage = () => {
 
     const syncAirtableMembersMutation = trpc.project.syncAirtableMembers.useMutation()
     const syncAirtableAchievementsMutation = trpc.project.syncAirtableAchievements.useMutation()
+    const addAirtableWebhook = trpc.project.addAirtableWebhook.useMutation()
 
     const syncAirtableData = async () => {
         if (!airtableData) {
@@ -95,16 +96,21 @@ const AdminDashboard: NextPage = () => {
 
         if (selectedOrg?.slug && selectedProject?.slug) {
             await syncAirtableMembersMutation.mutateAsync({
-                organizationSlug: selectedOrg?.slug,
+                organizationSlug: selectedOrg.slug,
                 airtableMembers,
-                projectSlug: selectedProject?.slug,
+                projectSlug: selectedProject.slug,
             })
 
             await syncAirtableAchievementsMutation.mutateAsync({
-                organizationSlug: selectedOrg?.slug,
+                organizationSlug: selectedOrg.slug,
                 airtableMembers,
                 airtableFields: airtableData.achievementFields,
-                projectSlug: selectedProject?.slug,
+                projectSlug: selectedProject.slug,
+            })
+
+            await addAirtableWebhook.mutateAsync({
+                organizationSlug: selectedOrg.slug,
+                projectSlug: selectedProject.slug,
             })
         } else {
             console.error('error syncing airtable data')
