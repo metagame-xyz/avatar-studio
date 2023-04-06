@@ -1,11 +1,11 @@
+import { OrganizationRole } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
-import { env as clientEnv } from 'env/client.mjs'
-import qs from 'qs'
-import type { AirtableOAuthResponse } from 'utils/airtable'
-import { getBasesList, getTablesList } from 'utils/airtable'
-import { airtableAuthHeaders, refreshAirtableAuth } from 'utils/airtableBackend'
+import { slugify } from 'utils'
+import airtable from 'utils/airtable'
+import { getAddressFromString } from 'utils/needEnvUtils'
+import { organizationRoleZod } from 'utils/types'
 import { z } from 'zod'
-import { protectedOrgProcedure, publicProcedure, router } from '../trpc'
+import { protectedMetagameAdminProcedure, protectedOrgProcedure, publicProcedure, router } from '../trpc'
 
 export const organizationRouter = router({
     getBySlug: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -29,112 +29,90 @@ export const organizationRouter = router({
             })
         }
     }),
-    getAirtableBases: protectedOrgProcedure
-        .input(z.object({ organizationSlug: z.string() }))
-        .query(async ({ ctx, input }) => {
-            const org = await ctx.prisma.organization.findUniqueOrThrow({
-                where: {
-                    slug: input.organizationSlug,
+    createNewOrg: protectedMetagameAdminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+        return ctx.prisma.organization.create({
+            data: {
+                name: input,
+                slug: slugify(input),
+            },
+        })
+    }),
+    getAllOrgs: protectedMetagameAdminProcedure.query(async ({ ctx }) => {
+        return ctx.prisma.organization.findMany({
+            include: {
+                admins: { include: { member: true } },
+                projects: {
+                    include: {
+                        traitCategories: {
+                            include: { traits: { include: { achievementsRequired: true, levelCategory: true } } },
+                        },
+                        achievementCategories: { include: { achievements: true } },
+                    },
                 },
-                include: {
-                    admins: { include: { member: true } },
-                    projects: true,
-                    airtableAuth: true,
+                invitations: true,
+            },
+        })
+    }),
+    sendOrgAdminInvite: protectedMetagameAdminProcedure
+        .input(
+            z.object({
+                ensOrWalletAddress: z.string(),
+                organizationId: z.number(),
+                role: organizationRoleZod,
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const issuer = await ctx.prisma.user.findUniqueOrThrow({
+                where: {
+                    privyDID: ctx.session?.userId,
+                },
+                select: {
+                    id: true,
                 },
             })
 
-            if (!org.airtableAuth) {
-                throw new TRPCError({
-                    code: 'NOT_FOUND',
-                    message: 'Airtable auth not found',
-                })
-            }
+            const address = await getAddressFromString(input.ensOrWalletAddress)
 
-            // TODO move airtable stuff into a class, record when the access / refresh token will expire, and only refresh if needed. move the refresh check into each individual api call, so we don't have to remember to refresh when you make a new call. Also make a cronjob with quirrel to refresh all tokens every 30 days just to make sure never lose the refresh token validity
-            const airtableAuth = await refreshAirtableAuth(org.airtableAuth)
-
-            const bases = await getBasesList(airtableAuth.accessToken)
-            if (!bases || !bases[0]) return null
-
-            for (const base of bases) {
-                const tables = await getTablesList(airtableAuth.accessToken, base.id)
-                if (tables) base.tables = tables
-            }
-
-            // We can switch to parallelized if it's a problem but I think we'd hit the rate limit of 5 req/s
-            // const getTablesLists = async (accessToken: string, baseIds: string[]) => {
-            //     const promises = baseIds.map(async (baseId) => {
-            //         const tables = await getTablesList(accessToken, baseId)
-            //         return { id: baseId, tables }
-            //     })
-            //     return Promise.all(promises)
-            // }
-            // const baseIds = bases.map((base) => base.id)
-            // const updatedBases = await getTablesLists(org.airtableAuth.accessToken, baseIds)
-            // updatedBases.forEach((updatedBase) => {
-            //     const base = bases.find((base) => base.id === updatedBase.id) as AirtableBase
-            //     base.tables = updatedBase.tables
-            // })
-
-            // Airtable.configure({ apiKey: org.airtableAuth.accessToken })
-            // const base = Airtable.base(bases[0].id)
-
-            return bases
+            return ctx.prisma.organizationInvitation.create({
+                data: {
+                    organizationId: input.organizationId,
+                    inviteeAddress: address.toLowerCase(),
+                    role: OrganizationRole[input.role],
+                    issuedById: issuer.id,
+                },
+            })
         }),
     addAirtableTokens: protectedOrgProcedure
         .input(z.object({ code: z.string(), codeVerifier: z.string(), organizationSlug: z.string() }))
         .mutation(async ({ ctx, input }) => {
             const { code, codeVerifier, organizationSlug } = input
 
-            let airtableResponse: AirtableOAuthResponse
-            try {
-                airtableResponse = await fetch(`${clientEnv.NEXT_PUBLIC_AIRTABLE_URL}/oauth2/v1/token`, {
-                    method: 'POST',
-                    headers: airtableAuthHeaders,
-                    body: qs.stringify({
-                        code_verifier: codeVerifier,
-                        redirect_uri: clientEnv.NEXT_PUBLIC_AIRTABLE_REDIRECT_URI,
-                        code,
-                        grant_type: 'authorization_code',
-                    }),
-                }).then((res) => res.json() as Promise<AirtableOAuthResponse>)
-            } catch (error) {
-                console.log('Airtable Response Error', error)
+            if (ctx.session?.userId === undefined) {
                 throw new TRPCError({
-                    code: 'NOT_FOUND',
-                    message: 'Airtable issue',
+                    code: 'UNAUTHORIZED',
+                    message: 'User not logged in',
                 })
             }
-            console.log('airtableResponse', airtableResponse)
 
-            const { access_token, refresh_token } = airtableResponse
-
-            const user = await ctx.prisma.user.findUniqueOrThrow({
-                where: {
-                    privyDID: ctx.session?.userId,
-                },
-            })
-
-            const authData = {
-                organizationSlug,
-                accessToken: access_token,
-                refreshToken: refresh_token,
-                accessGrantedUserId: user.id,
-                scope: clientEnv.NEXT_PUBLIC_AIRTABLE_SCOPE,
-            }
-
-            await ctx.prisma.organizationAirtableAuth.upsert({
-                where: {
-                    organizationSlug,
-                },
-                create: authData,
-                update: authData,
-            })
+            await airtable.getAirtableAuth(code, codeVerifier, organizationSlug, ctx.session.userId)
 
             return organizationSlug
         }),
+    doesTokenNeedRefresh: protectedOrgProcedure
+        .input(z.object({ organizationSlug: z.string() }))
+        .query(async ({ input }) => {
+            try {
+                await airtable.setOrg(input.organizationSlug, 'doesTokenNeedRefresh')
+                console.log('doesTokenNeedRefresh', false)
+                return false
+            } catch (err) {
+                console.log('doesTokenNeedRefresh', true)
+                return true
+            } finally {
+                await airtable.postCallCleanup('doesTokenNeedRefresh')
+            }
+        }),
 })
-
 // export const organizationRouter = router({
 //     getBySlug: publicProcedure
 //         .input(z.string())

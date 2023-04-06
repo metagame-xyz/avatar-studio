@@ -1,12 +1,12 @@
-import Image from 'next/image'
-
 import { LockClosedIcon } from '@heroicons/react/24/solid'
 import Tooltip from 'components/Tooltip'
-import type { TraitWithEarnedBool } from 'utils/types'
+import Image from 'next/image'
+import { getBaseName } from 'utils'
+import type { AssembledNftTraits, TraitWithEarnedBool } from 'utils/types'
 
 type TraitImageProps = {
     trait: TraitWithEarnedBool
-    backgroundTrait: TraitWithEarnedBool
+    pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
     selected: boolean
     disabled?: boolean
@@ -16,64 +16,49 @@ type TraitImageProps = {
 
 const TraitImage = ({
     trait,
-    backgroundTrait,
+    pfpState,
     updatePfpState,
     selected,
     disabled = false,
     disabledMessage = '',
     className,
 }: TraitImageProps) => {
-    const { name, category, earned, pngUrl, zIndex } = trait
-
-    // const [mergedImages, setMergedImages] = React.useState('')
-    // useEffect(() => {
-    //     const optimizeImage = (image: string) => {
-    //         return '/_next/image?url=' + image + '&w=112&q=75'
-    //     }
-    //     mergeImages(
-    //         [optimizeImage(pngUrl), optimizeImage(backgroundTrait.pngUrl)],
-    //         {
-    //             crossOrigin: 'anonymous',
-    //         },
-    //     ).then((b64: string) => {
-    //         setMergedImages(b64)
-    //     })
-    // }, [trait])
-    // console.log('mergedImages', mergedImages)
+    const isBaseCategory = trait.category === 'Base'
+    const baseName = isBaseCategory ? trait.name : getBaseName(pfpState)
     return (
         <div className="w-28">
             <button
                 className={`group relative h-28 w-28 overflow-hidden rounded-md bg-ui-gray ${
                     selected && 'bg-none outline outline-2 outline-offset-2 outline-teal-400'
                 } ${className}`}
-                disabled={(!earned && earned !== null) || disabled}
+                disabled={(!trait.earned && trait.earned !== null) || disabled}
                 onClick={() => updatePfpState(trait)}
             >
-                <Image
-                    src={pngUrl}
-                    width={112}
-                    height={112}
-                    alt={`${category} ${name}`}
-                    sizes="(max-width: 768px) 120px"
-                    className="relative group-disabled:opacity-40 group-disabled:grayscale"
-                    style={{ zIndex }}
-                />
-                <Image
-                    src={backgroundTrait.pngUrl}
-                    width={112}
-                    height={112}
-                    alt={`${backgroundTrait.name} ${backgroundTrait.category}`}
-                    sizes="(max-width: 768px) 120px"
-                    className="absolute left-0 top-0 z-10 opacity-20 grayscale"
-                />
+                {pfpState.map((existingTrait, i) => {
+                    const useNewTrait = existingTrait.category === trait.category
+                    const t = useNewTrait ? trait : existingTrait
+                    const pngUrl = (t.pngUrlMap[baseName] || t.pngUrlMap['defaultVariant']) as string
+                    const style = 'absolute left-0 top-0 group-disabled:opacity-60 group-disabled:grayscale'
+                    return (
+                        <Image
+                            width={112}
+                            height={112}
+                            key={`${t.category} ${t.name} ${i}`}
+                            alt={`${t.category} ${t.name}`}
+                            src={pngUrl}
+                            style={{ zIndex: t.zIndex }}
+                            className={style}
+                        />
+                    )
+                })}
                 {disabled && (
                     <div className="flex h-full w-full items-center justify-center">
-                        <LockClosedIcon className="h-5 w-5 fill-current" />
+                        <LockClosedIcon className="z-50 h-5 w-5 fill-current" />
                         <Tooltip text={disabledMessage} withLockIcon />
                     </div>
                 )}
             </button>
-            <div className="text-center text-xs text-teal-50">{trait.name}</div>
+            <div className="pt-1 text-center text-xs text-teal-50">{trait.name}</div>
         </div>
     )
 }

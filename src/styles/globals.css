@@ -4,13 +4,28 @@
 
 @layer components {
     .btn-primary {
-        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-teal-300 px-4 py-2 text-base font-medium  text-black shadow-sm hover:bg-teal-400 focus:outline-none focus:ring-1 focus:ring-black focus:ring-offset-1;
+        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-teal-300 px-4 py-2 text-base font-medium  text-black shadow-sm hover:bg-teal-500 hover:text-black focus:outline-none focus:ring-1 focus:ring-black focus:ring-offset-1;
     }
     .btn-secondary {
         @apply inline-flex items-center justify-center rounded-md border border-transparent bg-[#2D3836] px-4 py-2 text-base font-medium text-teal-50 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
     }
     .btn-ghost {
-        @apply inline-flex items-center justify-center rounded-md border border-gray-700 bg-transparent px-4 py-2 text-base font-medium text-gray-400 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
+        @apply inline-flex items-center justify-center rounded-md border border-teal-300 bg-transparent px-4 py-2 text-base font-medium text-gray-400 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
+    }
+    .th-primary {
+        @apply p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500;
+    }
+    .td-primary {
+        @apply whitespace-nowrap p-4 text-left;
+    }
+    .tbody-primary {
+        @apply divide-y divide-gray-500;
+    }
+    .thead-primary {
+        @apply border-b-2 border-gray-500;
+    }
+    .table-primary {
+        @apply table w-full;
     }
 }
 
@@ -22,7 +37,12 @@ html {
 
 body {
     @apply bg-black;
+    @apply text-teal-50;
     /* @apply h-full; */
+}
+a {
+    @apply text-teal-50;
+    @apply hover:text-teal-400;
 }
 
 div {

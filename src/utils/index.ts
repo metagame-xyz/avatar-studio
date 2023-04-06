@@ -1,9 +1,12 @@
 import { hashMessage } from '@ethersproject/hash'
 import type { Trait, TraitCategory } from '@prisma/client'
+import { ethers } from 'ethers'
 import isEqual from 'lodash.isequal'
 import slugifyFn from 'slugify'
 import type { Chain } from 'wagmi'
-import type { RequestedTraits, TraitWithEarnedBool } from './types'
+import { z } from 'zod'
+import type { AirtableField } from './airtableFrontend'
+import type { AssembledNftTraits, RequestedTraits, TraitWithEarnedBool } from './types'
 
 export const classNamesFn = (...classes: string[]) => {
     return classes.filter(Boolean).join(' ')
@@ -17,18 +20,44 @@ export const slugify = (name: string) => {
     })
 }
 
-export const traitsToTraitsWithEarnedBool = (
-    traits: (Trait & {
-        traitCategory: TraitCategory
-    })[],
-): TraitWithEarnedBool[] => {
+export const getBaseName = (
+    traits: (
+        | (Trait & {
+              traitCategory: TraitCategory
+          })
+        | TraitWithEarnedBool
+    )[],
+): string => {
+    const baseTrait = traits.find((trait) => {
+        return 'traitCategory' in trait
+            ? trait.traitCategory.name === 'Base' && trait.name
+            : trait.category === 'Base' && trait.name
+    })
+    return baseTrait?.name || 'defaultVariant'
+}
+
+export const traitsToAssembledNftTraits = (
+    traits: (
+        | (Trait & {
+              traitCategory: TraitCategory
+          })
+        | TraitWithEarnedBool
+    )[],
+): AssembledNftTraits => {
+    const baseName = getBaseName(traits)
     return traits.map((trait) => {
-        return {
-            ...trait,
-            earned: true,
-            category: trait.traitCategory.name,
-            zIndex: trait.traitCategory.zIndex,
-            isModifiable: trait.traitCategory.isModifiable,
+        const pngUrl = trait.pngUrlMap[baseName] || (trait.pngUrlMap['defaultVariant'] as string)
+        if ('earned' in trait) {
+            return { ...trait, pngUrl }
+        } else {
+            return {
+                ...trait,
+                earned: true,
+                category: trait.traitCategory.name,
+                zIndex: trait.traitCategory.zIndex,
+                isModifiable: trait.traitCategory.isModifiable,
+                pngUrl,
+            }
         }
     })
 }
@@ -60,7 +89,7 @@ export const springAnimation = {
 export const truncateAddress = (address: string | null | undefined): string =>
     address ? `0x${address.slice(2, 6).toUpperCase()}...${address.slice(-4).toUpperCase()}` : ''
 
-export const hashTraits = (traits: TraitWithEarnedBool[]): string => {
+export const hashPermanentTraits = (traits: TraitWithEarnedBool[]): string => {
     const traitString = traits
         .filter((t) => !t.isModifiable)
         .map((trait) => `${trait.category}-${trait.name}`)
@@ -94,10 +123,10 @@ export const IsNewComboAllowed = (
 }
 
 export const isComboAllowed = (
-    usedCombos: Record<string, string>[] | undefined,
-    PfpState: TraitWithEarnedBool[],
+    usedCombos: Record<string, string>[],
+    PfpState: TraitWithEarnedBool[] | undefined,
 ): boolean => {
-    if (!usedCombos) return true
+    if (!PfpState) return false
     const combo: Record<string, string> = {}
 
     const permanentTraits = PfpState.filter((trait) => !trait.isModifiable)
@@ -108,10 +137,10 @@ export const isComboAllowed = (
 }
 
 export const pageToLoad = (member: any): string => {
-    if (member?.organizations?.length > 1 || member?.projects?.length > 1) {
+    if (member?.organizations?.length > 1 || member?.projects?.length > 1 || member?.pendingOrgInvitations.length > 0) {
         return '/home'
     }
-    if (member?.projects?.length === 1) {
+    if (member?.organization?.length === 1) {
         console.log('member.organizations[0].slug', member.organizations[0]?.slug)
         return '/org/' + member.organizations[0]?.slug
     }
@@ -127,4 +156,105 @@ export const getOpenseaUrl = (chain: Chain, contactAddress: string | null | unde
     const testnetString = chain.testnet ? 'testnets.' : ''
     const chainNetwork = chain.network.toLowerCase()
     return `https://${testnetString}opensea.io/assets/${chainNetwork}/${contactAddress}/${tokenId}`
+}
+
+export const isAddress = (value: string) => {
+    try {
+        return ethers.utils.getAddress(value.toLowerCase())
+    } catch {
+        return false
+    }
+}
+
+const isValidEnsName = (value: string) => {
+    return value.endsWith('.eth')
+}
+
+// use zod to parse if a string is a valid eth address or an ens name
+export const parseEnsOrAddress = (address: string): string => {
+    try {
+        const ethAddressOrEnsName = z
+            .string()
+            .min(1, 'Invalid address or ens name')
+            .max(255, 'Invalid address or ens name')
+            .refine((address) => {
+                try {
+                    return isAddress(address) || isValidEnsName(address)
+                } catch (error) {
+                    return false
+                }
+            }, 'Invalid address or ens name')
+        return ethAddressOrEnsName.parse(address)
+    } catch (error) {
+        throw error
+    }
+}
+
+type HandleKeyDownFunction = (event: React.KeyboardEvent<HTMLInputElement>) => void
+
+export function withEnterKeyPressHandler(onClick: () => void): HandleKeyDownFunction {
+    return function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+        if (event.key === 'Enter') {
+            onClick()
+        }
+    }
+}
+
+// const TransferSignatureHash = ethers.utils.id(TransferEventSignature)
+
+export const getDecodedTransferEvent = (
+    logs: ethers.providers.Log[],
+    contractAbi: readonly any[],
+): { from: string; to: string; tokenId: number } => {
+    const TransferEventSignature = 'Transfer(address,address,uint256)'
+    const iface = new ethers.utils.Interface(contractAbi)
+    const transferLog = logs[0] as ethers.providers.Log
+    const decodedEvent = iface.decodeEventLog(TransferEventSignature, transferLog.data, transferLog.topics)
+    console.log('decodedEvent', decodedEvent)
+
+    if (!decodedEvent) throw new Error('No Transfer event found in logs')
+
+    return {
+        from: decodedEvent[0],
+        to: decodedEvent[1],
+        tokenId: decodedEvent[2].toNumber(),
+    }
+}
+
+export const areTraitArraysEqual = (
+    traits1: TraitWithEarnedBool[],
+    traits2: TraitWithEarnedBool[] | null | undefined,
+): boolean => {
+    if (!traits2) return false
+    if (traits1.length !== traits2.length) return false
+    traits1.sort((a, b) => a.id - b.id)
+    traits2.sort((a, b) => a.id - b.id)
+    for (let i = 0; i < traits1.length; i++) {
+        if (traits1[i]?.id !== traits2[i]?.id) return false
+    }
+    return true
+}
+
+// chatGPT wrote this (I added the question mark)
+export function addSpacesBeforeCapitalLetters(input: string): string {
+    let output = ''
+    for (let i = 0; i < input.length; i++) {
+        const char = input[i]
+        if (char === char?.toUpperCase() && i !== 0) {
+            output += ' '
+        }
+        output += char
+    }
+    return output
+}
+
+export const filterToAchievementFields = (
+    airtableFields: AirtableField[],
+    walletAddressFieldName: string,
+): AirtableField[] => {
+    const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens', walletAddressFieldName]
+    const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText', 'singleSelect', 'multipleSelects']
+    return airtableFields
+        .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
+        .filter((field) => allowedAchievementTypes.includes(field.type))
 }

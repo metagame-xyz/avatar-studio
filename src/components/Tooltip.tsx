@@ -25,13 +25,11 @@ const Tooltip = ({ text, withInfoIcon = false, withLockIcon = false }: TooltipPr
                 </TooltipPrimitive.Trigger>
                 <TooltipPrimitive.Portal>
                     <TooltipPrimitive.Content
-                        className="flex max-w-[14rem] animate-tooltip items-center gap-x-3 rounded border border-ui-yankee-blue-light bg-ui-dark-jungle px-3 py-2 text-sm tracking-wide text-off-white opacity-0 shadow-tooltip ease-in-out"
+                        className="z-50 flex max-w-[14rem] animate-tooltip items-center gap-x-3 rounded border border-ui-yankee-blue-light bg-ui-dark-jungle px-3 py-2 text-sm tracking-wide text-off-white opacity-0 shadow-tooltip ease-in-out"
                         sideOffset={5}
                     >
-                        {withInfoIcon && (
-                            <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 text-ui-purple-navy" />
-                        )}
-                        {withLockIcon && <LockClosedIcon className="h-5 w-5 flex-shrink-0 text-ui-purple-navy" />}
+                        {withInfoIcon && <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 text-teal-300" />}
+                        {withLockIcon && <LockClosedIcon className="h-5 w-5 flex-shrink-0 text-teal-300" />}
                         {text}
                         <TooltipPrimitive.Arrow asChild>
                             {/* <Icon

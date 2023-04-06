@@ -1,8 +1,9 @@
+import FullPageLoading from 'components/FullPageLoading'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSessionStorage } from 'react-use'
 import { trpc } from 'utils/trpc'
-import { AirtableAuthCache } from 'utils/types'
+import type { AirtableAuthCache } from 'utils/types'
 
 const AirtableOauth = () => {
     const router = useRouter()
@@ -13,7 +14,6 @@ const AirtableOauth = () => {
         state: string
     }
 
-    console.log('state', state)
     const [airtableAuthCache, setAirtableAuthCache] =
         useSessionStorage<Record<string, AirtableAuthCache>>('airtableAuthCache')
     const [hasMutationRun, setHasMutationRun] = useState(false)
@@ -48,7 +48,7 @@ const AirtableOauth = () => {
     // since the authorization didn't error, we know there's a grant code in the query
     // ...
 
-    return <div>{`Linking your Airtable to your Organization`}</div>
+    return <FullPageLoading loadingText="Linking your Airtable to your Organization" />
 }
 
 export default AirtableOauth

@@ -1,8 +1,9 @@
+import { UserRole } from '@prisma/client'
 import { initTRPC, TRPCError } from '@trpc/server'
+import { createHmac } from 'crypto'
+import { env } from 'env/server.mjs'
 import superjson from 'superjson'
 import { z } from 'zod'
-
-import { env } from 'env/server.mjs'
 import { type Context } from './context'
 
 const t = initTRPC.context<Context>().create({
@@ -34,6 +35,12 @@ const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     const isOrgAdminInput = z.object({ organizationSlug: z.string() })
     const input = isOrgAdminInput.parse(rawInput)
 
+    // TODO calling ctx here creates an issue:
+    // This is caused by either a bug in Node.js or incorrect usage of Node.js internals.
+    // Please open an issue with this stack trace at https://github.com/nodejs/node/issues
+    // console.log('ctx', ctx.organizationSlug)
+    // console.log('input', input)
+
     const organization = await ctx.prisma.organization.findUniqueOrThrow({
         where: {
             slug: input.organizationSlug,
@@ -47,7 +54,16 @@ const isOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
     const admins = organization.admins.map((admin) => admin.member)
 
     if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
-        throw new TRPCError({ code: 'UNAUTHORIZED' })
+        // then check for metagame admin only if the user is not an org admin to save a
+        const user = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session?.userId,
+            },
+        })
+
+        if (!user || !(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' })
+        }
     }
 
     return next({ ctx })
@@ -73,23 +89,109 @@ const isProjectOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
 
     const admins = project.organization.admins.map((admin) => admin.member)
 
+    // first check for org admin
     if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
-        throw new TRPCError({ code: 'UNAUTHORIZED' })
+        // then check for metagame admin only if the user is not an org admin to save a
+        const user = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session?.userId,
+            },
+        })
+
+        if (!user || !(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' })
+        }
     }
 
     return next({ ctx })
 })
 
-const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'goerli')
+const getNetworkName = (chainNetwork: string) => (env.NODE_ENV === 'production' ? chainNetwork : 'sepolia')
 
 const getNetwork = t.middleware(async ({ ctx, next, rawInput }) => {
-    const chainNetwork = ((rawInput as Record<string, unknown>)?.chainNetwork || 'goerli') as string
+    const chainNetwork = ((rawInput as Record<string, unknown>)?.chainNetwork || 'sepolia') as string
     return next({
         ctx: {
             ...ctx,
             network: getNetworkName(chainNetwork),
         },
     })
+})
+
+const isMetagameAdmin = t.middleware(async ({ ctx, next }) => {
+    if (!ctx.session || !ctx.session.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    const user = await ctx.prisma.user.findUniqueOrThrow({
+        where: {
+            privyDID: ctx.session.userId,
+        },
+    })
+
+    if (!(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    return next({ ctx })
+})
+
+const isWebhookOrOrgAdmin = t.middleware(async ({ ctx, next, rawInput }) => {
+    const isOrgAdminInput = z.object({ organizationSlug: z.string() })
+    const input = isOrgAdminInput.parse(rawInput)
+
+    // TODO calling ctx here creates an issue:
+    // This is caused by either a bug in Node.js or incorrect usage of Node.js internals.
+    // Please open an issue with this stack trace at https://github.com/nodejs/node/issues
+    // console.log('ctx', ctx.organizationSlug)
+    // console.log('input', input)
+
+    // only for
+    if (ctx.webhookPassword === env.WEBHOOK_PASSWORD) {
+        return next({ ctx })
+    }
+
+    const organization = await ctx.prisma.organization.findUniqueOrThrow({
+        where: {
+            slug: input.organizationSlug,
+        },
+        include: {
+            admins: { include: { member: true } },
+            projects: true,
+        },
+    })
+
+    const admins = organization.admins.map((admin) => admin.member)
+
+    if (!admins.some((admin) => admin.privyDID === ctx.session?.userId)) {
+        // then check for metagame admin only if the user is not an org admin to save a
+        const user = await ctx.prisma.user.findUnique({
+            where: {
+                privyDID: ctx.session?.userId,
+            },
+        })
+
+        if (!user || !(user.role === UserRole.METAGAME_ADMIN || user.role === UserRole.METAGAME_OWNER)) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' })
+        }
+    }
+
+    return next({ ctx })
+})
+
+const eventForwarderProtection = t.middleware(async ({ ctx, next, rawInput }) => {
+    const input = z.object({ authToken: z.string(), signature: z.string(), body: z.any() }).parse(rawInput)
+    const { authToken, signature, body } = input
+
+    const hmac = createHmac('sha256', authToken) // Create a HMAC SHA256 hash using the auth token
+    hmac.update(JSON.stringify(body), 'utf8') // Update the token hash with the request body using utf8
+    const digest = hmac.digest('hex')
+
+    if (signature !== digest) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    return next({ ctx })
 })
 
 /**
@@ -102,3 +204,6 @@ export const publicProcedure = t.procedure.use(getNetwork)
 export const protectedProcedure = t.procedure.use(getNetwork).use(isAuthed)
 export const protectedOrgProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isOrgAdmin)
 export const protectedProjectProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isProjectOrgAdmin)
+export const protectedMetagameAdminProcedure = t.procedure.use(getNetwork).use(isAuthed).use(isMetagameAdmin)
+export const eventForwarderProcedure = t.procedure.use(eventForwarderProtection)
+export const webhookOrOrgAdminProcedure = t.procedure.use(isWebhookOrOrgAdmin)

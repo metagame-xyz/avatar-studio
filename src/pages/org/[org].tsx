@@ -1,5 +1,5 @@
 import { UserCircleIcon } from '@heroicons/react/24/outline'
-import Loading from 'components/Loading'
+import FullPageLoading from 'components/FullPageLoading'
 import MembersList from 'components/MembersList'
 import NewProjectModal from 'components/NewProjectModal'
 import Shell from 'components/Shell'
@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSessionStorage } from 'react-use'
-import { airtableAuthUrl, codeVerifierKey, codeVerifierStr } from 'utils/airtable'
+import { airtableAuthUrl, codeVerifierKey, codeVerifierStr } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
 
 const Org: NextPage = () => {
@@ -17,14 +17,16 @@ const Org: NextPage = () => {
     const slug = router.query.org as string
 
     const { data: org, error, status } = trpc.org.getBySlug.useQuery(slug, { enabled: !!slug })
+    const { data: tokenNeedsRefresh } = trpc.org.doesTokenNeedRefresh.useQuery(
+        { organizationSlug: slug },
+        { enabled: !!slug },
+    )
 
     const { data: user } = trpc.member.me.useQuery()
     const [openNewProjectModal, setOpenNewProjectModal] = useState(false)
     const [, setAirtableAuthCache] = useSessionStorage('airtableAuthCache', {})
 
-    const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
-
-    console.log('bases browser', bases)
+    // const { data: bases } = trpc.org.getAirtableBases.useQuery({ organizationSlug: slug }, { enabled: !!slug })
 
     useEffect(() => {
         if (slug && codeVerifierStr) {
@@ -44,16 +46,16 @@ const Org: NextPage = () => {
         return <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
     }
 
-    if (status !== 'success') return <Loading />
+    if (status !== 'success') return <FullPageLoading />
 
     const { name } = org
 
     const Projects = () => {
         const projects = org.projects || []
         return projects.length > 0 ? (
-            <div>
+            <div className="flex flex-col space-y-2">
                 {projects.map(({ name, slug }) => (
-                    <div className="mt-2 flex items-center" key={slug}>
+                    <div className="flex items-center" key={slug}>
                         <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}>
                             <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
                             {name}
@@ -66,45 +68,43 @@ const Org: NextPage = () => {
         )
     }
 
-    const LeftChild = () => {
-        return (
+    return (
+        <Shell pageTitle={name}>
             <>
                 <NewProjectModal open={openNewProjectModal} setOpen={setOpenNewProjectModal} organizationSlug={slug} />
-                <div className="flex flex-col items-center">
-                    <div className="text-4xl font-bold">{name}</div>
-                    <div className="self-start">
+                <div className="pb-4 text-2xl font-bold md:text-3xl">{name}</div>
+                <div className="flex flex-col space-y-8">
+                    <div className="flex flex-col space-y-4">
+                        <div className="text-xl font-bold md:text-2xl">Projects</div>
                         <Projects />
-                        {isOrgAdmin && (
+                    </div>
+                    {/* {isOrgAdmin && (
+                        <div>
                             <button
-                                className="btn-primary mt-4 self-start text-center"
+                                className="btn-primary w-full"
                                 onClick={() => {
                                     setOpenNewProjectModal(true)
                                 }}
                             >
                                 Create Avatar
                             </button>
-                        )}
-                        {isOrgAdmin && org.airtableAuth?.refreshToken && (
-                            <a className="btn-primary mt-4 w-64 items-center text-center" href={`${airtableAuthUrl}`}>
+                        </div>
+                    )} */}
+                    {isOrgAdmin && tokenNeedsRefresh && (
+                        <div>
+                            <a className="btn-primary w-full" href={`${airtableAuthUrl}`}>
                                 Link Airtable
                             </a>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </>
-        )
-    }
-
-    const RightChild = () => {
-        return (
             <>
-                <div className="text-4xl font-bold">Admins</div>
+                <div className="pb-4 text-2xl font-bold md:text-3xl">Admins</div>
                 <MembersList membersList={org.admins} />
             </>
-        )
-    }
-
-    return <Shell LeftChild={<LeftChild />} RightChild={<RightChild />} pageTitle={name} />
+        </Shell>
+    )
 }
 
 export default Org

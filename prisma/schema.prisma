@@ -3,31 +3,37 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls"]
+  previewFeatures = ["orderByNulls", "extendedWhereUnique"]
+}
+
+generator json {
+  provider = "prisma-json-types-generator"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
   // Further reading:
   // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
   // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Account {
-  id         String    @id @default(cuid())
-  userId     String
-  type       String // could be a privy enum 'email' | 'phone' | 'wallet'
-  subject    String?
-  email      String?
-  username   String?
-  name       String?
-  address    String?
-  number     String?
-  chainType  String?
-  verifiedAt DateTime?
-  user       User      @relation(fields: [userId], references: [privyDID], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String
+  type         String // could be a privy enum 'email' | 'phone' | 'wallet'
+  subject      String?
+  email        String?
+  username     String?
+  name         String?
+  address      String?
+  number       String?
+  chainType    String?
+  walletClient String? // currently only 'privy' or 'unknown'
+  verifiedAt   DateTime?
+  user         User      @relation(fields: [userId], references: [privyDID], onDelete: Cascade)
 }
 
 model User {
@@ -43,25 +49,21 @@ model User {
   achievements          MemberAchievements[]
   organizations         MembersOfOrganizations[]
   invitations           OrganizationInvitation[]
-  //   role          UserRole?
-  role                  String?
+  role                  UserRole?
   nftMetadata           NftMetadata[]
   airtableAccessGranted OrganizationAirtableAuth[]
 }
 
 model OrganizationInvitation {
-  // id             Int          @id @unique @default(autoincrement())
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId Int
   // email          String
   inviteeAddress String
-  // role           OrganizationRole @default(ADMIN)
-  role           String
-  // status         InvitationStatus @default(PENDING)
-  status         String       @default("PENDING")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  issuedBy       User         @relation(fields: [issuedById], references: [id])
+  role           OrganizationRole @default(ADMIN)
+  status         InvitationStatus @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  issuedBy       User             @relation(fields: [issuedById], references: [id])
   issuedById     String
 
   @@id([organizationId, inviteeAddress, role])
@@ -78,62 +80,71 @@ model Organization {
 }
 
 model OrganizationAirtableAuth {
-  id                  Int          @id @unique @default(autoincrement())
-  scope               String
-  accessToken         String
-  refreshToken        String
-  organization        Organization @relation(fields: [organizationSlug], references: [slug])
-  organizationSlug    String       @unique
-  accessGrantedUser   User         @relation(fields: [accessGrantedUserId], references: [id])
-  accessGrantedUserId String
+  id                     Int          @id @unique @default(autoincrement())
+  scope                  String
+  accessToken            String
+  accessTokenExpiration  DateTime
+  refreshToken           String
+  refreshTokenExpiration DateTime
+  organization           Organization @relation(fields: [organizationSlug], references: [slug])
+  organizationSlug       String       @unique
+  accessGrantedUser      User         @relation(fields: [accessGrantedUserId], references: [id])
+  accessGrantedUserId    String
+}
+
+model Lock {
+  id    String @id @unique
+  owner String
 }
 
 model MembersOfOrganizations {
-  member         User         @relation(fields: [userId], references: [id])
+  member         User             @relation(fields: [userId], references: [id])
   userId         String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization     @relation(fields: [organizationId], references: [id])
   organizationId Int
-  //   role           OrganizationRole @default(ADMIN)
-  role           String       @default("ADMIN")
+  role           OrganizationRole @default(ADMIN)
 
   @@id([organizationId, userId])
 }
 
 model Project {
-  id                  Int                   @id @unique @default(autoincrement())
-  name                String                @unique
-  slug                String                @unique
-  description         String?
-  traitCategories     TraitCategory[]
-  organization        Organization          @relation(fields: [organizationId], references: [id])
-  members             MembersOfProjects[]
-  organizationId      Int
-  AchievementCategory AchievementCategory[]
-  NftMetadata         NftMetadata[]
+  id                    Int                   @id @unique @default(autoincrement())
+  name                  String                @unique
+  slug                  String                @unique
+  description           String?
+  traitCategories       TraitCategory[]
+  organization          Organization          @relation(fields: [organizationId], references: [id])
+  members               MembersOfProjects[]
+  organizationId        Int
+  achievementCategories AchievementCategory[]
+  nftMetadata           NftMetadata[]
 
   contractAddress     String? @unique
   network             String? @default("ethereum")
   testContractAddress String? @unique
-  testNetwork         String? @default("goerli")
+  testNetwork         String? @default("sepolia")
 
   airtableProject AirtableProject?
 }
 
 model AirtableProject {
-  id        Int     @id @unique @default(autoincrement())
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId Int     @unique
-  baseId    String
-  baseName  String
-  tableId   String
-  tableName String
+  id                     Int     @id @unique @default(autoincrement())
+  project                Project @relation(fields: [projectId], references: [id])
+  projectId              Int     @unique
+  baseId                 String
+  baseName               String
+  tableId                String
+  tableName              String
+  walletAddressFieldId   String
+  walletAddressFieldName String
+  webhookId              String?
+  macSecretBase64        String?
 }
 
 model MembersOfProjects {
-  member  User    @relation(fields: [userId], references: [id])
-  project Project @relation(fields: [projectSlug], references: [slug])
-  //   role      ProjectRole
-  role    String  @default("MEMBER")
+  member  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project     @relation(fields: [projectSlug], references: [slug])
+  role    ProjectRole @default(MEMBER)
 
   userId      String
   projectSlug String
@@ -158,14 +169,14 @@ model Trait {
   id                              Int                  @id @unique @default(autoincrement())
   traitCategory                   TraitCategory        @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
   name                            String
-  pngUrl                          String
+  ///                             [PngUrlMap]
+  pngUrlMap                       Json
   isDefaultAchieved               Boolean?
-  achievementsRequired            Achievement[]
-  achievementsRequiredDescription String?
-  //   levelLogic                      LevelLogic?
-  levelLogic                      String?
+  achievementsRequired            Achievement[] // is empty if we're using levelLogic
+  levelLogic                      LevelLogic?
   levelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
   levelRequired                   Int?
+  achievementsRequiredDescription String?
 
   projectId             Int
   traitCategoryName     String
@@ -177,16 +188,18 @@ model Trait {
 }
 
 model AchievementCategory {
-  id           Int           @id @unique @default(autoincrement())
+  id           Int             @id @unique @default(autoincrement())
+  airtableId   String?
   name         String
   description  String?
-  project      Project       @relation(fields: [projectId], references: [id])
+  project      Project         @relation(fields: [projectId], references: [id])
   achievements Achievement[]
-  //   type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
-  type         String        @default("SPECIFIC_ACHIEVEMENT")
+  type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
   traits       Trait[]
 
   projectId Int
+
+  @@unique([projectId, airtableId])
 }
 
 model Achievement {
@@ -196,12 +209,13 @@ model Achievement {
   level               Int?
   members             MemberAchievements[]
   traits              Trait[]
+  airtableId          String?              @unique
 
   achievementCategoryId Int
 }
 
 model MemberAchievements {
-  member      User        @relation(fields: [userId], references: [id])
+  member      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id])
   timestamp   DateTime    @default(now())
   status      Boolean     @default(true)
@@ -217,7 +231,7 @@ model NftMetadata {
   member        User     @relation(fields: [userId], references: [id])
   project       Project  @relation(fields: [projectSlug], references: [slug])
   name          String
-  image         String?
+  image         String?  @unique
   description   String
   externalUrl   String?
   tokenId       Int?
@@ -226,7 +240,7 @@ model NftMetadata {
   traits        Trait[]
   traitHash     String
 
-  network String @default("goerli")
+  network String @default("sepolia")
 
   userId      String
   projectSlug String
@@ -237,28 +251,37 @@ model NftMetadata {
   @@unique([userId, projectSlug, network, timestamp])
 }
 
-// enum ProjectRole {
-//   OWNER
-//   ADMIN
-//   MEMBER
-// }
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
 
-// enum LevelLogic {
-//   MORE_THAN_OR_EQUAL_TO
-//   LESS_THAN_OR_EQUAL_TO
-// }
+enum LevelLogic {
+  GREATER_THAN_OR_EQUAL_TO
+  MORE_THAN_OR_EQUAL_TO
+  LESS_THAN_OR_EQUAL_TO
+  EQUAL_TO
+}
 
-// enum AchievementType {
-//   SPECIFIC_ACHIEVEMENT
-//   LEVEL
-// }
+enum AchievementType {
+  SPECIFIC_ACHIEVEMENT
+  LEVEL
+}
 
-// enum OrganizationRole {
-//   ADMIN
-//   OWNER
-// }
+enum OrganizationRole {
+  ADMIN
+  OWNER
+}
 
-// enum UserRole {
-//   METAGAME_ADMIN
-//   METAGAME_OWNER
-// }
+enum UserRole {
+  METAGAME_ADMIN
+  METAGAME_OWNER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
+}

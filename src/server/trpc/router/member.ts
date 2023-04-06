@@ -1,14 +1,20 @@
 import { hashMessage } from '@ethersproject/hash'
-import type { Account } from '@prisma/client'
+import { createCanvas, loadImage } from '@napi-rs/canvas'
+import type { Account, Organization, OrganizationInvitation } from '@prisma/client'
+import { InvitationStatus } from '@prisma/client'
 import * as AWS from 'aws-sdk'
+import type { PutObjectRequest } from 'aws-sdk/clients/s3'
 import { env } from 'env/server.mjs'
 import { recoverAddress } from 'ethers/lib/utils'
-import { hashTraits, traitsToTraitsWithEarnedBool } from 'utils'
+import { hashPermanentTraits, traitsToAssembledNftTraits, truncateAddress } from 'utils'
 import { generateMintingSignature } from 'utils/backend'
+import { cloudfrontFolderUrl } from 'utils/constants'
+import { getEns } from 'utils/needEnvUtils'
 import { getEarnedTraits, getMemberWithProject, getNetworkName } from 'utils/prisma'
 import { privyUserZ } from 'utils/privyZod'
+import timer from 'utils/timer'
 import type { TraitWithEarnedBool } from 'utils/types'
-import { AddressZ, requestedTraitsSchema } from 'utils/types'
+import { AddressZ, organizationRoleZod, requestedTraitsSchema } from 'utils/types'
 import { z } from 'zod'
 import { protectedProcedure, publicProcedure, router } from '../trpc'
 
@@ -30,7 +36,6 @@ export const memberRouter = router({
             account.address = account.address.toLowerCase()
 
             delete account.chainId
-            delete account.walletType
 
             return account
         })
@@ -91,9 +96,10 @@ export const memberRouter = router({
             })
         }
     }),
-    me: protectedProcedure.query(async ({ ctx }) => {
-        // console.log('network', ctx.network)
-        const member = await ctx.prisma.user.findUniqueOrThrow({
+    homePage: protectedProcedure.query(async ({ ctx }) => {
+        if (!ctx.session) return null
+
+        const member = await ctx.prisma.user.findUnique({
             where: {
                 privyDID: ctx.session.userId,
             },
@@ -101,11 +107,25 @@ export const memberRouter = router({
                 organizations: { include: { organization: true } },
                 projects: { include: { project: true } },
                 achievements: { include: { achievement: true } },
-                invitations: { include: { organization: true } },
                 nftMetadata: true,
                 accounts: true,
             },
         })
+
+        if (!member) return null
+
+        let pendingOrgInvitations: (OrganizationInvitation & { organization: Organization })[] = []
+        if (member.address) {
+            pendingOrgInvitations = await ctx.prisma.organizationInvitation.findMany({
+                where: {
+                    inviteeAddress: member.address,
+                    status: InvitationStatus.PENDING,
+                },
+                include: {
+                    organization: true,
+                },
+            })
+        }
 
         return {
             ...member,
@@ -122,10 +142,63 @@ export const memberRouter = router({
                     status: a.status,
                 }
             }),
+            pendingOrgInvitations,
         }
     }),
+    me: protectedProcedure
+        .input(z.object({ getEns: z.boolean().optional() }).optional())
+        .query(async ({ ctx, input }) => {
+            // console.log('network', ctx.network)
+            const member = await ctx.prisma.user.findUniqueOrThrow({
+                where: {
+                    privyDID: ctx.session.userId,
+                },
+                include: {
+                    organizations: { include: { organization: true } },
+                    projects: { include: { project: true } },
+                    achievements: { include: { achievement: true } },
+                    nftMetadata: true,
+                    accounts: true,
+                },
+            })
+            let orgInvitations: (OrganizationInvitation & { organization: Organization })[] = []
+            if (member.address) {
+                orgInvitations = await ctx.prisma.organizationInvitation.findMany({
+                    where: {
+                        inviteeAddress: member.address,
+                    },
+                    include: {
+                        organization: true,
+                    },
+                })
+            }
+
+            let ens = undefined
+            if (input?.getEns && member.address) {
+                ens = await getEns(member.address)
+            }
+
+            return {
+                ...member,
+                ens,
+                organizations: member.organizations.map((o) => {
+                    return { ...o.organization, role: o.role }
+                }),
+                projects: member.projects.map((p) => {
+                    return { ...p.project, role: p.role }
+                }),
+                achievements: member.achievements.map((a) => {
+                    return {
+                        ...a.achievement,
+                        timestamp: a.timestamp,
+                        status: a.status,
+                    }
+                }),
+                invitations: orgInvitations,
+            }
+        }),
     acceptOrgInvitation: protectedProcedure
-        .input(z.object({ organizationId: z.number(), role: z.string() }))
+        .input(z.object({ organizationId: z.number(), role: organizationRoleZod }))
         .mutation(async ({ ctx, input }) => {
             if (!ctx.session) return null
 
@@ -138,7 +211,7 @@ export const memberRouter = router({
 
             const orgInvite = await ctx.prisma.organizationInvitation.findFirstOrThrow({
                 where: {
-                    status: 'PENDING',
+                    status: InvitationStatus.PENDING,
                     inviteeAddress: address,
                     organizationId: input.organizationId,
                     role: input.role,
@@ -169,7 +242,7 @@ export const memberRouter = router({
                             role: orgInvite.role,
                         },
                     },
-                    data: { status: 'ACCEPTED' },
+                    data: { status: InvitationStatus.ACCEPTED },
                 }),
             ])
 
@@ -184,7 +257,7 @@ export const memberRouter = router({
     nftMetadata: protectedProcedure
         .input(z.object({ projectSlug: z.string(), chainNetwork: z.string() }))
         .query(async ({ ctx, input }) => {
-            // if node env isn't prod, use goerli, else, use chainNetwork
+            // if node env isn't prod, use sepolia, else, use chainNetwork
             const network = getNetworkName(input.chainNetwork)
             // get the latest version of the user's nftMetadata for the project
 
@@ -192,7 +265,7 @@ export const memberRouter = router({
 
             if (!member.nftMetadata[0]) return null
 
-            const traits = traitsToTraitsWithEarnedBool(member.nftMetadata[0].traits)
+            const traits = traitsToAssembledNftTraits(member.nftMetadata[0].traits)
 
             const nftMetadata = {
                 ...member.nftMetadata[0],
@@ -200,7 +273,7 @@ export const memberRouter = router({
             }
             return nftMetadata
         }),
-    createNftMetadata: protectedProcedure
+    createOrUpdateNftMetadata: protectedProcedure
         .input(
             z.object({
                 requestedTraits: requestedTraitsSchema,
@@ -214,7 +287,9 @@ export const memberRouter = router({
             const network = getNetworkName(chainNetwork)
             const message = JSON.stringify({ requestedTraits, chainNetwork, projectSlug })
             const signerAddress = AddressZ.parse(recoverAddress(hashMessage(message), input.signature))
+            timer.startTimer('getMemberWithProject')
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
+            timer.stopTimer('getMemberWithProject')
 
             const allTraitsWithEarned = getEarnedTraits(member)
 
@@ -261,7 +336,7 @@ export const memberRouter = router({
                     throw new Error('No changes made')
                 }
 
-                const existingTraits = traitsToTraitsWithEarnedBool(existingNftData.traits)
+                const existingTraits = traitsToAssembledNftTraits(existingNftData.traits)
                 // add back existing non-modifiable traits
                 for (const existingTrait of existingTraits) {
                     if (!existingTrait.isModifiable) {
@@ -272,11 +347,12 @@ export const memberRouter = router({
 
             // if this is their first time creating nft metadata, make sure they're creating a unique set of non-modifiable traits
             if (!existingNftData) {
+                timer.startTimer('first time nft metadata')
                 const usedTraitComboNft = await ctx.prisma.nftMetadata.findFirst({
                     where: {
                         projectSlug,
                         network,
-                        traitHash: hashTraits(approvedTraits),
+                        traitHash: hashPermanentTraits(approvedTraits),
                         // redundant, but just to be safe
                         NOT: {
                             userId: member.id,
@@ -288,64 +364,103 @@ export const memberRouter = router({
                 if (usedTraitComboNft) {
                     throw new Error(`Trait combo already used by ${usedTraitComboNft.member.firstName}`)
                 }
+                timer.stopTimer('first time nft metadata')
             }
 
             // generate signature for the address
-            const contractAddress = network === 'mainnet' ? project.contractAddress : project.testContractAddress
+            const contractAddress = network === 'homestead' ? project.contractAddress : project.testContractAddress
 
             if (!contractAddress) throw new Error('Contract address not found')
 
             const signature = await generateMintingSignature(member.address, project.slug, contractAddress, network)
+
+            // // generate the multi-layer image using canvas
+            const canvas = createCanvas(2400, 2400)
+            const canvasCtx = canvas.getContext('2d')
+
+            // get the correct pngUrl for each trait
+            const approvedTraitsWithPngUrl = traitsToAssembledNftTraits(approvedTraits)
+
+            // // sort the layers by category z-index so that the background is drawn first
+            approvedTraitsWithPngUrl.sort((a, b) => a.zIndex - b.zIndex)
+
+            timer.startTimer('load trait images')
+
+            const imagePromises = approvedTraitsWithPngUrl.map((layer) => loadImage(layer.pngUrl))
+            const images = await Promise.all(imagePromises)
+            timer.stopTimer('load trait images')
+
+            timer.startTimer('draw trait images')
+            for (const image of images) {
+                canvasCtx.drawImage(image, 0, 0, 2400, 2400)
+            }
+            timer.stopTimer('draw trait images')
 
             AWS.config.update({
                 accessKeyId: env.METAGAME_AWS_ACCESS_KEY,
                 secretAccessKey: env.METAGAME_AWS_SECRET_ACCESS_KEY,
             })
 
-            const s3 = new AWS.S3()
+            const s3 = new AWS.S3({ useAccelerateEndpoint: true })
 
-            // // generate the multi-layer image using canvas
-            // const canvas = createCanvas(2400, 2400)
-            // const ctx = canvas.getContext('2d')
+            const permanentTraitsHash = hashPermanentTraits(approvedTraitsWithPngUrl)
+            const version = member.nftMetadata.length + 1
+            const imageFilePath = `${projectSlug}/complete-images/${network}/${member.address}/${permanentTraitsHash}_v${version}.png`
+            const params: PutObjectRequest = {
+                Bucket: 'metagame-xyz',
+                Key: `nft-images/${imageFilePath}`,
+                Body: canvas.toBuffer('image/png'),
+                ContentType: 'image/png',
+                ContentDisposition: 'inline',
+            }
 
-            // // sort the layers by category z-index so that the background is drawn first
-            // requestedLayers.sort(
-            //     (a, b) => zIndexMap[a.category] - zIndexMap[b.category],
-            // )
+            const userName = `${member.firstName}` || (await getEns(member.address)) || truncateAddress(member.address)
 
-            // for (const layer of requestedLayers) {
-            //     const matchingAsset = getLayerIfEarned(assetData, layer)
-            //     if (matchingAsset) {
-            //         const image = await loadImage(matchingAsset.pngLink)
-            //         ctx.drawImage(image, 0, 0, 2400, 2400)
-            //     }
-            // }
-
-            // // upload the image to IPFS, return hash
-            // const ipfsUrl = await addToIpfsFromBuffer(
-            //     canvas.toBuffer('image/png'),
-            // )
-
+            timer.startTimer('nftMetadata.create')
             // add a new nftMetadata record
             await ctx.prisma.nftMetadata.create({
                 data: {
                     userId: member.id,
                     projectSlug,
                     tokenId: existingNftData?.tokenId || null,
-                    name: `${member.firstName}'s ${project.name} Avatar`,
-                    description: `${member.firstName}'s ${project.name} Avatar, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
+                    name: `${userName}'s ${project.name}`,
+                    description: `${userName}'s ${project.name}, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
                     walletAddress: member.address,
-                    image: 'todo url', // TODO
+                    image: `${cloudfrontFolderUrl}${imageFilePath}`,
                     network,
+                    traitHash: permanentTraitsHash,
                     traits: {
-                        connect: approvedTraits.map((t) => {
+                        connect: approvedTraitsWithPngUrl.map((t) => {
                             return { id: t.id }
                         }),
                     },
-                    traitHash: hashTraits(approvedTraits),
                 },
             })
+            timer.stopTimer('nftMetadata.create')
+
+            timer.startTimer('s3 upload')
+            await s3.upload(params).promise()
+            timer.stopTimer('s3 upload')
 
             return signature
+        }),
+    getSignature: protectedProcedure
+        .input(
+            z.object({
+                chainNetwork: z.string(),
+                projectSlug: z.string(),
+            }),
+        )
+        .query(async ({ ctx, input }) => {
+            const network = getNetworkName(input.chainNetwork)
+            const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
+            const project = member.projects[0]?.project
+            if (!project) throw new Error('Project not found')
+            if (!member.address) throw new Error('User address not found')
+
+            const contractAddress = network === 'homestead' ? project.contractAddress : project.testContractAddress
+            if (!contractAddress) throw new Error('Contract address not found')
+
+            return generateMintingSignature(member.address, project.slug, contractAddress, network)
         }),
 })

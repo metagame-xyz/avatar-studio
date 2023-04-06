@@ -1,15 +1,17 @@
 import Head from 'next/head'
+import React from 'react'
 
 type ShellProps = {
-    LeftChild: JSX.Element
-    RightChild: JSX.Element
+    children?: React.ReactNode
     Header?: JSX.Element
     pageTitle: string
     leftWidth?: 'third' | 'half'
 }
 
-const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, Header, pageTitle, leftWidth = 'third' }) => {
+const Shell: React.FC<ShellProps> = ({ children, Header, pageTitle, leftWidth = 'third' }) => {
+    const [LeftChild, RightChild] = React.Children.toArray(children)
     const width = leftWidth === 'third' ? 'md:w-4/12' : 'md:w-6/12'
+    const mdGap = leftWidth === 'third' ? 'md:gap-32' : ''
     return (
         <>
             <Head>
@@ -22,12 +24,14 @@ const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, Header, pageTitle,
                 <div className="relative flex min-h-[calc(100vh_-_120px)] flex-col">
                     {/* page wrapper */}
                     <div className="container mx-auto">{Header}</div>
-                    <div className="container mx-auto w-full flex-grow lg:flex xl:px-8">
+                    <div className="container mx-auto flex w-full flex-grow">
                         {/* Left sidebar & main wrapper */}
-                        <div className="min-w-0 flex-1 md:flex">
+                        <div
+                            className={`flex min-w-0 flex-1 flex-col gap-8 divide-y-2 md:flex-row md:divide-y-0 ${mdGap}`}
+                        >
                             {/* Start left column area */}
                             <div className={`md:flex-shrink-0 ` + width}>
-                                <div className="h-full md:py-6">
+                                <div className="h-full p-4">
                                     <div className="relative h-full">{LeftChild}</div>
                                 </div>
                             </div>
@@ -35,7 +39,7 @@ const Shell: React.FC<ShellProps> = ({ LeftChild, RightChild, Header, pageTitle,
 
                             {/* Start main area*/}
                             <div className="md:min-w-0 md:flex-1">
-                                <div className="h-full md:py-6">
+                                <div className="h-full p-4">
                                     <div className="relative h-full">{RightChild}</div>
                                 </div>
                             </div>

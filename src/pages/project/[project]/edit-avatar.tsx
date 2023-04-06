@@ -1,25 +1,39 @@
+import FullPageLoading from 'components/FullPageLoading'
 import Loading from 'components/Loading'
+import Modal from 'components/Modal'
 import PfpPreview from 'components/PfpPreview'
 import Shell from 'components/Shell'
 import Title from 'components/Title'
-import Toast from 'components/Toast'
-import TraitSelectionPanel from 'components/TraitSelectionPanel'
+import TraitSelector from 'components/TraitSelector'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
-import { getOpenseaUrl, isComboAllowed, pfpStateToRequestedTraits, springAnimation } from 'utils/index'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'react-hot-toast'
+import {
+    areTraitArraysEqual,
+    getDecodedTransferEvent,
+    getOpenseaUrl,
+    isComboAllowed,
+    pfpStateToRequestedTraits,
+    springAnimation,
+    traitsToAssembledNftTraits,
+} from 'utils'
+import { NETWORK } from 'utils/constants'
 import { llamaPfpABI } from 'utils/llamaPfpABI'
 import { trpc } from 'utils/trpc'
-import type { Signature, ToastData, TraitWithEarnedBool } from 'utils/types'
-import { ActionType, Status } from 'utils/types'
+import type { AssembledNftTraits, Signature, Status, TraitWithEarnedBool } from 'utils/types'
+import { AllowedAction } from 'utils/types'
 import {
+    mainnet,
     useAccount,
     useContractWrite,
     useNetwork,
     usePrepareContractWrite,
     useSignMessage,
+    useSwitchNetwork,
     useWaitForTransaction,
 } from 'wagmi'
+import { sepolia } from 'wagmi/chains'
 
 const EditAvatar = () => {
     const router = useRouter()
@@ -27,113 +41,157 @@ const EditAvatar = () => {
 
     const { address } = useAccount()
     const { chain } = useNetwork()
+    const { isLoading, pendingChainId, switchNetwork } = useSwitchNetwork()
+    const switchChainRef = useRef(null)
     const trpcUtils = trpc.useContext()
 
     const { data: project } = trpc.project.getProject.useQuery()
     const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
-    console.log('chainNetwork', chain?.network)
+    const correctChain = [sepolia, mainnet].find((chain) => chain.network === NETWORK) || sepolia
+    const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(!!(chain?.id !== correctChain?.id))
+    const [isUpdatingTraitsModalOpen, setIsUpdatingTraitsModalOpen] = useState<boolean>(false)
+    useEffect(() => {
+        setIsChainModalOpen(chain?.id !== correctChain?.id)
+    }, [correctChain, chain])
+
+    const network = chain?.network || ''
+
     const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
         {
             projectSlug,
-            chainNetwork: chain?.network || '',
+            chainNetwork: network,
         },
         { enabled: !!projectSlug && !!chain },
     )
 
-    console.log(existingNftMetadata)
+    const { data: signature } = trpc.member.getSignature.useQuery(
+        { projectSlug, chainNetwork: network },
+        { enabled: !!projectSlug && !!existingNftMetadata },
+    )
+
+    useEffect(() => {
+        if (signature) setSignatureForMint(signature)
+    }, [signature])
 
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
-        { chainNetwork: chain?.network || '' },
+        { chainNetwork: network },
         { enabled: !!projectSlug && !!chain },
     )
 
-    const [hasMintedNFT, setHasMintedNFT] = useState(!!existingNftMetadata)
-    const [pfpState, setPfpState] = useState<TraitWithEarnedBool[]>([])
-    const [toast, setToast] = useState<ToastData>({
-        open: false,
-        message: '',
-        type: Status.error,
-    })
-    const [txHash, setTxHash] = useState<`0x${string}`>()
-    const [mintEnabled, setMintEnabled] = useState(false)
-    const [signatureForMint, setSignatureForMint] = useState<Signature>()
+    // TODO this will be cleaner if you use this instead
+    const enum NftState {
+        noDataNoNft = 'noDataNoNFT',
+        hasDataNoNft = 'hasDataNoNFT',
+        hasDataAndNft = 'noDataOrNFT',
+    }
 
-    const [existingPfpState, setExistingPfpState] = useState<TraitWithEarnedBool[] | null>(null)
-
+    const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
+    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create)
+    const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
     // set existing pfp state if user has an nft
+    // set nft state (data in db, and then also if minted and has a tokenId)
     useEffect(() => {
         existingNftMetadata?.traits && setExistingPfpState(existingNftMetadata?.traits)
-        existingNftMetadata && setHasMintedNFT(true)
+
+        // user already has an nft, as shown by having a tokenId
+        if (existingNftMetadata?.tokenId) {
+            setNftState(NftState.hasDataAndNft)
+            setAllowedAction(AllowedAction.update)
+        }
+
+        // user has data in db, so ready to mint, but no tokenId yet
+        if (existingNftMetadata && !existingNftMetadata?.tokenId) {
+            setNftState(NftState.hasDataNoNft)
+
+            const statesAreSame = areTraitArraysEqual(existingNftMetadata?.traits, pfpState)
+            setAllowedAction(statesAreSame ? AllowedAction.mint : AllowedAction.update)
+        }
+
+        // user has no data in db, so not ready to mint
+        if (!existingNftMetadata) {
+            setNftState(NftState.noDataNoNft)
+            setAllowedAction(AllowedAction.create)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingNftMetadata])
 
-    const actionType = hasMintedNFT ? ActionType.update : ActionType.mint
+    const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
+    const [txHash, setTxHash] = useState<`0x${string}`>()
+    const [signatureForMint, setSignatureForMint] = useState<Signature>()
+
+    // upload data to db
+    const createOrUpdateNftMetadata = trpc.member.createOrUpdateNftMetadata.useMutation({
+        onSuccess: (data) => {
+            if (nftState === NftState.hasDataAndNft) {
+                toast.success(`Your ${project?.name} updated!`)
+            }
+            if ([NftState.hasDataNoNft, NftState.noDataNoNft].includes(nftState)) {
+                setSignatureForMint(data)
+                setNftState(NftState.hasDataNoNft)
+                setAllowedAction(AllowedAction.mint)
+                toast.success(`You may mint your ${project?.name} now`)
+            }
+            setIsUpdatingTraitsModalOpen(false)
+            trpcUtils.member.nftMetadata.invalidate()
+        },
+        onError: (error) => {
+            toast.error(error.message)
+        },
+    })
 
     // set initial pfpState
     useEffect(() => {
-        if (existingNftMetadata?.traits && assetData) {
+        if (existingNftMetadata?.traits && assetData && !createOrUpdateNftMetadata.isLoading) {
             setPfpState(existingNftMetadata.traits)
-        } else if (assetData) {
-            let i = 0
-            let defaultPfpState = assetData
-                ?.filter((tc) => !tc.isModifiable)
-                .map((traitCategory) => traitCategory.traits[i] as TraitWithEarnedBool) as TraitWithEarnedBool[]
+        } else if (assetData && !pfpState.length && usedCombos) {
+            let defaultPfpState: AssembledNftTraits | undefined = undefined
 
             let safety = 0
             while (!isComboAllowed(usedCombos, defaultPfpState)) {
                 // create a new combo for defaultPfPState if taken
-                defaultPfpState = assetData
-                    ?.filter((tc) => !tc.isModifiable)
-                    .map((traitCategory) => {
-                        i = (i + 1) % traitCategory.traits.length
-                        return traitCategory.traits[i] as TraitWithEarnedBool
-                    }) as TraitWithEarnedBool[]
+                defaultPfpState = traitsToAssembledNftTraits(
+                    assetData
+                        .map((traitCategory) => {
+                            const earnedTraits = traitCategory.traits.filter((t) => t.earned)
+                            if (!earnedTraits.length) return null
+                            const i = Math.floor(Math.random() * earnedTraits.length)
+                            return earnedTraits[i] as TraitWithEarnedBool
+                        })
+                        .filter((t) => !!t) as TraitWithEarnedBool[],
+                )
 
                 safety++
                 if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
             }
+            if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
             setPfpState(defaultPfpState)
         }
-    }, [assetData, existingNftMetadata?.traits, usedCombos])
-
-    const createNftMetadata = trpc.member.createNftMetadata.useMutation({
-        onSuccess: (data) => {
-            setSignatureForMint(data)
-            trpcUtils.member.nftMetadata.invalidate()
-            console.log('signatureForMint:', data)
-        },
-        onError: (error) => {
-            triggerErrorToast(error.message)
-        },
-    })
+    }, [assetData, createOrUpdateNftMetadata.isLoading, existingNftMetadata?.traits, pfpState.length, usedCombos])
 
     // Signing transaction (pre-mint & for updating pfp)
-    const {
-        error: signError,
-        isLoading: userIsSigning,
-        signMessage,
-    } = useSignMessage({
+    const { isLoading: userIsSigning, signMessage } = useSignMessage({
         onSuccess(data) {
             const sendablePfpState =
-                actionType == ActionType.mint ? pfpState : pfpState.filter((trait) => trait.isModifiable)
-            createNftMetadata.mutate({
+                allowedAction == AllowedAction.create ? pfpState : pfpState.filter((trait) => trait.isModifiable)
+
+            setIsUpdatingTraitsModalOpen(true)
+
+            createOrUpdateNftMetadata.mutate({
                 projectSlug,
                 requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
-                chainNetwork: chain?.network || '',
+                chainNetwork: network,
                 signature: data,
             })
         },
+        onError(error) {
+            console.error(error)
+            toast.error('Error signing message.')
+        },
     })
 
-    useEffect(() => {
-        if (signError) {
-            triggerErrorToast('Error signing message.')
-        }
-    }, [signError])
-
-    // TODO maybe un-hardcode?
-    const contractAddress = chain?.network === 'homestead' ? project?.contractAddress : project?.testContractAddress
-
+    // TODO maybe un-hardcode homestead?
+    const contractAddress = network === 'homestead' ? project?.contractAddress : project?.testContractAddress
     const placeholderHex = '0x00' as `0x${string}`
 
     // Minting functions
@@ -150,127 +208,168 @@ const EditAvatar = () => {
         enabled: !!contractAddress && !!signatureForMint,
     })
 
-    const { data: txResult, write: mint } = useContractWrite(config)
+    const { data: txResponse, write: mint } = useContractWrite({
+        ...config,
+        onSuccess: (txResult) => {
+            console.log('txResult:', txResult)
+            setTxHash(txResult.hash)
+        },
+    })
 
     // note that mintStatus is the HTTP request, not the successful transaction on Ethereum
     // To see whether the txn was reverted, we need to check postMintData.status === 0
-    const { data: txReceipt, status: mintStatus } = useWaitForTransaction({
-        hash: txResult?.hash,
+    const { status: mintStatus } = useWaitForTransaction({
+        hash: txResponse?.hash,
+        onSuccess(txReceipt) {
+            if (txReceipt.status === 0) {
+                toast.error('Transaction reverted. Please try again.')
+            } else {
+                const { tokenId } = getDecodedTransferEvent(txReceipt.logs, llamaPfpABI)
+                console.log('tokenId:', tokenId)
+                addTokenId.mutate({
+                    tokenId,
+                    projectSlug,
+                    network: network,
+                })
+            }
+        },
+        onError(error) {
+            console.log('error:', error)
+            toast.error(`Something went wrong. Please try again.`)
+        },
     })
 
-    useEffect(() => {
-        if (mintStatus === Status.loading) {
-            setTxHash(txResult?.hash)
-        }
+    const addTokenId = trpc.nftMetadata.addTokenId.useMutation({
+        onSuccess: () => {
+            trpcUtils.member.nftMetadata.invalidate()
+            setNftState(NftState.hasDataAndNft)
+            toast.success(`Your ${project?.name} was minted successfully!`)
+        },
+    })
 
-        if (mintStatus === Status.success && txReceipt?.status === 1) {
-            setHasMintedNFT(true)
-            triggerSuccessToast(`Your ${project?.name} NFT was minted successfully!`)
-        }
-
-        if (mintStatus === Status.error || txReceipt?.status === 0) {
-            triggerErrorToast('Something went wrong. Please try again.')
-        }
-    }, [mintStatus, txResult, txReceipt, project])
-
-    useEffect(() => {
-        if (createNftMetadata.status === Status.error) {
-            triggerErrorToast(`${createNftMetadata.error?.message}`)
-        }
-
-        if (createNftMetadata.status === Status.success && actionType === ActionType.mint) {
-            setMintEnabled(true)
-            triggerSuccessToast('You may mint your NFT now')
-        }
-    }, [createNftMetadata.status, actionType, createNftMetadata.error?.message])
-
-    const triggerErrorToast = (message: string) => {
-        setToast({ message, open: true, type: Status.error })
-        const timeout = setTimeout(() => {
-            setToast((toast) => ({ ...toast, open: false }))
-        }, 4000)
-
-        return () => clearTimeout(timeout)
-    }
-    const triggerSuccessToast = (message: string) => {
-        setToast({ message, open: true, type: Status.success })
-        const timeout = setTimeout(() => {
-            setToast((toast) => ({ ...toast, open: false }))
-        }, 4000)
-
-        return () => clearTimeout(timeout)
-    }
-
-    const updatePfpState = (trait: TraitWithEarnedBool): void => {
-        if (!trait.category) {
+    const updatePfpState = (newTrait: TraitWithEarnedBool): void => {
+        if (!newTrait.category) {
             setPfpState([])
         }
-        const updatedState = pfpState.filter((t) => t.category !== trait.category)
-        setPfpState([...updatedState, trait])
+        const oldStateMinusNewTrait = pfpState.filter((t) => t.category !== newTrait.category)
+        const updatedState = [...oldStateMinusNewTrait, newTrait]
+
+        const statesAreSame = areTraitArraysEqual(updatedState, existingNftMetadata?.traits)
+
+        const stateToActionMap = {
+            [NftState.noDataNoNft]: AllowedAction.create,
+            [NftState.hasDataNoNft]: statesAreSame ? AllowedAction.mint : AllowedAction.update,
+            [NftState.hasDataAndNft]: AllowedAction.update,
+        }
+        setAllowedAction(stateToActionMap[nftState])
+
+        setPfpState(traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait]))
         return
     }
 
-    if (!assetData || !chain) return <Loading />
+    if (!assetData || !chain) return <FullPageLoading />
 
-    // console.log(chain, contractAddress, existingNftMetadata?.tokenId)
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 
     const Header = () => {
         return (
             <>
-                <Toast data={toast} setData={setToast} />
                 <div className="mx-auto flex items-center justify-center">
                     <div className="grid gap-y-2 text-center">
                         <Title level={3} className="font-title font-bold">
-                            {actionType === 'Mint' ? 'Build your Avatar' : 'Update your Avatar'}
+                            {project
+                                ? allowedAction === AllowedAction.update
+                                    ? `Update your ${project.name}`
+                                    : `Create your ${project.name}`
+                                : null}
                         </Title>
-                        <p className="text-md text-teal-50/75">Unlock more traits over time</p>
+                        <p className="text-md text-teal-50/75">Earn more traits over time</p>
                     </div>
                 </div>
             </>
         )
     }
-    const LeftChild = () => {
-        return (
-            <motion.div layout transition={springAnimation} className="">
-                <PfpPreview
-                    pfpState={pfpState}
-                    mintStatus={txReceipt?.status === 0 ? Status.error : (mintStatus as Status)}
-                    txHash={txHash}
-                    openSeaUrl={openseaUrl}
-                />
-            </motion.div>
-        )
-    }
 
-    const RightChild = () => {
-        return (
-            <motion.div transition={springAnimation}>
-                <TraitSelectionPanel
-                    pfpState={pfpState}
-                    assetData={assetData}
-                    existingPfpState={existingPfpState}
-                    updatePfpState={updatePfpState}
-                    actionType={actionType}
-                    signMessage={signMessage}
-                    userIsSigning={userIsSigning}
-                    createNftMetadataStatus={createNftMetadata.status as Status}
-                    mintEnabled={mintEnabled}
-                    mintFunction={mint}
-                    mintStatus={mintStatus as Status}
-                />
-            </motion.div>
-        )
-    }
+    const actionCopy = allowedAction === AllowedAction.update ? 'Updating' : 'Creating'
 
     return (
-        <Shell
-            LeftChild={<LeftChild />}
-            RightChild={<RightChild />}
-            Header={<Header />}
-            pageTitle="edit avatar"
-            leftWidth="half"
-        />
+        <>
+            <Modal
+                open={isChainModalOpen}
+                setOpen={setIsChainModalOpen}
+                title={`Please switch to ${correctChain?.network}`}
+                initialFocusRef={switchChainRef}
+                hideButtons
+            >
+                <div className="flex flex-col items-center justify-center">
+                    <button
+                        className="btn-primary"
+                        disabled={!switchNetwork}
+                        onClick={() => switchNetwork?.(correctChain.id)}
+                        ref={switchChainRef}
+                    >
+                        {correctChain.name}
+                        {isLoading && pendingChainId === correctChain.id && ` (switching)`}
+                    </button>
+                </div>
+            </Modal>
+            <Modal
+                open={isUpdatingTraitsModalOpen}
+                setOpen={setIsUpdatingTraitsModalOpen}
+                hideButtons
+                uncloseable
+                className="flex h-64 max-w-screen-md flex-col justify-center"
+            >
+                <div className="flex h-auto flex-col justify-center gap-6 text-left">
+                    <div className="text-center text-2xl">{`${actionCopy} your ${project?.name}`}</div>
+                    <div className="text-lg">
+                        {`${actionCopy} your ${project?.name} takes time. ${
+                            !(allowedAction === AllowedAction.update)
+                                ? `Once it's done being assembled, you will be able to mint it! `
+                                : ''
+                        }${project?.name} is complicated to assemble, this may take up to 2 minutes. `}
+                    </div>
+                    <Loading />
+                </div>
+            </Modal>
+            <Shell Header={<Header />} pageTitle="edit avatar" leftWidth="half">
+                <motion.div layout transition={springAnimation} className="sticky top-0">
+                    <PfpPreview
+                        pfpState={pfpState}
+                        txHash={txHash}
+                        openSeaUrl={openseaUrl}
+                        existingPfpState={existingPfpState}
+                        signMessage={signMessage}
+                        userIsSigning={userIsSigning}
+                        createNftMetadataStatus={createOrUpdateNftMetadata.status as Status}
+                        allowedAction={allowedAction}
+                        mintFunction={mint}
+                        mintStatus={mintStatus as Status}
+                        projectName={project?.name || ''}
+                        contractAddress={contractAddress}
+                    />
+                </motion.div>
+                <motion.div transition={springAnimation}>
+                    <div className={`relative flex w-full flex-col justify-between gap-4 py-2`}>
+                        <div className="grid gap-y-2">
+                            {assetData
+                                ?.sort((a, b) => a.zIndex - b.zIndex)
+                                .map((tc) => {
+                                    // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
+                                    return !!existingPfpState && !tc.isModifiable ? null : (
+                                        <TraitSelector
+                                            key={tc.name}
+                                            traitCategory={tc}
+                                            pfpState={pfpState}
+                                            updatePfpState={updatePfpState}
+                                        />
+                                    )
+                                })}
+                        </div>
+                    </div>
+                </motion.div>
+            </Shell>
+        </>
     )
 }
 

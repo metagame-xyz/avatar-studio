@@ -7,12 +7,16 @@ import { z } from 'zod'
  */
 export const serverSchema = z.object({
     DATABASE_URL: z.string().url(),
+    DIRECT_URL: z.string().url(),
     NODE_ENV: z.enum(['development', 'test', 'production']),
     PRIVY_APP_SECRET: z.string(),
     METAGAME_AWS_ACCESS_KEY: z.string(),
     METAGAME_AWS_SECRET_ACCESS_KEY: z.string(),
     VALIDATOR_PRIVATE_KEY: z.string(),
     AIRTABLE_CLIENT_SECRET: z.string(),
+    EVENT_FORWARDER_AUTH_TOKEN: z.string(),
+    WEBHOOK_PASSWORD: z.string(),
+    BASE_URL: z.string(),
 })
 
 /**

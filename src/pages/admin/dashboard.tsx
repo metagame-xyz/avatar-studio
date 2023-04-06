@@ -1,91 +1,483 @@
+import type { OrganizationInvitation, TraitCategory } from '@prisma/client'
+import { OrganizationRole } from '@prisma/client'
+import AchievementToTraitEditor from 'components/AchievementToTraitEditor'
+import Input from 'components/Input'
+import Loader from 'components/Loader'
+import Shell from 'components/Shell'
+import ToggleWithIcon from 'components/Toggle'
 import { type NextPage } from 'next'
-
-import Head from 'next/head'
-import { useRouter } from 'next/router'
-
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { truncateAddress } from 'utils'
+import { getEns } from 'utils/needEnvUtils'
 import { trpc } from 'utils/trpc'
+import type { ArrayElement } from 'utils/types'
+import { newAirtableMemberSchema } from 'utils/types'
 
-const Org: NextPage = () => {
-    const router = useRouter()
+const AdminDashboard: NextPage = () => {
+    const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
+    const trpcUtils = trpc.useContext()
 
-    const { data: user } = trpc.member.me.useQuery()
+    const copyS3Files = trpc.trait.createFromS3.useMutation({
+        onSuccess: (data) => {
+            console.log('success', data)
+            trpcUtils.org.getAllOrgs.invalidate()
+        },
+        onError: (error) => {
+            console.log('error', error)
+        },
+    })
 
-    const { data } = trpc.trait.getFromS3.useQuery('llama-pfp')
-    const copyS3Files = trpc.trait.createFromS3.useMutation()
+    const createOrg = trpc.org.createNewOrg.useMutation({
+        onSuccess: (data) => {
+            console.log('success', data)
+            setNewOrgName('')
+            trpcUtils.org.getAllOrgs.invalidate()
+        },
+        onError: (error) => {
+            console.log('error', error)
+        },
+    })
 
-    // const Projects = () => {
-    //     const projects = org.projects || []
-    //     return projects.length > 0 ? (
-    //         <div>
-    //             {projects.map(({ name, slug }) => (
-    //                 <div className="mt-2 flex items-center" key={slug}>
-    //                     <Link
-    //                         className="text-lg hover:text-teal-200"
-    //                         href={`/project/${slug}`}
-    //                     >
-    //                         <UserCircleIcon className="mr-2 inline-block h-8 w-8" />
-    //                         {name}
-    //                     </Link>
-    //                 </div>
-    //             ))}
-    //         </div>
-    //     ) : (
-    //         <></>
-    //     )
-    // }
+    const createProject = trpc.project.createNewProject.useMutation({
+        onSuccess: () => {
+            setNewProjectName('')
+            trpcUtils.org.getAllOrgs.invalidate()
+        },
+        onError: (error) => {
+            console.log('error', error)
+        },
+    })
+
+    // TODO add dropdown for admin / owner
+    const createInvite = trpc.org.sendOrgAdminInvite.useMutation({
+        onSuccess: (data) => {
+            console.log('success', data)
+            setInviteAddress('')
+            trpcUtils.org.getAllOrgs.invalidate()
+        },
+        onError: (error) => {
+            console.log('error', error)
+        },
+    })
+
+    type OrgWithData = ArrayElement<typeof orgs>
+    type ProjectWithData = ArrayElement<OrgWithData['projects']>
+
+    const [newOrgName, setNewOrgName] = useState('')
+    const [newProjectName, setNewProjectName] = useState('')
+    const [selectedOrg, setSelectedOrg] = useState<OrgWithData | null>(null)
+    const [selectedProject, setSelectedProject] = useState<ProjectWithData | null>(null)
+
+    const [inviteAddress, setInviteAddress] = useState('')
+    const [invites, setInvites] = useState<(OrganizationInvitation & { ens: string | null })[] | []>([])
+
+    const { data: airtableData } = trpc.project.getAllAirtableData.useQuery(
+        { organizationSlug: selectedOrg?.slug || '', projectSlug: selectedProject?.slug || '' },
+        { enabled: !!selectedOrg && !!selectedProject },
+    )
+
+    const syncAirtableMembersMutation = trpc.project.syncAirtableMembers.useMutation()
+    const syncAirtableAchievementsMutation = trpc.project.syncAirtableAchievements.useMutation()
+    const addAirtableWebhook = trpc.project.addAirtableWebhook.useMutation()
+
+    const syncAirtableData = async () => {
+        if (!airtableData) {
+            console.log('No airtable data found')
+            return
+        }
+
+        const airtableMembers = airtableData?.members?.map((m) => newAirtableMemberSchema.parse(m))
+
+        if (!airtableMembers || !airtableData?.achievementFields) {
+            console.log('No airtable members or achievement fields found')
+            return
+        }
+
+        if (selectedOrg?.slug && selectedProject?.slug) {
+            await syncAirtableMembersMutation.mutateAsync({
+                organizationSlug: selectedOrg.slug,
+                airtableMembers,
+                projectSlug: selectedProject.slug,
+            })
+
+            await syncAirtableAchievementsMutation.mutateAsync({
+                organizationSlug: selectedOrg.slug,
+                airtableMembers,
+                airtableFields: airtableData.achievementFields,
+                projectSlug: selectedProject.slug,
+            })
+
+            await addAirtableWebhook.mutateAsync({
+                organizationSlug: selectedOrg.slug,
+                projectSlug: selectedProject.slug,
+                override: true,
+            })
+        } else {
+            console.error('error syncing airtable data')
+        }
+    }
+
+    useEffect(() => {
+        const loadInvites = async () => {
+            if (selectedOrg) {
+                const invitations = selectedOrg.invitations.map(async (invite) => {
+                    const ens = await getEns(invite.inviteeAddress)
+                    console.log('ens', ens, invite.inviteeAddress)
+                    return { ...invite, ens }
+                })
+
+                const invites = await Promise.all(invitations)
+                setInvites(invites)
+            }
+        }
+
+        loadInvites()
+    }, [selectedOrg])
+
+    useEffect(() => {
+        if (!isOrgsLoading && orgs) {
+            // Find the previously selected org in the new orgs data
+            const previouslySelectedOrg = selectedOrg ? orgs.find((org) => org.slug === selectedOrg.slug) : null
+
+            if (previouslySelectedOrg) setSelectedOrg(previouslySelectedOrg)
+        }
+        if (!isOrgsLoading && orgs) {
+            const previouslySelectedProject = selectedProject
+                ? selectedOrg?.projects.find((project) => project.slug === selectedProject.slug)
+                : null
+
+            if (previouslySelectedProject) setSelectedProject(previouslySelectedProject)
+        }
+    }, [orgs, isOrgsLoading, selectedOrg, selectedProject])
+
+    const Orgs = () => {
+        return orgs && orgs.length > 0 ? (
+            <div className="flex flex-col space-y-2">
+                {orgs.map((org) => (
+                    <span
+                        onClick={() => {
+                            setSelectedOrg(org)
+                            setSelectedProject(null)
+                        }}
+                        key={org.name}
+                    >
+                        <div
+                            className={`text-xl hover:cursor-pointer hover:text-teal-200${
+                                org.slug === selectedOrg?.slug ? ' text-teal-300' : ''
+                            }`}
+                        >
+                            {org.name}
+                        </div>
+                    </span>
+                ))}
+            </div>
+        ) : (
+            <></>
+        )
+    }
+
+    const Projects = () => {
+        const projects = selectedOrg?.projects || []
+        return projects && projects.length > 0 ? (
+            <div className="flex flex-col space-y-2">
+                {projects.map((project) => (
+                    <div className="flex items-center gap-2" key={project.name}>
+                        <span onClick={() => setSelectedProject(project)} key={project.name}>
+                            <div
+                                className={`text-xl hover:cursor-pointer hover:text-teal-200${
+                                    project.slug === selectedProject?.slug ? ' text-teal-300' : ''
+                                }`}
+                            >
+                                {project.name}
+                            </div>
+                        </span>
+                        <Link target="_blank" href={`/project/${project.slug}`}>
+                            (project page)
+                        </Link>
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <></>
+        )
+    }
+
+    function TraitCategoryTable({
+        traitCategories,
+        projectSlug,
+    }: {
+        traitCategories: TraitCategory[]
+        projectSlug: string
+    }) {
+        const updateTraitCategoryMutation = trpc.trait.updateTraitCategory.useMutation({
+            onSuccess: (data) => {
+                console.log('success', data)
+                trpcUtils.org.getAllOrgs.invalidate()
+            },
+        })
+
+        const handleZIndexChange = async (updatedTraitCategory: TraitCategory, zIndex: number) => {
+            updatedTraitCategory.zIndex = zIndex
+            await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
+        }
+
+        const handleUpgradeableChange = async (updatedTraitCategory: TraitCategory, isUpgradeable: boolean) => {
+            updatedTraitCategory.isModifiable = isUpgradeable
+            await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
+        }
+
+        const handleDefaultAchievedChange = async (updatedTraitCategory: TraitCategory, isDefaultAchieved: boolean) => {
+            updatedTraitCategory.isDefaultAchieved = isDefaultAchieved
+            await updateTraitCategoryMutation.mutate({ traitCategory: updatedTraitCategory, projectSlug })
+        }
+
+        const zOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+        const Options = () => {
+            return (
+                <>
+                    {zOptions.map((z) => (
+                        <option key={z} value={`${z}`}>
+                            {z}
+                        </option>
+                    ))}
+                </>
+            )
+        }
+
+        return (
+            <div className="overflow-x-auto">
+                <table className="table-primary">
+                    <thead className="thead-primary">
+                        <tr>
+                            <th className="th-primary">Name</th>
+                            <th className="th-primary">Z Index</th>
+                            <th className="th-primary">Upgradeable?</th>
+                            <th className="th-primary">Default Earned?</th>
+                        </tr>
+                    </thead>
+                    <tbody className="tbody-primary">
+                        {traitCategories
+                            .sort((a, b) => a.zIndex - b.zIndex)
+                            .map((traitCategory) => (
+                                <tr key={traitCategory.name}>
+                                    <td className="td-primary">{traitCategory.name}</td>
+                                    <td className="td-primary">
+                                        <select
+                                            className="bg-black"
+                                            value={traitCategory.zIndex}
+                                            onChange={(event) =>
+                                                handleZIndexChange(traitCategory, parseInt(event.target.value))
+                                            }
+                                        >
+                                            <Options />
+                                        </select>
+                                    </td>
+                                    <td className="td-primary">
+                                        <ToggleWithIcon
+                                            enabled={traitCategory.isModifiable}
+                                            setEnabled={(isEnabled: boolean) =>
+                                                handleUpgradeableChange(traitCategory, isEnabled)
+                                            }
+                                        />
+                                    </td>
+                                    <td className="td-primary">
+                                        <ToggleWithIcon
+                                            enabled={traitCategory.isDefaultAchieved}
+                                            setEnabled={(isEnabled: boolean) =>
+                                                handleDefaultAchievedChange(traitCategory, isEnabled)
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
+            </div>
+        )
+    }
 
     return (
-        <>
-            <Head>
-                <title>Admin Dashboard</title>
-                {/* <meta name="description" content="Generated by create-t3-app" /> */}
-                <link rel="icon" href="/favicon.ico" />
-            </Head>
-            <>
-                <div className="relative flex min-h-screen flex-col">
-                    {/* 3 column wrapper */}
-                    <div className="mx-auto w-full max-w-7xl flex-grow  lg:flex xl:px-8">
-                        {/* Left sidebar & main wrapper */}
-                        <div className="min-w-0 flex-1  xl:flex">
-                            <div className="border-b border-gray-200 xl:w-64 xl:flex-shrink-0 xl:border-b-0 xl:border-r xl:border-gray-200">
-                                <div className="h-full py-6 pl-4 pr-6 sm:pl-6 lg:pl-8 xl:pl-0">
-                                    {/* Start left column area */}
-                                    <div className="relative h-full">
-                                        <div className="flex flex-col">
-                                            <div className="text-4xl font-bold">Admin</div>
-                                            <div className="mt-4 mb-2 text-3xl font-bold">things</div>
-                                            {/* <Projects /> */}
-                                            <button
-                                                onClick={() =>
-                                                    copyS3Files.mutateAsync({
-                                                        projectSlug: 'llama-pfp',
-                                                    })
-                                                }
-                                                className="btn-primary"
-                                            >
-                                                upload files
-                                            </button>
-                                        </div>
-                                    </div>
-                                    {/* End left column area */}
-                                </div>
+        <Shell pageTitle="Admin Dashboard">
+            <div>
+                <div className="pb-4 text-2xl font-bold md:text-3xl">Admin</div>
+                <div className="flex flex-col space-y-12">
+                    <div className="flex flex-col space-y-6">
+                        <div className="flex flex-col space-y-2">
+                            <div className="text-xl font-bold md:text-2xl">Orgs</div>
+                            <Orgs />
+                        </div>
+                        <div className="flex gap-2">
+                            <Input
+                                className="w-2/3"
+                                label="New Org Name"
+                                placeholder="Haab Goblins Crypto Club"
+                                value={newOrgName}
+                                onChange={(e) => {
+                                    setNewOrgName(e.target.value)
+                                }}
+                            />
+                            <button
+                                className="btn-primary"
+                                onClick={() => {
+                                    createOrg.mutate(newOrgName)
+                                }}
+                            >
+                                Create
+                            </button>
+                        </div>
+                    </div>
+
+                    {selectedOrg && (
+                        <div className="flex flex-col space-y-6">
+                            <div className="flex flex-col space-y-2">
+                                <div className="text-xl font-bold md:text-2xl">Projects</div>
+                                <Projects />
                             </div>
 
-                            <div className="lg:min-w-0 lg:flex-1">
-                                <div className="h-full py-6 px-4 sm:px-6 lg:px-8">
-                                    {/* Start main area*/}
-                                    <div className="relative h-full">
-                                        <div className="text-4xl font-bold">Members</div>
-                                    </div>
-                                    {/* End main area */}
+                            <div className="flex gap-2">
+                                <Input
+                                    className="w-2/3"
+                                    label="New Project Name"
+                                    placeholder={`${selectedOrg.name}'s Avatar`}
+                                    value={newProjectName}
+                                    onChange={(e) => {
+                                        setNewProjectName(e.target.value)
+                                    }}
+                                />
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => {
+                                        createProject.mutate({
+                                            name: newProjectName,
+                                            organizationSlug: selectedOrg.slug,
+                                        })
+                                    }}
+                                >
+                                    Create
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+            <>
+                <div className="flex flex-col space-y-12">
+                    {selectedOrg && !selectedProject && (
+                        <div>
+                            <div className="flex flex-col space-y-8">
+                                <div className="text-2xl font-bold md:text-3xl">{`${selectedOrg.name}`}</div>
+                                <div className="flex gap-2">
+                                    <Input
+                                        label="ENS or Wallet Address"
+                                        placeholder="brenner.eth"
+                                        value={inviteAddress}
+                                        onChange={(e) => {
+                                            setInviteAddress(e.target.value)
+                                        }}
+                                        className="w-64"
+                                    />
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => {
+                                            createInvite.mutate({
+                                                organizationId: selectedOrg.id,
+                                                ensOrWalletAddress: inviteAddress,
+                                                role: OrganizationRole.ADMIN,
+                                            })
+                                        }}
+                                    >
+                                        Send Admin Invite
+                                    </button>
+                                </div>
+                                <div className="flex flex-col space-y-2">
+                                    <div className="text-xl font-bold md:text-2xl">Existing Admins & Invitations</div>
+                                    {invites ? (
+                                        <div className="">
+                                            <div className="overflow-x-auto">
+                                                <table className="table-primary">
+                                                    <thead className="thead-primary">
+                                                        <tr>
+                                                            <th className="th-primary">ENS</th>
+                                                            <th className="th-primary">Address</th>
+                                                            <th className="th-primary">Sent At</th>
+                                                            <th className="th-primary">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="tbody-primary">
+                                                        {invites.map((invite) => (
+                                                            <tr key={invite.inviteeAddress}>
+                                                                <td className="td-primary">{invite.ens ?? '-'}</td>
+                                                                <td className="td-primary">
+                                                                    {truncateAddress(invite.inviteeAddress)}
+                                                                </td>
+                                                                <td className="td-primary">
+                                                                    {invite.createdAt.toLocaleString()}
+                                                                </td>
+                                                                <td className="td-primary text-sm text-gray-500">
+                                                                    {invite.status.toLowerCase()}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    ) : null}
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
+                    {selectedOrg && selectedProject && (
+                        <div className="flex flex-col space-y-4">
+                            <div className="text-2xl font-bold md:text-3xl">{`${selectedProject.name}`}</div>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() =>
+                                        copyS3Files.mutate({
+                                            projectSlug: selectedProject.slug,
+                                        })
+                                    }
+                                    className="btn-primary my-4"
+                                >
+                                    upload traits from S3
+                                </button>
+                                <button
+                                    onClick={() => syncAirtableData()}
+                                    className="btn-primary my-4 disabled:opacity-50"
+                                    disabled={!airtableData || !!airtableData.error}
+                                >
+                                    {!airtableData && <Loader size="sm" className="mr-2 text-black" />}
+                                    {`(re)sync airtable`}
+                                </button>
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <div className="text-xl font-bold md:text-2xl">Trait Categories</div>
+                                <TraitCategoryTable
+                                    traitCategories={selectedProject.traitCategories}
+                                    projectSlug={selectedProject.slug}
+                                />
+                            </div>
+                            <div>
+                                <div className="text-xl font-bold md:text-2xl">Achievement to Trait mapping</div>
+                                {selectedProject.traitCategories
+                                    .filter((traitCategory) => !traitCategory.isDefaultAchieved)
+                                    .map((traitCategory) => (
+                                        <div key={traitCategory.name}>
+                                            <AchievementToTraitEditor
+                                                traitCategory={traitCategory}
+                                                achievementCategories={selectedProject.achievementCategories}
+                                            />
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </>
-        </>
+        </Shell>
     )
 }
 
-export default Org
+export default AdminDashboard

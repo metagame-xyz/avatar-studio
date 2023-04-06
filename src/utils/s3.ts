@@ -2,7 +2,7 @@ import type { PrismaClient, TraitCategory } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import type * as AWS from 'aws-sdk'
 import { z } from 'zod'
-import { getS3LayersFolderUrl } from './constants'
+import { getCloudfrontLayersFolderUrl } from './constants'
 import type { TraitWithCategory } from './types'
 
 const S3FoldersSchema = z.record(z.array(z.string()))
@@ -22,16 +22,28 @@ export async function getTraitCategoriesAndNames(aws: typeof AWS, projectSlug: s
 
     files?.forEach((file) => {
         // get the file name
-        const traitName = file.Key?.split('/').pop()?.split('.')[0] as string
-        // take the last folder name as the key
-        const traitCategory = file.Key?.split('/').slice(-2)[0] as string
+        const fileNameParts = file.Key?.split('/')
+        if (!fileNameParts) {
+            return
+        }
+
+        // combine the second-to-last and last parts of the path to create the new file name
+        // "Hair/Blue.png" => "Hair" & "Blue.png"
+        // "Hair/Man/Blue.png" => "Hair" & "Man/Blue.png"
+        const traitCategory = fileNameParts[3] as string
+        const fileName = (
+            fileNameParts.length > 5
+                ? fileNameParts.slice(fileNameParts.length - 2).join('/')
+                : fileNameParts[fileNameParts.length - 1]
+        ) as string
 
         if (!result[traitCategory]) {
-            result[traitCategory] = [traitName]
+            result[traitCategory] = [fileName]
         } else {
-            result[traitCategory]?.push(traitName)
+            result[traitCategory]?.push(fileName)
         }
     })
+    // console.log(result)
     return result
 }
 
@@ -65,12 +77,12 @@ export const getFromS3 = async (
         return fileName.replace(/_/g, ' ')
     }
 
-    const s3FolderUrl = getS3LayersFolderUrl(projectSlug)
+    const cloudfrontFolderUrl = getCloudfrontLayersFolderUrl(projectSlug)
 
     const traitCategories: TraitCategory[] = []
     const traits: TraitWithCategory[] = []
 
-    for (const [traitCategoryData, traitNameList] of Object.entries(traitCategoriesData)) {
+    for (const [traitCategoryData, fileNameList] of Object.entries(traitCategoriesData)) {
         // create trait category
         const traitCategory = await prisma.traitCategory.upsert({
             create: {
@@ -96,13 +108,45 @@ export const getFromS3 = async (
         traitCategories.push(traitCategory)
 
         // create traits
-        for (const traitName of traitNameList) {
-            const pngUrl = s3FolderUrl + traitCategory.name + '/' + traitName + '.png'
+
+        let fileNames = [] as string[][]
+
+        if (fileNameList[0]?.includes('/')) {
+            const fileNamesGroupedByCategory: Record<string, string[]> = {}
+            for (const fileName of fileNameList) {
+                const category = fileName.split('/')[1] as string
+                if (!fileNamesGroupedByCategory[category]) {
+                    fileNamesGroupedByCategory[category] = []
+                }
+                fileNamesGroupedByCategory[category]?.push(fileName)
+            }
+
+            fileNames = Object.values(fileNamesGroupedByCategory)
+        } else {
+            fileNames = fileNameList.map((fileName) => [fileName])
+        }
+        for (const fileNamesArray of fileNames) {
+            const pngUrlMap: Record<string, string> = {}
+            let traitName = undefined
+
+            if (fileNamesArray.length > 1) {
+                // array of file names for variants of the same trait
+                for (const fileName of fileNamesArray) {
+                    const baseName = fileName.split('/')[0] as string
+                    pngUrlMap[baseName] = cloudfrontFolderUrl + traitCategory.name + '/' + fileName
+                }
+                traitName = fileNamesArray[0]?.split('/')[1]?.split('.')[0] as string
+            } else {
+                // single file name for trait, default variant
+                const fileName = fileNamesArray[0] as string
+                traitName = fileName.split('.')[0] as string
+                pngUrlMap['defaultVariant'] = cloudfrontFolderUrl + traitCategory.name + '/' + fileName
+            }
 
             const trait = await prisma.trait.upsert({
                 create: {
                     name: fileNameToName(traitName),
-                    pngUrl,
+                    pngUrlMap,
                     traitCategory: {
                         connect: {
                             projectId_name: {
@@ -120,7 +164,7 @@ export const getFromS3 = async (
                     },
                 },
                 update: {
-                    pngUrl,
+                    pngUrlMap,
                 },
                 include: {
                     traitCategory: true,
@@ -130,7 +174,6 @@ export const getFromS3 = async (
             traits.push(trait)
         }
     }
-
     return {
         traitCategories,
         traits,

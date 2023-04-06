@@ -1,19 +1,15 @@
+import type { AuthTokenClaims } from '@privy-io/server-auth'
 import { type inferAsyncReturnType } from '@trpc/server'
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next'
+import { privy } from 'utils/backend'
 import { prisma } from '../db/client'
-
-import type { AuthTokenClaims } from '@privy-io/server-auth'
-import { PrivyClient } from '@privy-io/server-auth'
-import { env as clientEnv } from 'env/client.mjs'
-import { env as serverEnv } from 'env/server.mjs'
-
-const privy = new PrivyClient(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET)
 
 type CreateContextOptions = {
     verifiedClaims: AuthTokenClaims | null
     projectSlug: string | null
-    orgSlug: string | null
+    organizationSlug: string | null
     network: string | null
+    webhookPassword: string | null
 }
 
 /** Use this helper for:
@@ -26,8 +22,9 @@ export const createContextInner = async (opts: CreateContextOptions) => {
         session: opts.verifiedClaims,
         prisma,
         projectSlug: opts.projectSlug,
-        orgSlug: opts.orgSlug,
+        organizationSlug: opts.organizationSlug,
         network: opts.network,
+        webhookPassword: opts.webhookPassword,
     }
 }
 
@@ -40,8 +37,9 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
     const authToken = req.headers?.authorization?.replace('Bearer ', '')
     const projectSlug = (req.headers?.projectslug || null) as string | null
-    const orgSlug = (req.headers?.orgslug || null) as string | null
+    const organizationSlug = (req.headers?.orgslug || null) as string | null
     const network = (req.headers?.chain || null) as string | null
+    const webhookPassword = (req.headers?.webhookPassword || null) as string | null
 
     // console.log('headers', req.headers)
 
@@ -53,7 +51,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
         console.log(`Token verification failed with error ${error}.`)
     }
 
-    return await createContextInner({ verifiedClaims, projectSlug, orgSlug, network })
+    return await createContextInner({ verifiedClaims, projectSlug, organizationSlug, network, webhookPassword })
     // Get the session from the server using the unstable_getServerSession wrapper function
     // const session = await getServerAuthSession({ req, res })
 }

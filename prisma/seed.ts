@@ -1,15 +1,21 @@
 import type { Achievement, TraitCategory } from '@prisma/client'
-import { PrismaClient } from '@prisma/client'
-import { hashTraits } from '../src/utils'
-import { getFromS3 } from '../src/utils/s3'
-import type { TraitWithEarnedBool } from '../src/utils/types'
-import { LlamaTier } from '../src/utils/types'
-// import { prisma } from '../src/server/db/client'
+import { InvitationStatus, LevelLogic, PrismaClient, UserRole } from '@prisma/client'
 import * as AWS from 'aws-sdk'
-
 import * as dotenv from 'dotenv'
+import { objectToCamel } from 'ts-case-convert'
+import { hashPermanentTraits } from 'utils'
+import { getFromS3 } from 'utils/s3'
+import type { NewAirtableMember, TraitWithEarnedBool } from 'utils/types'
+import { LlamaTier } from 'utils/types'
 
 dotenv.config()
+
+const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+const privyAppSecret = process.env.PRIVY_APP_SECRET
 
 const prisma = new PrismaClient()
 
@@ -18,24 +24,156 @@ AWS.config.update({
     secretAccessKey: process.env.METAGAME_AWS_SECRET_ACCESS_KEY,
 })
 
+const createAuthHeader = (id: string, secret: string): string => {
+    const token = Buffer.from(`${id}:${secret}`).toString('base64')
+    return `Basic ${token}`
+}
+const privyGetAllUsers = async (
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<any[]> => {
+    const url = 'https://auth.privy.io/api/v1/users'
+
+    const app = appId || ''
+    const secret = appSecret || ''
+    const options = {
+        method: 'GET',
+        headers: {
+            'privy-app-id': app,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(app, secret),
+        },
+    }
+
+    const data = await fetch(url, options).then((res) => res.json())
+    const users = data.data.map((user: any) => {
+        return objectToCamel(user)
+    })
+
+    const remappedUsers = users.map((user: any) => ({
+        ...user,
+        address: user.linkedAccounts[0]?.address.toLowerCase(),
+    }))
+
+    return remappedUsers
+}
+
+export const privyDeleteUser = async (
+    id: string,
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<void> => {
+    const url = `https://auth.privy.io/api/v1/users/${id}`
+
+    const app = appId || ''
+    const secret = appSecret || ''
+
+    const options = {
+        method: 'DELETE',
+        headers: {
+            'privy-app-id': app,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(app, secret),
+        },
+    }
+
+    await fetch(url, options)
+}
+
+export const privyAddUser = async (
+    newAirtableUser: NewAirtableMember,
+    appId: string | undefined = undefined,
+    appSecret: string | undefined = undefined,
+): Promise<any> => {
+    const url = 'https://auth.privy.io/api/v1/users'
+
+    const app = appId || ''
+    const secret = appSecret || ''
+
+    const linked_accounts = []
+
+    if (newAirtableUser['wallet-address']) {
+        linked_accounts.push({
+            address: newAirtableUser['wallet-address'],
+            type: 'wallet',
+            chain_type: 'ethereum',
+        })
+    }
+    if (newAirtableUser.email) {
+        linked_accounts.push({
+            address: newAirtableUser.email,
+            type: 'email',
+        })
+    }
+
+    const data = JSON.stringify({ linked_accounts })
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'privy-app-id': app,
+            'Content-Type': 'application/json',
+            Authorization: createAuthHeader(app, secret),
+        },
+        body: data,
+    }
+
+    const user = await fetch(url, options).then((res) => res.json())
+
+    const camelUser = objectToCamel(user) as any
+
+    const remappedUser = {
+        ...camelUser,
+        address: camelUser.linkedAccounts.find((acc: any) => acc.type === 'wallet')?.address.toLowerCase(),
+    }
+
+    return remappedUser
+}
+
 const metagameAddress = '0x9d8395a406fa264dea71671c772269e844264e8c'
-const privyDID_1 = 'did:privy:clcqu9l350001m908u2ojo5gc'
 const brennerEmail = 'brenner@themetagame.xyz'
-
-const goerliTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
-const privyDID_2 = 'did:privy:cld99jkny0001jq08q3wrr93p'
-
-const rinkebyTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
-const privyDID_3 = 'did:privy:cldcb05ow0007ml08ugao0o7h'
+const aliceTestAddress = '0xe55aa8f29593531b2c1c7e013139dbc8b63b1b92'
+const bobTestAddress = '0xacebc2d5c90b515341f3a01ba4c876643b8067e8'
 
 const goerliContractAddress = '0x2ba797c234c8fe25847225b11b616bce729b0b53'
 
+const metagameAdmin = {
+    ['wallet-address']: metagameAddress,
+    email: brennerEmail,
+    ['first-name']: 'Metagame',
+    ['last-name']: 'Admin',
+}
+
+const AliceTestUser = {
+    ['wallet-address']: aliceTestAddress,
+    ['first-name']: 'Alice',
+    ['last-name']: 'Test',
+}
+
+const bobTestUser = {
+    ['wallet-address']: bobTestAddress,
+    ['first-name']: 'Bob',
+    ['last-name']: 'Test',
+}
+
+const seedMembers = [metagameAdmin, AliceTestUser, bobTestUser]
+
 async function main() {
-    const brenner = await prisma.user.create({
+    const oldPrivyUsers = await privyGetAllUsers(privyAppId, privyAppSecret)
+
+    await Promise.all(
+        oldPrivyUsers.map((user) => {
+            privyDeleteUser(user.id, privyAppId, privyAppSecret)
+        }),
+    )
+    await sleep(3000)
+    const privyUsers = await Promise.all(seedMembers.map((member) => privyAddUser(member, privyAppId, privyAppSecret)))
+
+    const metagameAdmin = await prisma.user.create({
         data: {
             address: metagameAddress,
             email: brennerEmail,
-            privyDID: privyDID_1,
+            privyDID: privyUsers.find((user) => user.address === metagameAddress)?.id,
             accounts: {
                 create: [
                     {
@@ -51,46 +189,47 @@ async function main() {
                     },
                 ],
             },
-            firstName: 'Brenner',
-            lastName: 'Spear',
+            firstName: 'Metagame',
+            lastName: 'Admin',
+            role: UserRole.METAGAME_OWNER,
         },
     })
 
-    const nir = await prisma.user.create({
+    const alice = await prisma.user.create({
         data: {
-            address: goerliTestAddress,
-            privyDID: privyDID_2,
+            address: aliceTestAddress,
+            privyDID: privyUsers.find((user) => user.address === aliceTestAddress)?.id,
             accounts: {
                 create: [
                     {
                         type: 'wallet',
-                        address: goerliTestAddress,
+                        address: aliceTestAddress,
                         chainType: 'ethereum',
                         verifiedAt: '2023-01-11T20:23:17.000Z',
                     },
                 ],
             },
-            firstName: 'Nir',
-            lastName: 'Kabessa',
+            firstName: 'Alice',
+            lastName: 'Test',
         },
     })
 
-    const jon = await prisma.user.create({
+    const bob = await prisma.user.create({
         data: {
-            address: rinkebyTestAddress,
-            privyDID: privyDID_3,
+            address: bobTestAddress,
+            privyDID: privyUsers.find((user) => user.address === bobTestAddress)?.id,
             accounts: {
                 create: [
                     {
                         type: 'wallet',
-                        address: rinkebyTestAddress,
+                        address: bobTestAddress,
                         chainType: 'ethereum',
                         verifiedAt: '2023-01-11T20:25:17.000Z',
                     },
                 ],
             },
-            firstName: 'Jon',
-            lastName: 'Wu',
+            firstName: 'Bob',
+            lastName: 'Test',
         },
     })
 
@@ -132,7 +271,7 @@ async function main() {
             organizationId: haabGoblins.id,
             inviteeAddress: metagameAddress,
             role: 'OWNER',
-            issuedById: brenner.id,
+            issuedById: metagameAdmin.id,
         },
     })
     const acceptedInvitation = await prisma.organizationInvitation.create({
@@ -140,8 +279,8 @@ async function main() {
             organizationId: brassFactory.id,
             inviteeAddress: metagameAddress,
             role: 'OWNER',
-            issuedById: brenner.id,
-            status: 'ACCEPTED',
+            issuedById: metagameAdmin.id,
+            status: InvitationStatus.ACCEPTED,
         },
     })
 
@@ -154,6 +293,53 @@ async function main() {
             organizationId: brassFactory.id,
         },
     })
+
+    const axolotls = await prisma.project.upsert({
+        where: { slug: 'cdmx-axolotls' },
+        update: {},
+        create: {
+            name: 'CDMX Axolotls',
+            slug: 'cdmx-axolotls',
+            organizationId: haabGoblins.id,
+        },
+    })
+
+    const { traitCategories: axolotlTraitCategories } = await getFromS3(AWS, prisma, axolotls.slug)
+
+    for (const axolotlTraitCategory of axolotlTraitCategories) {
+        const zMap = {
+            Background: 0,
+            Base: 1,
+            Eyes: 2,
+            Ears: 3,
+            Mouth: 4,
+            Headwear: 5,
+            Clothes: 6,
+        } as Record<string, number>
+
+        await prisma.traitCategory.update({
+            where: {
+                projectId_name: {
+                    projectId: axolotlTraitCategory.projectId,
+                    name: axolotlTraitCategory.name,
+                },
+            },
+            data: {
+                zIndex: zMap[axolotlTraitCategory.name],
+            },
+        })
+    }
+
+    for (const member of [metagameAdmin, alice, bob]) {
+        await prisma.membersOfProjects.create({
+            data: {
+                projectSlug: axolotls.slug,
+                userId: member.id,
+                role: 'MEMBER',
+            },
+        })
+    }
+
     const llamaPfp = await prisma.project.upsert({
         where: { slug: 'llama-pfp' },
         update: {},
@@ -165,7 +351,7 @@ async function main() {
         },
     })
 
-    for (const member of [brenner, nir, jon]) {
+    for (const member of [metagameAdmin, alice, bob]) {
         await prisma.membersOfProjects.create({
             data: {
                 projectSlug: llamaPfp.slug,
@@ -211,14 +397,14 @@ async function main() {
 
     await prisma.memberAchievements.create({
         data: {
-            userId: brenner.id,
+            userId: metagameAdmin.id,
             achievementId: (achievements[1] as Achievement).id,
             status: true,
         },
     })
     await prisma.memberAchievements.create({
         data: {
-            userId: nir.id,
+            userId: alice.id,
             achievementId: (achievements[2] as Achievement).id,
             status: true,
         },
@@ -290,7 +476,7 @@ async function main() {
             data: {
                 isDefaultAchieved: false,
                 levelRequired: Math.floor(i / 2) + 1,
-                levelLogic: 'GREATER_THAN_OR_EQUAL',
+                levelLogic: LevelLogic.GREATER_THAN_OR_EQUAL_TO,
                 levelCategory: {
                     connect: {
                         id: llamaLevel.id,
@@ -344,7 +530,7 @@ async function main() {
     const traitsToConnectArr = [traitsToConnect, traitsToConnect2, traitsToConnect3, traitsToConnect4]
 
     for (const [i, traits] of traitsToConnectArr.entries()) {
-        const member = i % 2 === 0 ? brenner : nir
+        const member = i % 2 === 0 ? metagameAdmin : alice
         const traitsWithEarnedBool = traits?.map((t) => {
             return {
                 ...t,
@@ -360,7 +546,7 @@ async function main() {
                 userId: member.id,
                 projectSlug: llamaPfp.slug,
                 tokenId: (i % 2) + 1,
-                image: 'TODO',
+                image: `${member.address}-${i + 1}.png`,
                 name: `${member.firstName}'s Llama`,
                 description: 'TODO',
                 externalUrl: 'TODO',
@@ -368,7 +554,7 @@ async function main() {
                 traits: {
                     connect: traitsWithEarnedBool.map((t) => ({ id: t.id })),
                 },
-                traitHash: hashTraits(traitsWithEarnedBool),
+                traitHash: hashPermanentTraits(traitsWithEarnedBool),
             },
         })
     }

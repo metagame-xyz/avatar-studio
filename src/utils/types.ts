@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import type {
     Achievement,
+    AchievementCategory,
     MemberAchievements,
     MembersOfProjects,
     NftMetadata,
@@ -28,6 +30,10 @@ export type Signature = {
     compact: string
 }
 
+export type MostTypes = string | number | boolean | null | undefined | unknown[]
+
+export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never
+
 export const enum Status {
     loading = 'loading',
     success = 'success',
@@ -35,7 +41,8 @@ export const enum Status {
     idle = 'idle',
 }
 
-export const enum ActionType {
+export const enum AllowedAction {
+    create = 'Save',
     mint = 'Mint',
     update = 'Update',
 }
@@ -46,27 +53,66 @@ export type ToastData = {
     type: Status
 }
 
-export type PfpUpdateRequest = TraitWithEarnedBool[]
-
 export type ProfileIconSizeType = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
-export type TraitWithEarnedBool = Trait & {
-    earned: boolean
-    category: string
-    zIndex: number
-    isModifiable: boolean
+export type TraitWithEarnedBool = Prettify<
+    Trait & {
+        earned: boolean
+        category: string
+        zIndex: number
+        isModifiable: boolean
+    }
+>
+
+export type AssembledNftTraits = Prettify<
+    TraitWithEarnedBool & {
+        pngUrl: string
+    }
+>[]
+
+export type TraitCategoryWithTraitsWithEarned = Prettify<
+    TraitCategory & {
+        traits: TraitWithEarnedBool[]
+    }
+>
+
+export type TraitWithAchievements = Prettify<
+    Trait & {
+        achievementsRequired: Achievement[]
+        levelCategory: AchievementCategory | null
+    }
+>
+
+export type TraitCategoryWitTraits = Prettify<
+    TraitCategory & {
+        traits: TraitWithAchievements[]
+    }
+>
+
+export type TraitWithCategory = Prettify<
+    Trait & {
+        traitCategory: TraitCategory
+    }
+>
+
+export type NftMetadataWithTraits = Prettify<
+    NftMetadata & {
+        traits: Trait[]
+    }
+>
+
+export type Attribute = {
+    display_type?: string
+    trait_type: string
+    value: string | number | boolean
 }
 
-export type TraitCategoryWithTraitsWithEarned = TraitCategory & {
-    traits: TraitWithEarnedBool[]
-}
-
-export type TraitCategoryWitTraits = TraitCategory & {
-    traits: Trait[]
-}
-
-export type TraitWithCategory = Trait & {
-    traitCategory: TraitCategory
+export type OpenSeaMetadata = {
+    name: string
+    description: string
+    image: string
+    external_url: string
+    attributes: Attribute[]
 }
 
 export const enum LlamaTier {
@@ -75,6 +121,14 @@ export const enum LlamaTier {
     Mountaineer = 'Mountaineer',
     Rancher = 'Rancher',
 }
+
+export const traitCategorySchema = z.object({
+    name: z.string(),
+    zIndex: z.number(),
+    isModifiable: z.boolean(),
+    isDefaultAchieved: z.boolean(),
+    projectId: z.number(),
+})
 
 export const traitSchema = z.object({
     id: z.number(),
@@ -97,30 +151,65 @@ export const traitWithEarnedBoolSchema = traitSchema.and(
     }),
 )
 
+export const newAirtableMemberSchema = z
+    .object({
+        ['first-name']: z.string().optional(),
+        ['last-name']: z.string().optional(),
+        email: z.string().email().optional(),
+
+        // add an option to expect any string as the key and any string as the value
+    })
+    .and(z.record(z.any()))
+
+export type NewAirtableMember = z.infer<typeof newAirtableMemberSchema>
+
 export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
 
-export type MemberWithAProject = User & {
-    projects: (MembersOfProjects & {
-        project: Project & {
-            traitCategories: (TraitCategory & {
-                traits: Trait[]
-            })[]
-            organization: Organization
-        }
-    })[]
-    achievements: (MemberAchievements & {
-        achievement: Achievement & {
-            traits: Trait[]
-        }
-    })[]
-    nftMetadata: (NftMetadata & {
-        traits: (Trait & {
-            traitCategory: TraitCategory
+export type MemberWithAProject = Prettify<
+    User & {
+        projects: (MembersOfProjects & {
+            project: Project & {
+                traitCategories: (TraitCategory & {
+                    traits: Trait[]
+                })[]
+                organization: Organization
+            }
         })[]
-    })[]
-}
+        achievements: (MemberAchievements & {
+            achievement: Achievement & {
+                traits: Trait[]
+                achievementCategory: AchievementCategory
+            }
+        })[]
+        nftMetadata: (NftMetadata & {
+            traits: (Trait & {
+                traitCategory: TraitCategory
+            })[]
+        })[]
+    }
+>
 
 export type AirtableAuthCache = {
     codeVerifier: string
     organizationSlug: string
+}
+
+export const organizationRoleZod = z.enum(['ADMIN', 'OWNER'])
+
+export type Prettify<T> = {
+    [K in keyof T]: T[K]
+    // eslint-disable-next-line @typescript-eslint/ban-types
+} & {}
+
+export type AchievementCategoryWithAs = Prettify<AchievementCategory & { achievements: Achievement[] }>
+
+type AtLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U]
+
+export type NonEmptyRecord<T extends string, V> = AtLeastOne<Record<T, V>>
+
+// for prisma-json-types-generator
+declare global {
+    namespace PrismaJson {
+        type PngUrlMap = NonEmptyRecord<string, string>
+    }
 }
