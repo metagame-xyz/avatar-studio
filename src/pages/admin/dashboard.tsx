@@ -2,6 +2,7 @@ import type { OrganizationInvitation, TraitCategory } from '@prisma/client'
 import { OrganizationRole } from '@prisma/client'
 import AchievementToTraitEditor from 'components/AchievementToTraitEditor'
 import Input from 'components/Input'
+import Loader from 'components/Loader'
 import Shell from 'components/Shell'
 import ToggleWithIcon from 'components/Toggle'
 import { type NextPage } from 'next'
@@ -11,6 +12,7 @@ import { truncateAddress } from 'utils'
 import { getEns } from 'utils/needEnvUtils'
 import { trpc } from 'utils/trpc'
 import type { ArrayElement } from 'utils/types'
+import { newAirtableMemberSchema } from 'utils/types'
 
 const AdminDashboard: NextPage = () => {
     const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
@@ -69,6 +71,45 @@ const AdminDashboard: NextPage = () => {
 
     const [inviteAddress, setInviteAddress] = useState('')
     const [invites, setInvites] = useState<(OrganizationInvitation & { ens: string | null })[] | []>([])
+
+    const { data: airtableData } = trpc.project.getAllAirtableData.useQuery(
+        { organizationSlug: selectedOrg?.slug || '', projectSlug: selectedProject?.slug || '' },
+        { enabled: !!selectedOrg && !!selectedProject },
+    )
+
+    const syncAirtableMembersMutation = trpc.project.syncAirtableMembers.useMutation()
+    const syncAirtableAchievementsMutation = trpc.project.syncAirtableAchievements.useMutation()
+
+    const syncAirtableData = async () => {
+        if (!airtableData) {
+            console.log('No airtable data found')
+            return
+        }
+
+        const airtableMembers = airtableData?.members?.map((m) => newAirtableMemberSchema.parse(m))
+
+        if (!airtableMembers || !airtableData?.achievementFields) {
+            console.log('No airtable members or achievement fields found')
+            return
+        }
+
+        if (selectedOrg?.slug && selectedProject?.slug) {
+            await syncAirtableMembersMutation.mutateAsync({
+                organizationSlug: selectedOrg?.slug,
+                airtableMembers,
+                projectSlug: selectedProject?.slug,
+            })
+
+            await syncAirtableAchievementsMutation.mutateAsync({
+                organizationSlug: selectedOrg?.slug,
+                airtableMembers,
+                airtableFields: airtableData.achievementFields,
+                projectSlug: selectedProject?.slug,
+            })
+        } else {
+            console.error('error syncing airtable data')
+        }
+    }
 
     useEffect(() => {
         const loadInvites = async () => {
@@ -381,10 +422,10 @@ const AdminDashboard: NextPage = () => {
                             </div>
                         </div>
                     )}
-                    {selectedProject && (
+                    {selectedOrg && selectedProject && (
                         <div className="flex flex-col space-y-4">
                             <div className="text-2xl font-bold md:text-3xl">{`${selectedProject.name}`}</div>
-                            <div>
+                            <div className="flex gap-4">
                                 <button
                                     onClick={() =>
                                         copyS3Files.mutate({
@@ -394,6 +435,14 @@ const AdminDashboard: NextPage = () => {
                                     className="btn-primary my-4"
                                 >
                                     upload traits from S3
+                                </button>
+                                <button
+                                    onClick={() => syncAirtableData()}
+                                    className="btn-primary my-4 disabled:opacity-50"
+                                    disabled={!airtableData || !!airtableData.error}
+                                >
+                                    {!airtableData && <Loader size="sm" className="mr-2 text-black" />}
+                                    {`(re)sync airtable`}
                                 </button>
                             </div>
                             <div className="flex flex-col space-y-2">

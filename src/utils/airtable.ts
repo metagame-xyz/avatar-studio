@@ -47,7 +47,7 @@ class Airtable {
         this.organizationSlug = organizationSlug
     }
 
-    public async setOrg(organizationSlug: string, caller = 'unknown'): Promise<void> {
+    public async setOrg(organizationSlug: string, caller: string): Promise<void> {
         this.organizationSlug = organizationSlug
         await this.preCallChecks(caller)
     }
@@ -70,7 +70,7 @@ class Airtable {
         return airtableAuth
     }
 
-    private async acquireLock(caller = 'unknown', retries = 0): Promise<void> {
+    private async acquireLock(caller: string, retries = 0): Promise<void> {
         if (!this.organizationSlug) {
             throw new Error('No Org Slug yet')
         }
@@ -98,7 +98,7 @@ class Airtable {
         throw new AirtableLockError('Lock acquisition failed')
     }
 
-    private async releaseLock(caller = 'unknown'): Promise<void> {
+    private async releaseLock(caller: string): Promise<void> {
         if (!this.organizationSlug) {
             throw new Error('No Org Slug yet')
         }
@@ -159,7 +159,7 @@ class Airtable {
         }
     }
 
-    public async preCallChecks(caller = 'unknown'): Promise<OrganizationAirtableAuth> {
+    public async preCallChecks(caller: string): Promise<OrganizationAirtableAuth> {
         if (!this.organizationSlug) {
             throw new Error('No Org Slug yet')
         }
@@ -171,20 +171,18 @@ class Airtable {
         return this.airtableAuth
     }
 
-    public async postCallCleanup(caller = 'unknown'): Promise<void> {
+    public async postCallCleanup(caller: string): Promise<void> {
         try {
             await this.releaseLock(caller)
         } catch (error) {}
     }
 
-    public async safeRefreshAirtableAuth(): Promise<void> {
-        if (!this.organizationSlug) {
-            throw new Error('No Org Slug yet')
-        }
+    public async safeRefreshAirtableAuth(orgSlug: string, caller: string): Promise<void> {
+        this.organizationSlug = orgSlug
         this.airtableAuth = await this.getOrgAirtableAuth()
-        await this.acquireLock('safeRefreshAirtableAuth')
+        await this.acquireLock(caller)
         await this.refreshAirtableAuth()
-        await this.releaseLock('safeRefreshAirtableAuth')
+        await this.releaseLock(caller)
     }
 
     public async getAirtableAuth(

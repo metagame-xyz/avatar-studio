@@ -17,8 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const webhookIds: Record<string, string> = {}
     // todo make this concurrent
     for (const org of orgs) {
-        await airtable.setOrg(org.slug)
-        await airtable.safeRefreshAirtableAuth()
+        await airtable.safeRefreshAirtableAuth(org.slug, 'safeRefreshAirtableAuth Cron')
     }
 
     return res.status(200).json({ webhookIds })

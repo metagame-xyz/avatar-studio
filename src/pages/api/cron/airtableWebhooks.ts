@@ -30,11 +30,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             `${airtableProject.project.organization.slug}/${airtableProject.project.slug}/${airtableProject.baseName}`
         ] = airtableProject.webhookId
 
-        await airtable.setOrg(airtableProject.project.organization.slug)
+        await airtable.setOrg(airtableProject.project.organization.slug, 'airtableWebhook Cron')
         // console.log(
         //     `Refreshing webhook for ${airtableProject.project.organization.slug}/${airtableProject.project.name} with id ${airtableProject.webhookId}`,
         // )
         await airtable.refreshWebhook(airtableProject.baseId, airtableProject.webhookId)
+        await airtable.postCallCleanup('airtableWebhook Cron')
     }
 
     return res.status(200).json({ webhookIds })

@@ -184,12 +184,13 @@ export const projectRouter = router({
             })
         }),
     getAllAirtableData: webhookOrOrgAdminProcedure
-        .input(z.object({ organizationSlug: z.string() })) // for protectedOrgProcedure to work
-        .query(async ({ ctx }) => {
-            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+        .input(z.object({ organizationSlug: z.string(), projectSlug: z.string().optional() })) // for protectedOrgProcedure to work
+        .query(async ({ input, ctx }) => {
+            const projectSlug = input.projectSlug || ctx.projectSlug
+            if (!projectSlug) throw new Error('Cant get slug from context or input')
 
             const project = await ctx.prisma.project.findUniqueOrThrow({
-                where: { slug: ctx.projectSlug },
+                where: { slug: projectSlug },
                 include: {
                     airtableProject: true,
                     organization: {
@@ -266,12 +267,19 @@ export const projectRouter = router({
             }
         }),
     syncAirtableMembers: webhookOrOrgAdminProcedure
-        .input(z.object({ organizationSlug: z.string(), airtableMembers: z.array(newAirtableMemberSchema) }))
+        .input(
+            z.object({
+                organizationSlug: z.string(),
+                airtableMembers: z.array(newAirtableMemberSchema),
+                projectSlug: z.string().optional(),
+            }),
+        )
         .mutation(async ({ ctx, input }) => {
-            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+            const projectSlug = input.projectSlug || ctx.projectSlug
+            if (!projectSlug) throw new Error('Cant get slug from context or input')
 
             const project = await ctx.prisma.project.findUniqueOrThrow({
-                where: { slug: ctx.projectSlug },
+                where: { slug: projectSlug },
                 include: {
                     airtableProject: true,
                 },
@@ -362,14 +370,16 @@ export const projectRouter = router({
                 organizationSlug: z.string(),
                 airtableFields: z.array(airtableFieldSchema),
                 airtableMembers: z.array(newAirtableMemberSchema),
+                projectSlug: z.string().optional(),
             }),
         ) // for protectedOrgProcedure to work
         .mutation(async ({ ctx, input }) => {
-            if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+            const projectSlug = input.projectSlug || ctx.projectSlug
+            if (!projectSlug) throw new Error('Cant get slug from context or input')
 
             const { airtableFields, airtableMembers } = input
             const project = await ctx.prisma.project.findUniqueOrThrow({
-                where: { slug: ctx.projectSlug },
+                where: { slug: projectSlug },
                 include: { airtableProject: true },
             })
 

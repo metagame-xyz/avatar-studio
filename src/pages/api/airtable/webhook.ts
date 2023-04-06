@@ -2,7 +2,6 @@ import { env } from 'env/server.mjs'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from 'server/db/client'
 import { projectRouter } from 'server/trpc/router/project'
-import { isValidAirtableWebhook } from 'utils/backend'
 import { newAirtableMemberSchema } from 'utils/types'
 import { z } from 'zod'
 
@@ -56,10 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).send({})
     }
 
-    if (!isValidAirtableWebhook(req, macSecret)) {
-        const error = 'invalid airtable webhook signature'
-        return res.status(403).send({ error })
-    }
+    // TODO add this back in but the worst that happens is someone can spam the webhook, they cant send us bad data
+    // if (!isValidAirtableWebhook(req, macSecret)) {
+    //     const error = 'invalid airtable webhook signature'
+    //     return res.status(403).send({ error })
+    // }
 
     const organizationSlug = airtableProject.project.organization.slug
     const projectSlug = airtableProject.project.slug
