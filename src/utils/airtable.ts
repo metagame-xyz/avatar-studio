@@ -443,6 +443,9 @@ class Airtable {
             throw new Error('Webhook Refresh Error')
         }
 
+        console.log('webhooks to be deleted:')
+        console.log(airtableResponse.webhooks)
+
         const webhookIds = airtableResponse.webhooks.map((webhook) => webhook.id)
         return webhookIds
     }
