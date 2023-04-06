@@ -111,6 +111,7 @@ const AdminDashboard: NextPage = () => {
             await addAirtableWebhook.mutateAsync({
                 organizationSlug: selectedOrg.slug,
                 projectSlug: selectedProject.slug,
+                override: true,
             })
         } else {
             console.error('error syncing airtable data')

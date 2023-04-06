@@ -189,6 +189,7 @@ export const projectRouter = router({
             z.object({
                 organizationSlug: z.string(),
                 projectSlug: z.string(),
+                override: z.boolean().optional(),
             }),
         )
         .mutation(async ({ ctx, input }) => {
@@ -200,9 +201,9 @@ export const projectRouter = router({
 
             if (!project?.airtableProject) throw new Error('Airtable project not found')
 
-            if (!project.airtableProject.webhookId) {
+            if (!project.airtableProject.webhookId || input.override) {
                 await airtable.setOrg(organizationSlug, 'createWebhook via addAirtableWebhook')
-                const webhookData = await airtable.createWebhook(
+                const webhookData = await airtable.replaceWithFreshWebhook(
                     project.airtableProject.baseId,
                     project.airtableProject.tableId,
                 )

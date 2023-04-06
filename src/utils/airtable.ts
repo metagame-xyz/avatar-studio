@@ -15,6 +15,7 @@ import type {
     AirtableWebhookError,
     AirtableWebhookRefreshResponse,
     AirtableWebhookResponse,
+    AirtableWebhooksResponse,
 } from './airtableFrontend'
 import { AirtableAuthError, AirtableLockError } from './airtableFrontend'
 import { createAuthHeader, sleep } from './backend'
@@ -393,7 +394,7 @@ class Airtable {
             throw new Error('No Airtable Auth yet')
         }
 
-        let airtableResponse: unknown
+        let airtableResponse: Record<string, unknown> | AirtableWebhookError
 
         const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks/${webhookId}`
         const headers = {
@@ -404,9 +405,9 @@ class Airtable {
             airtableResponse = await fetch(url, {
                 method: 'DELETE',
                 headers,
-            }).then((res) => res.json() as Promise<null | AirtableWebhookError>)
+            }).then((res) => res.json() as Promise<Record<string, unknown> | AirtableWebhookError>)
 
-            if (airtableResponse) {
+            if (Object.keys(airtableResponse).length) {
                 console.log('Webhook Delete Error', airtableResponse)
                 throw new Error('Webhook Delete Error')
             }
@@ -414,6 +415,51 @@ class Airtable {
             console.log(error)
             throw new Error('Webhook Delete Error')
         }
+    }
+
+    async listWebhooks(baseId: string): Promise<string[]> {
+        if (!this.airtableAuth) {
+            throw new Error('No Airtable Auth yet')
+        }
+
+        let airtableResponse: AirtableWebhooksResponse | AirtableWebhookError
+
+        const url = `https://api.airtable.com/v0/bases/${baseId}/webhooks`
+        const headers = {
+            Authorization: `Bearer ${this.airtableAuth.accessToken}`,
+        }
+
+        try {
+            airtableResponse = await fetch(url, {
+                headers,
+            }).then((res) => res.json())
+
+            if ('error' in airtableResponse) {
+                console.log('Webhook Refresh Error', airtableResponse)
+                throw new Error(airtableResponse.error.message)
+            }
+        } catch (error) {
+            console.log(error)
+            throw new Error('Webhook Refresh Error')
+        }
+
+        const webhookIds = airtableResponse.webhooks.map((webhook) => webhook.id)
+        return webhookIds
+    }
+
+    async replaceWithFreshWebhook(baseId: string, tableId: string): Promise<AirtableWebhookResponse> {
+        if (!this.airtableAuth) {
+            throw new Error('No Airtable Auth yet')
+        }
+
+        const webhookIds = await this.listWebhooks(baseId)
+
+        for (const webhookId of webhookIds) {
+            await this.deleteWebhook(baseId, webhookId)
+        }
+
+        const webhookData = await this.createWebhook(baseId, tableId)
+        return webhookData
     }
 }
 

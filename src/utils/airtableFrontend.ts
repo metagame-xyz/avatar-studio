@@ -132,6 +132,29 @@ export type AirtableField = Prettify<
     AirtableFieldCheckbox | AirtableFieldNumber | AirtableFieldSingleSelect | AirtableFieldMultipleSelects
 >
 
+export type AirtableWebhook = {
+    areNotificationsEnabled: boolean
+    cursorForNextPayload: number
+    expirationTime: string
+    id: string
+    isHookEnabled: boolean
+    lastNotificationResult: null | unknown // Replace 'unknown' with a more specific type if available
+    lastSuccessfulNotificationTime: null | string
+    notificationUrl: null | string
+    specification: {
+        options: {
+            filters: {
+                dataTypes: string[]
+                recordChangeScope: string
+            }
+        }
+    }
+}
+
+export type AirtableWebhooksResponse = {
+    webhooks: AirtableWebhook[]
+}
+
 export const airtableOAuthResponseSchema = z.object({
     token_type: z.string(),
     scope: z.string(),
