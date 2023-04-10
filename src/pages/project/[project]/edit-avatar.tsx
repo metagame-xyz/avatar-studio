@@ -195,6 +195,8 @@ const EditAvatar = () => {
     const placeholderHex = '0x00' as `0x${string}`
 
     // Minting functions
+
+    const [preventingMintError, setPreventingMintError] = useState<string | null>(null)
     const { config } = usePrepareContractWrite({
         address: contractAddress as `0x${string}`,
         abi: llamaPfpABI,
@@ -206,6 +208,14 @@ const EditAvatar = () => {
             signatureForMint?.s || placeholderHex,
         ],
         enabled: !!contractAddress && !!signatureForMint,
+        onSuccess: () => {
+            setPreventingMintError(null)
+        },
+        onError: (error: any) => {
+            const message = (error.error?.message || error.message).toString() as string
+            toast.error(message)
+            setPreventingMintError(error.error.message)
+        },
     })
 
     const { data: txResponse, write: mint } = useContractWrite({
@@ -332,7 +342,7 @@ const EditAvatar = () => {
                     <Loading />
                 </div>
             </Modal>
-            <Shell Header={<Header />} pageTitle="edit avatar" leftWidth="half">
+            <Shell Header={<Header />} pageTitle={project?.name || 'loading...'} leftWidth="half">
                 <motion.div layout transition={springAnimation} className="sticky top-0">
                     <PfpPreview
                         pfpState={pfpState}
@@ -347,6 +357,7 @@ const EditAvatar = () => {
                         mintStatus={mintStatus as Status}
                         projectName={project?.name || ''}
                         contractAddress={contractAddress}
+                        preventingMintError={preventingMintError}
                     />
                 </motion.div>
                 <motion.div transition={springAnimation}>
