@@ -1,4 +1,5 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
+import { User as PrivyUser } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
 import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
@@ -334,29 +335,43 @@ export const projectRouter = router({
                     const existingUser = await ctx.prisma.user.findUnique({
                         where: { address: member[walletAddressFieldName] },
                     })
-                    if (existingUser) {
-                        return existingUser
-                    } else {
-                        const privyUser = await privyAddUser(member, walletAddressFieldName)
-                        let lastName: string | null = null
-                        let firstName: string | null = null
+                    let privyUser: PrivyUser | null = null
 
-                        if (member.name) {
-                            // pop off the last word in the string
-                            lastName = member.name.split(' ').pop() || null
-                            // combine the rest of the words into a string
-                            firstName = member.name.split(' ').slice(0, -1).join(' ') || null
-                        }
-                        const user = await ctx.prisma.user.create({
-                            data: {
-                                privyDID: privyUser.id,
-                                address: member[walletAddressFieldName],
-                                firstName: member['first-name'] || firstName,
-                                lastName: member['last-name'] || lastName,
-                                email: member.email,
-                            },
-                        })
+                    // TODO update this to "privyUpdateUser once Privy adds that option"
+                    if (!existingUser) {
+                        privyUser = await privyAddUser(member, walletAddressFieldName)
+                    }
 
+                    let lastName: string | null = null
+                    let firstName: string | null = null
+
+                    if (member.name) {
+                        // pop off the last word in the string
+                        lastName = member.name.split(' ').pop() || null
+                        // combine the rest of the words into a string
+                        firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                    }
+
+                    const privyDID = (existingUser?.privyDID || privyUser?.id) as string
+                    const user = await ctx.prisma.user.upsert({
+                        where: {
+                            privyDID,
+                        },
+                        update: {
+                            firstName: member['first-name'] || firstName || existingUser?.firstName,
+                            lastName: member['last-name'] || lastName || existingUser?.lastName,
+                            email: member.email || existingUser?.email,
+                        },
+                        create: {
+                            privyDID,
+                            address: member[walletAddressFieldName],
+                            firstName: member['first-name'] || firstName,
+                            lastName: member['last-name'] || lastName,
+                            email: member.email,
+                        },
+                    })
+
+                    if (privyUser) {
                         const accounts = privyUser.linkedAccounts.map((account) => {
                             const data = {
                                 userId: user.privyDID,
@@ -374,9 +389,9 @@ export const projectRouter = router({
                         })
 
                         await ctx.prisma.account.createMany({ data: accounts })
-
-                        return user
                     }
+
+                    return user
                 }),
             )
 
