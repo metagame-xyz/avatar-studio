@@ -33,6 +33,7 @@ type PfpPreviewProps = {
     allowedAction: AllowedAction
     projectName: string
     contractAddress: string | null | undefined
+    preventingMintError: string | null
 }
 
 const PfpPreview = ({
@@ -48,6 +49,7 @@ const PfpPreview = ({
     allowedAction,
     projectName,
     contractAddress,
+    preventingMintError,
 }: PfpPreviewProps) => {
     // const { user: dynamicUser, authToken } = useDynamicContext()
     // const { data: user } = trpc.member.me.useQuery()
@@ -247,7 +249,7 @@ const PfpPreview = ({
                                     <button
                                         className="btn-primary relative flex items-center gap-x-2 disabled:opacity-40"
                                         onClick={() => mintFunction?.()}
-                                        disabled={mintStatus === Status.loading} // TODO
+                                        disabled={mintStatus === Status.loading || !!preventingMintError} // TODO
                                     >
                                         {mintStatus === Status.loading ? (
                                             <Loader size="sm" />
@@ -255,6 +257,12 @@ const PfpPreview = ({
                                             <Icon size={2} image={sparkles} />
                                         )}
                                         Mint NFT
+                                        {preventingMintError && (
+                                            <>
+                                                <ExclamationCircleIcon className="h-4 w-4 opacity-70" />
+                                                <Tooltip text={preventingMintError} withInfoIcon />
+                                            </>
+                                        )}
                                     </button>
                                 </motion.div>
                             ) : (
@@ -285,7 +293,8 @@ const PfpPreview = ({
                                                 areTraitsEqual(pfpState, existingPfpState) ||
                                                 userIsSigning ||
                                                 createNftMetadataStatus === Status.loading ||
-                                                !contractAddress
+                                                !contractAddress ||
+                                                !!preventingMintError
                                             }
                                         >
                                             <>
