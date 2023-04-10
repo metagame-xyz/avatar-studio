@@ -17,10 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const tokenId = params[1] as string
 
     const isProd = process.env.VERCEL_ENV === 'production' // TODO confirm
-    console.log('isProd', isProd)
     const chainNetwork = isProd ? 'homestead' : 'sepolia'
-
-    console.log('chainNetwork', chainNetwork)
 
     try {
         const nftMetadata = await nftMetadataTrpc.getForOpenseaByTokenId({

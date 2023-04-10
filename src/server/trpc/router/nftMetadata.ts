@@ -29,8 +29,6 @@ export const nftMetadataRouter = router({
         .query(async ({ ctx, input }) => {
             const { tokenId, projectSlug, chainNetwork } = input
 
-            console.log('getForOpenseaByTokenId', input)
-
             const data = await ctx.prisma.$queryRaw<NftMetadata[]>`WITH max_timestamps AS (
                 SELECT "userId", MAX("timestamp") AS "timestamp"
                 FROM "NftMetadata"
