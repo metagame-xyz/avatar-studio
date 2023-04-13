@@ -1,5 +1,3 @@
-import { Fragment, useEffect, useState } from 'react'
-
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { usePrivy } from '@privy-io/react-auth'
@@ -7,6 +5,7 @@ import makeBlockie from 'ethereum-blockies-base64'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { Fragment, useEffect, useState } from 'react'
 import { useAccount, useEnsAvatar } from 'wagmi'
 
 const navigation = [
@@ -45,6 +44,10 @@ export default function Navbar() {
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    console.log('mounted', mounted)
+    console.log('address', address)
+    console.log('ensAvatarUrl', ensAvatarUrl?.length)
 
     return (
         <Disclosure as="nav" className="bg-black">
@@ -121,7 +124,7 @@ export default function Navbar() {
                                     />
                                 </button> */}
                                 {/* Profile dropdown */}
-                                {mounted && address ? (
+                                {mounted && address && avatarUrl ? (
                                     <Menu as="div" className="relative">
                                         <div>
                                             <Menu.Button className="flex rounded-full bg-black text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-black">
@@ -193,7 +196,7 @@ export default function Navbar() {
                                         </Transition>
                                     </Menu>
                                 ) : (
-                                    <div className="h-8 w-8 "></div>
+                                    <div className="h-8 w-8 bg-gray-500"></div>
                                 )}
                             </div>
                         </div>

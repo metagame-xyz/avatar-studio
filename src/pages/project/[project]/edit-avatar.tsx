@@ -337,7 +337,7 @@ const EditAvatar = () => {
                             !(allowedAction === AllowedAction.update)
                                 ? `Once it's done being assembled, you will be able to mint it! `
                                 : ''
-                        }${project?.name} is complicated to assemble, this may take up to 2 minutes. `}
+                        }`}
                     </div>
                     <Loading />
                 </div>

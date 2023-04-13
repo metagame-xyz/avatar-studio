@@ -347,9 +347,15 @@ export const projectRouter = router({
 
                     if (member.name) {
                         // pop off the last word in the string
-                        lastName = member.name.split(' ').pop() || null
-                        // combine the rest of the words into a string
-                        firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                        const nameArr = member.name.split(' ')
+                        if (nameArr.length > 1) {
+                            lastName = member.name.split(' ').pop() || null
+                            // combine the rest of the words into a string
+                            firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                        } else {
+                            firstName = member.name
+                            lastName = null
+                        }
                     }
 
                     const privyDID = (existingUser?.privyDID || privyUser?.id) as string

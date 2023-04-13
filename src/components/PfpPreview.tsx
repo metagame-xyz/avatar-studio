@@ -230,7 +230,11 @@ const PfpPreview = ({
                                 <Icon image={opensea} size={2} />
                                 OpenSea
                             </a>
-                            <button className="btn-ghost items-center gap-2" onClick={createImageDownload}>
+                            <button
+                                className="btn-ghost items-center gap-2"
+                                onClick={createImageDownload}
+                                disabled={!areTraitsEqual(pfpState, existingPfpState)}
+                            >
                                 <ArrowDownTrayIcon className="w-5" />
                                 Download <span className="text-sm font-light text-gray-400">PNG</span>
                             </button>
