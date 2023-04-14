@@ -1079,10 +1079,10 @@
     chalk "4.1.2"
     cross-spawn "7.0.3"
 
-"@privy-io/react-auth@1.16.1":
-  version "1.16.1"
-  resolved "https://registry.yarnpkg.com/@privy-io/react-auth/-/react-auth-1.16.1.tgz#3e288be47d243b7534b6ecdc8fe2592f07c65dcd"
-  integrity sha512-2c4CTiblKZrga9y+6cgMNOJgLb5/pS1DPnLvToqLpUWOeQ2/ZbDCE4+2And0QDbxIKYHT5kTSFHsZl2yU+WTZw==
+"@privy-io/react-auth@1.20.3":
+  version "1.20.3"
+  resolved "https://registry.yarnpkg.com/@privy-io/react-auth/-/react-auth-1.20.3.tgz#3e25caafb8f05f3e9f2be177e10963d83975eb8f"
+  integrity sha512-bj8b8BHvwNFT7E7gCEMmZ+8f1Qxemuj4KjFDcn4o478q/bB7iENyKv95a1uZUI5haeerUlqM3O7RhBQNtFOMBw==
   dependencies:
     "@coinbase/wallet-sdk" "^3.6.4"
     "@ethersproject/address" "^5.7.0"
@@ -1099,23 +1099,26 @@
     qrcode "^1.5.1"
     react-device-detect "^2.2.2"
     styled-components "^5.3.6"
+    tinycolor2 "^1.6.0"
     web3-core "^1.8.0"
     web3-core-helpers "^1.8.0"
     wicg-inert "^3.1.2"
 
-"@privy-io/server-auth@^1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@privy-io/server-auth/-/server-auth-1.1.2.tgz#0ad1c0585eaffb6d5524431d8038697e5b3cd167"
-  integrity sha512-YCHHJAhm75MIzLSa1QdiA/7/C4bgLdaakMCt4DsVfJ3WzOqzVQn3Ie9c2c01BpmX5nigso6+GRR/GjNGErW98g==
+"@privy-io/server-auth@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@privy-io/server-auth/-/server-auth-1.2.0.tgz#286003e2147575d200e0c556f5d801c08945b54d"
+  integrity sha512-11BJYSNnLhQCZZ4sLY4YgG41U8wx35i3oW236705bpODKulxSgn9taRGRY+d6EV5UDU4kO/GF5cyj5RKtMnBSA==
   dependencies:
     axios "^1.1.2"
     dotenv "^16.0.3"
     jose "^4.10.4"
+    ts-case-convert "^2.0.2"
+    type-fest "^3.6.1"
 
-"@privy-io/wagmi-connector@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@privy-io/wagmi-connector/-/wagmi-connector-0.0.2.tgz#149be0d952bcdbc77d819d52912b12bb02e55d79"
-  integrity sha512-vG5s/Zrxvtkm2rrmNY9ZFin0QW5GZML6030fYq3kUgXCMwUZV4EgoXX1hECv57vBsjqUxcltuQ+glDRSdmAzLw==
+"@privy-io/wagmi-connector@0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@privy-io/wagmi-connector/-/wagmi-connector-0.0.7.tgz#ce02ead259cae7183fc2bdac16b7b509968082a6"
+  integrity sha512-eF3LH9sLgzngOX7tX/mbv+KGWfZT2ZBTaz8i6Rue+47btU0UE0wZ0JrxnNbNfATzOm5VNVf9VO2zEpYOW9UiYA==
 
 "@radix-ui/primitive@1.0.0":
   version "1.0.0"
@@ -7153,6 +7156,11 @@ throttle-debounce@^3.0.1:
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==
 
+tinycolor2@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.6.0.tgz#f98007460169b0263b97072c5ae92484ce02d09e"
+  integrity sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==
+
 to-fast-properties@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/to-fast-properties/-/to-fast-properties-2.0.0.tgz#dc5e698cbd079265bc73e0377681a4e4e83f616e"
@@ -7277,6 +7285,11 @@ type-fest@^0.20.2:
   version "0.20.2"
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.20.2.tgz#1bf207f4b28f91583666cb5fbd327887301cd5f4"
   integrity sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==
+
+type-fest@^3.6.1:
+  version "3.8.0"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-3.8.0.tgz#ce80d1ca7c7d11c5540560999cbd410cb5b3a385"
+  integrity sha512-FVNSzGQz9Th+/9R6Lvv7WIAkstylfHN2/JYxkyhhmKFYh9At2DST8t6L6Lref9eYO8PXFTfG9Sg1Agg0K3vq3Q==
 
 type@^1.0.1:
   version "1.2.0"

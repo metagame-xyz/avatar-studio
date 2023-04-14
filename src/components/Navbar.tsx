@@ -22,7 +22,7 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-    const { address } = useAccount()
+    const { address, isConnecting, isConnected } = useAccount()
     const router = useRouter()
     const { logout: privyLogout } = usePrivy()
     // const address = user?.wallet?.address as `0x${string}`
@@ -35,10 +35,6 @@ export default function Navbar() {
         await privyLogout()
         router.push('/')
     }
-    // console.log('user', user)
-    // console.log('address', address)
-    // console.log('isConnected', isConnected)
-    // console.log('isConnecting', isConnecting)
 
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
@@ -47,6 +43,8 @@ export default function Navbar() {
 
     console.log('mounted', mounted)
     console.log('address', address)
+    console.log('isConnected', isConnected)
+    console.log('isConnecting', isConnecting)
     console.log('ensAvatarUrl', ensAvatarUrl?.length)
 
     return (
