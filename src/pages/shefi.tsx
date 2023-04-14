@@ -2,7 +2,10 @@ import { usePrivy } from '@privy-io/react-auth'
 import FullPageLoading from 'components/FullPageLoading'
 import { type NextPage } from 'next'
 import Head from 'next/head'
+import Image from 'next/image'
 import { useRouter } from 'next/router'
+import robonova from 'public/assets/Robo Nova Homepage.png'
+import shefiLogo from 'public/assets/shefi_logo.svg'
 import { useEffect } from 'react'
 import { pageToLoad } from 'utils'
 import { trpc } from 'utils/trpc'
@@ -25,17 +28,25 @@ const Home: NextPage = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             {authenticated ? null : (
-                <main className="flex min-h-[calc(100vh_-_120px)] flex-col items-center justify-center bg-black bg-jupiter-pattern">
+                <main className="flex min-h-[calc(100vh_-_120px)] flex-col items-center justify-center bg-black bg-sheFi bg-cover">
                     <div className="container flex flex-col items-center justify-center gap-8 px-4 py-12">
-                        <h1 className="text-5xl font-extrabold tracking-tight text-teal-100 sm:text-[5rem]">
-                            SheFi Robo Nova
-                        </h1>
-                        <div className="text-2xl text-teal-100">
-                            Earn traits by participating and contributing to your community
+                        <div className="flex flex-col items-end md:flex-row">
+                            <div className="flex flex-col items-end">
+                                <Image src={shefiLogo} alt="SheFi Logo" width={630} />
+                                <div className="">
+                                    <span className=" whitespace-nowrap bg-gradient-to-b from-[rgb(252,255,121)] to-[rgb(44,173,226)] bg-clip-text font-robonova text-5xl text-transparent drop-shadow sm:text-8xl">
+                                        ROBO NOVA
+                                    </span>
+                                </div>
+                            </div>
+                            <Image src={robonova} alt="Robonova" height={320} className="mx-auto" />
+                        </div>
+                        <div className="font-robonova text-2xl text-teal-50">
+                            Earn traits by participating and contributing to SheFi
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <div className="flex flex-col items-center justify-center gap-4">
-                                <button className="btn-primary" onClick={login}>
+                                <button className="btn-primary w-56" onClick={login}>
                                     Log In
                                 </button>
                             </div>
