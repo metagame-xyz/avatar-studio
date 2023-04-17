@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Fragment, useEffect, useState } from 'react'
-import { useAccount, useEnsAvatar } from 'wagmi'
+import { useAccount, useEnsAvatar, useSwitchNetwork } from 'wagmi'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },
@@ -22,7 +22,9 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-    const { address, isConnecting, isConnected } = useAccount()
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { switchNetwork } = useSwitchNetwork()
+    const { address } = useAccount()
     const router = useRouter()
     const { logout: privyLogout } = usePrivy()
     // const address = user?.wallet?.address as `0x${string}`
@@ -41,11 +43,11 @@ export default function Navbar() {
         setMounted(true)
     }, [])
 
-    console.log('mounted', mounted)
-    console.log('address', address)
-    console.log('isConnected', isConnected)
-    console.log('isConnecting', isConnecting)
-    console.log('ensAvatarUrl', ensAvatarUrl?.length)
+    // console.log('mounted', mounted)
+    // console.log('address', address)
+    // console.log('isConnected', isConnected)
+    // console.log('isConnecting', isConnecting)
+    // console.log('ensAvatarUrl', ensAvatarUrl?.length)
 
     return (
         <Disclosure as="nav" className="bg-black">
@@ -194,7 +196,7 @@ export default function Navbar() {
                                         </Transition>
                                     </Menu>
                                 ) : (
-                                    <div className="h-8 w-8 bg-gray-500"></div>
+                                    <div className="h-8 w-8"></div>
                                 )}
                             </div>
                         </div>
