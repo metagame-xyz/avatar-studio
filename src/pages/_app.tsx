@@ -6,6 +6,7 @@ import { Toaster } from 'components/Toast'
 import { env } from 'env/client.mjs'
 import { type AppType } from 'next/app'
 import 'styles/globals.css'
+import type { ValuesType } from 'utility-types'
 import { trpc } from 'utils/trpc'
 import { configureChains } from 'wagmi'
 import { mainnet, optimism, polygon, sepolia } from 'wagmi/chains'
@@ -24,8 +25,36 @@ export const configureChainsConfig = configureChains(
 //     provider,
 // })
 
+const getHost = () => {
+    if (typeof window !== 'undefined') {
+        return window.location.host
+    } else {
+        return null
+    }
+}
+
+const hostToOrgMap = {
+    'robonova.shefi.org': 'SheFi',
+    // 'localhost:3000': 'SheFi',
+} as const
+
+type HostEnum = keyof typeof hostToOrgMap
+type OrgEnum = ValuesType<typeof hostToOrgMap> | 'default'
+
+const getOrg = (host: string | null): OrgEnum => {
+    if (host) {
+        return hostToOrgMap[host as HostEnum] || 'default'
+    } else {
+        return 'default'
+    }
+}
+
 const MyApp: AppType = ({ Component, pageProps }) => {
     const createOrUpdateUser = trpc.member.createOrUpdate.useMutation()
+
+    const host = getHost()
+    const org = getOrg(host)
+    // console.log('org: ', org)
 
     const onLoginSuccess = async (privyUser: PrivyUser) => {
         await createOrUpdateUser.mutateAsync({
@@ -38,7 +67,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
             {/* <WagmiConfig client={wagmiClient}> */}
             <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
                 <Toaster />
-                <Navbar />
+                <Navbar orgConfig={org} />
                 <Component {...pageProps} />
                 <Footer />
             </PrivyWagmiConnector>

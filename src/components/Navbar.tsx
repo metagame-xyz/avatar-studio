@@ -5,6 +5,7 @@ import makeBlockie from 'ethereum-blockies-base64'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import shefiLogoSvg from 'public/assets/SheFi Logo Blue.svg'
 import { Fragment, useEffect, useState } from 'react'
 import { useAccount, useEnsAvatar, useSwitchNetwork } from 'wagmi'
 
@@ -21,7 +22,25 @@ function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
 
-export default function Navbar() {
+type Logo = {
+    src: string
+    size: string
+    alt: string
+}
+
+const defaultLogo: Logo = {
+    src: '/logo.png',
+    size: 'h-8 w-8',
+    alt: 'Metagame Logo',
+}
+
+const shefiLogo: Logo = {
+    src: shefiLogoSvg,
+    size: 'h-8 w-16',
+    alt: 'SheFi Logo',
+}
+
+export default function Navbar({ orgConfig = null }: { orgConfig?: string | null }) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { switchNetwork } = useSwitchNetwork()
     const { address } = useAccount()
@@ -32,6 +51,7 @@ export default function Navbar() {
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
+    const [logo, setLogo] = useState(defaultLogo)
 
     const logout = async () => {
         await privyLogout()
@@ -41,7 +61,8 @@ export default function Navbar() {
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
-    }, [])
+        setLogo(orgConfig === 'SheFi' ? shefiLogo : defaultLogo)
+    }, [orgConfig])
 
     // console.log('mounted', mounted)
     // console.log('address', address)
@@ -70,13 +91,15 @@ export default function Navbar() {
                                 <div className="flex flex-shrink-0 items-center">
                                     <div className="block h-8 w-auto">
                                         <Link href={'/home'}>
-                                            <Image
-                                                className="block"
-                                                src="/logo.png"
-                                                alt="Metagame"
-                                                width={32}
-                                                height={32}
-                                            />
+                                            <div className={`relative block ${logo.size}`}>
+                                                <Image
+                                                    src={logo.src}
+                                                    alt={logo.alt}
+                                                    fill
+                                                    // width={32}
+                                                    // height={32}
+                                                />
+                                            </div>
                                         </Link>
                                     </div>
                                 </div>
