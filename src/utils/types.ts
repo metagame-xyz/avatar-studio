@@ -34,6 +34,19 @@ export type MostTypes = string | number | boolean | null | undefined | unknown[]
 
 export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never
 
+export const enum SubdomainOrgs {
+    sheFi = 'SheFi',
+    default = 'default',
+}
+
+export type SubdomainConfig = {
+    name: SubdomainOrgs
+    logoSrc: string
+    logoSize: string
+    logoAlt: string
+    font: string
+}
+
 export const enum Status {
     loading = 'loading',
     success = 'success',

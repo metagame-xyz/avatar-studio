@@ -10,10 +10,6 @@ export const isProdEnv = process.env.NODE_ENV === 'production'
 export const NETWORK = process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() || 'sepolia'
 export const networkStrings = getNetworkString(NETWORK)
 
-export const enum SubdomainOrgs {
-    sheFi = 'SheFi',
-}
-
 type NetworkStrings = {
     alchemy: string
     ethers: string

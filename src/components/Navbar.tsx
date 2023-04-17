@@ -5,8 +5,9 @@ import makeBlockie from 'ethereum-blockies-base64'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import shefiLogoSvg from 'public/assets/SheFi Logo Blue.svg'
+import { defaultConfig } from 'pages/_app'
 import { Fragment, useEffect, useState } from 'react'
+import type { SubdomainConfig } from 'utils/types'
 import { useAccount, useEnsAvatar, useSwitchNetwork } from 'wagmi'
 
 const navigation = [
@@ -22,25 +23,7 @@ function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
 
-type Logo = {
-    src: string
-    size: string
-    alt: string
-}
-
-const defaultLogo: Logo = {
-    src: '/logo.png',
-    size: 'h-8 w-8',
-    alt: 'Metagame Logo',
-}
-
-const shefiLogo: Logo = {
-    src: shefiLogoSvg,
-    size: 'h-8 w-16',
-    alt: 'SheFi Logo',
-}
-
-export default function Navbar({ orgConfig = null }: { orgConfig?: string | null }) {
+export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainConfig?: SubdomainConfig }) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { switchNetwork } = useSwitchNetwork()
     const { address } = useAccount()
@@ -51,7 +34,6 @@ export default function Navbar({ orgConfig = null }: { orgConfig?: string | null
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
 
     const [mounted, setMounted] = useState(false)
-    const [logo, setLogo] = useState(defaultLogo)
 
     const logout = async () => {
         await privyLogout()
@@ -61,8 +43,7 @@ export default function Navbar({ orgConfig = null }: { orgConfig?: string | null
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
-        setLogo(orgConfig === 'SheFi' ? shefiLogo : defaultLogo)
-    }, [orgConfig])
+    }, [])
 
     // console.log('mounted', mounted)
     // console.log('address', address)
@@ -71,7 +52,7 @@ export default function Navbar({ orgConfig = null }: { orgConfig?: string | null
     // console.log('ensAvatarUrl', ensAvatarUrl?.length)
 
     return (
-        <Disclosure as="nav" className="bg-black">
+        <Disclosure as="nav" className={`bg-black ${subdomainConfig.font}`}>
             {({ open }) => (
                 <>
                     <div className="container mx-auto">
@@ -91,10 +72,10 @@ export default function Navbar({ orgConfig = null }: { orgConfig?: string | null
                                 <div className="flex flex-shrink-0 items-center">
                                     <div className="block h-8 w-auto">
                                         <Link href={'/home'}>
-                                            <div className={`relative block ${logo.size}`}>
+                                            <div className={`relative block ${subdomainConfig.logoSize}`}>
                                                 <Image
-                                                    src={logo.src}
-                                                    alt={logo.alt}
+                                                    src={subdomainConfig.logoSrc}
+                                                    alt={subdomainConfig.logoAlt}
                                                     fill
                                                     // width={32}
                                                     // height={32}
@@ -129,7 +110,9 @@ export default function Navbar({ orgConfig = null }: { orgConfig?: string | null
                             </div>
                             <div className="absolute inset-y-0 right-0 flex items-center gap-4 sm:static sm:inset-auto">
                                 <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
-                                    <Link href={'/help'}>Help</Link>
+                                    <Link href={'https://t.me/brennerspear'} target="blank">
+                                        Help
+                                    </Link>
                                 </div>
                                 {/* <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
                                     <Link href={'/about'}>About</Link>

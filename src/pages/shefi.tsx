@@ -51,7 +51,7 @@ const SheFiHomepage: NextPage = () => {
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <div className="flex flex-col items-center justify-center gap-4">
-                                <button className="btn-primary w-56" onClick={login}>
+                                <button className="btn-primary w-56 font-robonova" onClick={login}>
                                     Log In
                                 </button>
                             </div>
