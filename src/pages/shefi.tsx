@@ -10,7 +10,7 @@ import { useEffect } from 'react'
 import { pageToLoad } from 'utils'
 import { trpc } from 'utils/trpc'
 
-const Home: NextPage = () => {
+const SheFiHomepage: NextPage = () => {
     const router = useRouter()
     const { login, authenticated, ready } = usePrivy()
     const { data: user } = trpc.member.homePage.useQuery(undefined, { enabled: authenticated })
@@ -63,4 +63,4 @@ const Home: NextPage = () => {
     )
 }
 
-export default Home
+export default SheFiHomepage

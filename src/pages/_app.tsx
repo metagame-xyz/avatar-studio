@@ -7,6 +7,7 @@ import { env } from 'env/client.mjs'
 import { type AppType } from 'next/app'
 import 'styles/globals.css'
 import type { ValuesType } from 'utility-types'
+import { SubdomainOrgs } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 import { configureChains } from 'wagmi'
 import { mainnet, optimism, polygon, sepolia } from 'wagmi/chains'
@@ -25,17 +26,12 @@ export const configureChainsConfig = configureChains(
 //     provider,
 // })
 
-const getHost = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.host
-    } else {
-        return null
-    }
-}
+const getHost = () => (typeof window !== 'undefined' ? window.location.host : null)
 
 const hostToOrgMap = {
-    'robonova.shefi.org': 'SheFi',
-    // 'localhost:3000': 'SheFi',
+    'robonova.shefi.org': SubdomainOrgs.sheFi,
+    'shefi-dev.avatar-studio.xyz': SubdomainOrgs.sheFi,
+    // 'localhost:3000': SubdomainOrgs.sheFi,
 } as const
 
 type HostEnum = keyof typeof hostToOrgMap
@@ -68,7 +64,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
             <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
                 <Toaster />
                 <Navbar orgConfig={org} />
-                <Component {...pageProps} />
+                <Component {...pageProps} orgConfig={org} />
                 <Footer />
             </PrivyWagmiConnector>
             {/* </WagmiConfig> */}
