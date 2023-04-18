@@ -55,15 +55,15 @@ export const getMemberWithProject = async (
         },
     })
 
+    const project = memberWithAProjectRaw.projects[0]?.project
+    // if (!project) throw new Error('Member not a part of this project')
+
     const memberWithAProject = {
         ...memberWithAProjectRaw,
         achievements: memberWithAProjectRaw.achievements.filter(
-            (a) => a.achievement.achievementCategory.projectId === memberWithAProjectRaw.projects[0]?.project.id,
+            (a) => a.achievement.achievementCategory.projectId === project?.id,
         ),
-        project: memberWithAProjectRaw.projects[0]?.project,
-        isOrgAdmin: !!memberWithAProjectRaw.organizations.find(
-            (o) => o.organizationId === memberWithAProjectRaw.projects[0]?.project.organizationId,
-        ),
+        project,
     } as MemberWithAProject
 
     return memberWithAProject

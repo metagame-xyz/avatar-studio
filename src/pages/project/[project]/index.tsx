@@ -9,9 +9,11 @@ import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
+import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { slugify } from 'utils'
+import { getPlaceholderImageUrl } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
@@ -27,7 +29,7 @@ const Project: NextPage = () => {
 
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
-    const isOrgAdmin = !!member?.isOrgAdmin
+    const isOrgAdmin = !!member?.organizations?.find((o) => o.organizationId == project?.organization?.id)
 
     const organizationSlug = project?.organization?.slug as string
 
@@ -51,6 +53,7 @@ const Project: NextPage = () => {
     const isProjectConfigured = !!(isDataLoaded && data.members && data.achievementFields)
 
     const memberAchievements = member.achievements
+    const nftImageUrl = member.nftMetadata[0]?.image
 
     const handleEditAvatarClick = () => {
         router.push(`/project/${slug}/edit-avatar`)
@@ -94,8 +97,17 @@ const Project: NextPage = () => {
                     />
                 }
 
-                <div className="flex flex-col">
-                    <div className="pb-4 text-2xl font-bold md:text-3xl">{name}</div>
+                <div className="flex flex-col gap-4">
+                    <div className="text-2xl font-bold md:text-3xl">{name}</div>
+                    {nftImageUrl ? (
+                        <div className="relative flex h-64 w-64 self-center">
+                            <Image fill src={nftImageUrl} alt="placeholder nft" />
+                        </div>
+                    ) : (
+                        <div className="relative flex h-64 w-64 self-center grayscale">
+                            <Image fill src={getPlaceholderImageUrl(slug)} alt="placeholder nft" />
+                        </div>
+                    )}
 
                     <div className="flex flex-col space-y-8">
                         <div>

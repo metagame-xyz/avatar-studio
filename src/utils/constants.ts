@@ -66,6 +66,9 @@ export const cloudfrontFolderUrl = 'https://d17y9jhu28q4cz.cloudfront.net/nft-im
 
 export const getCloudfrontLayersFolderUrl = (project: string): string => `${cloudfrontFolderUrl}${project}/Layers/`
 
+export const getPlaceholderImageUrl = (project: string): string =>
+    `${cloudfrontFolderUrl}${project}/misc/placeholder-nft-no-background.png`
+
 // export const getS3CompleteImagesFolderUrlForUpload = (network: string, project: string): string =>
 //     `${s3AcceleratedFolderUrl}${network}/${project}/complete-images/`
 

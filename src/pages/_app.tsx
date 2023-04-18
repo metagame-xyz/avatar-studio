@@ -49,6 +49,7 @@ const getSubdomainConfig = (host: string | null): SubdomainConfig => {
             return defaultConfig
     }
 }
+
 const MyApp: AppType = ({ Component, pageProps }) => {
     const createOrUpdateUser = trpc.member.createOrUpdate.useMutation()
 
@@ -67,13 +68,17 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         setMounted(true)
     }, [])
 
+    useEffect(() => {
+        document.body.className = subdomainConfig.font
+    }, [subdomainConfig.font])
+
     if (!mounted) return null
 
     return (
         <PrivyProvider appId={env.NEXT_PUBLIC_PRIVY_APP_ID} onSuccess={onLoginSuccess}>
             {/* <WagmiConfig client={wagmiClient}> */}
             <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
-                <div className={`${subdomainConfig.font}`}>
+                <div>
                     <Toaster />
                     <Navbar subdomainConfig={subdomainConfig} />
                     <Component {...pageProps} subdomainConfig={subdomainConfig} />

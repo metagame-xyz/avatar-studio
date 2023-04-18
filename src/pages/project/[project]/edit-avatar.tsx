@@ -46,7 +46,9 @@ const EditAvatar = () => {
     const trpcUtils = trpc.useContext()
 
     const { data: project } = trpc.project.getProject.useQuery()
-    const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
+    const { data: assetData, status } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
+
+    if (status === 'error') router.push('/')
 
     const correctChain = [sepolia, mainnet].find((chain) => chain.network === NETWORK) || sepolia
     const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(!!(chain?.id !== correctChain?.id))
