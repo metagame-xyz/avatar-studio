@@ -7,8 +7,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { defaultConfig } from 'pages/_app'
 import { Fragment, useEffect, useState } from 'react'
+import { truncateAddress } from 'utils'
+import { networkStrings } from 'utils/constants'
 import type { SubdomainConfig } from 'utils/types'
-import { useAccount, useEnsAvatar, useSwitchNetwork } from 'wagmi'
+import { useAccount, useEnsAvatar, useEnsName, useSwitchNetwork } from 'wagmi'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },
@@ -30,8 +32,11 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
     const router = useRouter()
     const { logout: privyLogout } = usePrivy()
     // const address = user?.wallet?.address as `0x${string}`
+    const { data: ensName } = useEnsName({ address, enabled: !!address, chainId: 1 })
     const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address, chainId: 1 })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
+
+    const readableName = ensName || truncateAddress(address)
 
     const [mounted, setMounted] = useState(false)
 
@@ -110,7 +115,7 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
                             </div>
                             <div className="absolute inset-y-0 right-0 flex items-center gap-4 sm:static sm:inset-auto">
                                 <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
-                                    <Link href={'https://t.me/brennerspear'} target="blank">
+                                    <Link href={'https://t.me/brennerspear'} target="_blank">
                                         Help
                                     </Link>
                                 </div>
@@ -159,17 +164,19 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
                                                 <Menu.Item>
                                                     {({ active }) => (
                                                         <a
-                                                            href="#"
+                                                            href={`https://${networkStrings.etherscan}etherscan.io/address/${address}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
                                                             className={classNames(
                                                                 active ? 'bg-gray-100' : '',
                                                                 'block px-4 py-2 text-sm text-gray-700',
                                                             )}
                                                         >
-                                                            Your Profile
+                                                            {readableName}
                                                         </a>
                                                     )}
                                                 </Menu.Item>
-                                                <Menu.Item>
+                                                {/* <Menu.Item>
                                                     {({ active }) => (
                                                         <a
                                                             href="#"
@@ -181,7 +188,7 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
                                                             Settings
                                                         </a>
                                                     )}
-                                                </Menu.Item>
+                                                </Menu.Item> */}
                                                 <Menu.Item>
                                                     {({ active }) => (
                                                         <a
