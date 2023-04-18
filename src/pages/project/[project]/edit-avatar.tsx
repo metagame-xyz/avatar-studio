@@ -91,6 +91,7 @@ const EditAvatar = () => {
     const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
     const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create)
     const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
+    const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     // set existing pfp state if user has an nft
     // set nft state (data in db, and then also if minted and has a tokenId)
     useEffect(() => {
@@ -107,6 +108,7 @@ const EditAvatar = () => {
             setNftState(NftState.hasDataNoNft)
 
             const statesAreSame = areTraitArraysEqual(existingNftMetadata?.traits, pfpState)
+            console.log('statesAreSame', statesAreSame)
             setAllowedAction(statesAreSame ? AllowedAction.mint : AllowedAction.update)
         }
 
@@ -116,9 +118,8 @@ const EditAvatar = () => {
             setAllowedAction(AllowedAction.create)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [existingNftMetadata])
+    }, [existingNftMetadata, pfpState])
 
-    const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [signatureForMint, setSignatureForMint] = useState<Signature>()
 
