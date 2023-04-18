@@ -8,12 +8,13 @@ export const getMemberWithProject = async (
     projectSlug: string,
     network = 'sepolia',
 ): Promise<MemberWithAProject> => {
-    const memberWithAProject = (await prisma.user.findUniqueOrThrow({
+    const memberWithAProjectRaw = await prisma.user.findUniqueOrThrow({
         where: {
             privyDID,
         },
         include: {
             achievements: {
+                where: {},
                 include: {
                     achievement: {
                         include: {
@@ -50,12 +51,20 @@ export const getMemberWithProject = async (
                 },
                 orderBy: { timestamp: 'desc' },
             },
+            organizations: true,
         },
-    })) as MemberWithAProject
+    })
 
-    memberWithAProject.achievements = memberWithAProject.achievements.filter(
-        (a) => a.achievement.achievementCategory.projectId === memberWithAProject.projects[0]?.project.id,
-    )
+    const memberWithAProject = {
+        ...memberWithAProjectRaw,
+        achievements: memberWithAProjectRaw.achievements.filter(
+            (a) => a.achievement.achievementCategory.projectId === memberWithAProjectRaw.projects[0]?.project.id,
+        ),
+        project: memberWithAProjectRaw.projects[0]?.project,
+        isOrgAdmin: !!memberWithAProjectRaw.organizations.find(
+            (o) => o.organizationId === memberWithAProjectRaw.projects[0]?.project.organizationId,
+        ),
+    } as MemberWithAProject
 
     return memberWithAProject
 }
@@ -76,7 +85,7 @@ export const hasCorrectLevelForTrait = (trait: Trait, level: number) => {
 }
 
 export const getEarnedTraits = (member: MemberWithAProject): TraitCategoryWithTraitsWithEarned[] => {
-    const project = member.projects[0]?.project
+    const { project } = member
     if (!project) throw new Error('Project not found')
 
     const achievements = member.achievements

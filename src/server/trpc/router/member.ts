@@ -254,6 +254,12 @@ export const memberRouter = router({
         return getEarnedTraits(member)
     }),
 
+    memberWithAProject: protectedProcedure.query(async ({ ctx }) => {
+        if (!ctx.projectSlug) throw new Error('Cant get slug from context')
+        const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, ctx.projectSlug)
+        return member
+    }),
+
     nftMetadata: protectedProcedure
         .input(z.object({ projectSlug: z.string(), chainNetwork: z.string() }))
         .query(async ({ ctx, input }) => {
@@ -293,10 +299,10 @@ export const memberRouter = router({
 
             const allTraitsWithEarned = getEarnedTraits(member)
 
-            if (!member.address) throw new Error('User address not found')
-            if (member.address !== signerAddress) throw new Error('Invalid signer')
+            const { address, project } = member
 
-            const project = member.projects[0]?.project
+            if (!address) throw new Error('User address not found')
+            if (address !== signerAddress) throw new Error('Invalid signer')
             if (!project) throw new Error('Project not found')
 
             // confirm all of the requested traits are valid, based on being in the project's traits, and has been earned by the member
@@ -372,7 +378,7 @@ export const memberRouter = router({
 
             if (!contractAddress) throw new Error('Contract address not found')
 
-            const signature = await generateMintingSignature(member.address, project.slug, contractAddress, network)
+            const signature = await generateMintingSignature(address, project.slug, contractAddress, network)
 
             // // generate the multi-layer image using canvas
             const canvas = createCanvas(2400, 2400)
@@ -414,7 +420,7 @@ export const memberRouter = router({
                 ContentDisposition: 'inline',
             }
 
-            const userName = `${member.firstName}` || (await getEns(member.address)) || truncateAddress(member.address)
+            const userName = `${member.firstName}` || (await getEns(address)) || truncateAddress(address)
 
             timer.startTimer('nftMetadata.create')
             // add a new nftMetadata record
@@ -425,7 +431,7 @@ export const memberRouter = router({
                     tokenId: existingNftData?.tokenId || null,
                     name: `${userName}'s ${project.name}`,
                     description: `${userName}'s ${project.name}, part of the ${project.organization.name} exclusive collection of Earnable Avatars`,
-                    walletAddress: member.address,
+                    walletAddress: address,
                     image: `${cloudfrontFolderUrl}${imageFilePath}`,
                     network,
                     traitHash: permanentTraitsHash,
@@ -454,13 +460,13 @@ export const memberRouter = router({
         .query(async ({ ctx, input }) => {
             const network = getNetworkName(input.chainNetwork)
             const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, input.projectSlug, network)
-            const project = member.projects[0]?.project
+            const { project, address } = member
             if (!project) throw new Error('Project not found')
-            if (!member.address) throw new Error('User address not found')
+            if (!address) throw new Error('User address not found')
 
             const contractAddress = network === 'homestead' ? project.contractAddress : project.testContractAddress
             if (!contractAddress) throw new Error('Contract address not found')
 
-            return generateMintingSignature(member.address, project.slug, contractAddress, network)
+            return generateMintingSignature(address, project.slug, contractAddress, network)
         }),
 })

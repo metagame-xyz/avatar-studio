@@ -3,7 +3,6 @@ import type {
     Achievement,
     AchievementCategory,
     MemberAchievements,
-    MembersOfProjects,
     NftMetadata,
     Organization,
     Project,
@@ -180,14 +179,12 @@ export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
 
 export type MemberWithAProject = Prettify<
     User & {
-        projects: (MembersOfProjects & {
-            project: Project & {
-                traitCategories: (TraitCategory & {
-                    traits: Trait[]
-                })[]
-                organization: Organization
-            }
-        })[]
+        project: Project & {
+            traitCategories: (TraitCategory & {
+                traits: Trait[]
+            })[]
+            organization: Organization
+        }
         achievements: (MemberAchievements & {
             achievement: Achievement & {
                 traits: Trait[]
@@ -199,6 +196,7 @@ export type MemberWithAProject = Prettify<
                 traitCategory: TraitCategory
             })[]
         })[]
+        isOrgAdmin: boolean
     }
 >
 
