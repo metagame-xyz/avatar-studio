@@ -26,9 +26,9 @@
         "@heroicons/react": "^2.0.13",
         "@napi-rs/canvas": "^0.1.36",
         "@prisma/client": "^4.10.1",
-        "@privy-io/react-auth": "1.16.1",
-        "@privy-io/server-auth": "^1.1.2",
-        "@privy-io/wagmi-connector": "0.0.2",
+        "@privy-io/react-auth": "1.20.3",
+        "@privy-io/server-auth": "1.2.0",
+        "@privy-io/wagmi-connector": "0.0.7",
         "@radix-ui/react-toast": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.0.2",
         "@stitches/react": "^1.2.8",
@@ -39,6 +39,7 @@
         "@trpc/react-query": "^10.0.0",
         "@trpc/server": "^10.0.0",
         "airtable": "^0.11.6",
+        "alchemy-sdk": "^2.8.0",
         "aws-sdk": "^2.1294.0",
         "base64url": "^3.0.1",
         "ethereum-blockies-base64": "^1.0.2",
@@ -86,7 +87,8 @@
         "prisma": "^4.10.1",
         "prisma-json-types-generator": "^2.3.0",
         "tailwindcss": "^3.2.4",
-        "typescript": "^4.8.4"
+        "typescript": "^4.8.4",
+        "utility-types": "^3.10.0"
     },
     "ct3aMetadata": {
         "initVersion": "6.11.4"

@@ -1,5 +1,5 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
-import { User as PrivyUser } from '@privy-io/server-auth'
+import type { User as PrivyUser } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
 import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
@@ -347,9 +347,15 @@ export const projectRouter = router({
 
                     if (member.name) {
                         // pop off the last word in the string
-                        lastName = member.name.split(' ').pop() || null
-                        // combine the rest of the words into a string
-                        firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                        const nameArr = member.name.split(' ')
+                        if (nameArr.length > 1) {
+                            lastName = member.name.split(' ').pop() || null
+                            // combine the rest of the words into a string
+                            firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                        } else {
+                            firstName = member.name
+                            lastName = null
+                        }
                     }
 
                     const privyDID = (existingUser?.privyDID || privyUser?.id) as string

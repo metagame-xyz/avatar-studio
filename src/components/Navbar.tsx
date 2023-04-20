@@ -1,5 +1,3 @@
-import { Fragment, useEffect, useState } from 'react'
-
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { usePrivy } from '@privy-io/react-auth'
@@ -7,7 +5,12 @@ import makeBlockie from 'ethereum-blockies-base64'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useAccount, useEnsAvatar } from 'wagmi'
+import { defaultConfig } from 'pages/_app'
+import { Fragment, useEffect, useState } from 'react'
+import { truncateAddress } from 'utils'
+import { networkStrings } from 'utils/constants'
+import type { SubdomainConfig } from 'utils/types'
+import { useAccount, useEnsAvatar, useEnsName, useSwitchNetwork } from 'wagmi'
 
 const navigation = [
     // { name: 'Dashboard', href: '#', current: true },
@@ -22,13 +25,18 @@ function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
 
-export default function Navbar() {
+export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainConfig?: SubdomainConfig }) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { switchNetwork } = useSwitchNetwork()
     const { address } = useAccount()
     const router = useRouter()
     const { logout: privyLogout } = usePrivy()
     // const address = user?.wallet?.address as `0x${string}`
+    const { data: ensName } = useEnsName({ address, enabled: !!address, chainId: 1 })
     const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address, chainId: 1 })
     const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
+
+    const readableName = ensName || truncateAddress(address)
 
     const [mounted, setMounted] = useState(false)
 
@@ -36,18 +44,20 @@ export default function Navbar() {
         await privyLogout()
         router.push('/')
     }
-    // console.log('user', user)
-    // console.log('address', address)
-    // console.log('isConnected', isConnected)
-    // console.log('isConnecting', isConnecting)
 
     // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
     }, [])
 
+    // console.log('mounted', mounted)
+    // console.log('address', address)
+    // console.log('isConnected', isConnected)
+    // console.log('isConnecting', isConnecting)
+    // console.log('ensAvatarUrl', ensAvatarUrl?.length)
+
     return (
-        <Disclosure as="nav" className="bg-black">
+        <Disclosure as="nav" className={`bg-black ${subdomainConfig.font}`}>
             {({ open }) => (
                 <>
                     <div className="container mx-auto">
@@ -67,13 +77,15 @@ export default function Navbar() {
                                 <div className="flex flex-shrink-0 items-center">
                                     <div className="block h-8 w-auto">
                                         <Link href={'/home'}>
-                                            <Image
-                                                className="block"
-                                                src="/logo.png"
-                                                alt="Metagame"
-                                                width={32}
-                                                height={32}
-                                            />
+                                            <div className={`relative block ${subdomainConfig.logoSize}`}>
+                                                <Image
+                                                    src={subdomainConfig.logoSrc}
+                                                    alt={subdomainConfig.logoAlt}
+                                                    fill
+                                                    // width={32}
+                                                    // height={32}
+                                                />
+                                            </div>
                                         </Link>
                                     </div>
                                 </div>
@@ -103,7 +115,9 @@ export default function Navbar() {
                             </div>
                             <div className="absolute inset-y-0 right-0 flex items-center gap-4 sm:static sm:inset-auto">
                                 <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
-                                    <Link href={'/help'}>Help</Link>
+                                    <Link href={'https://t.me/brennerspear'} target="_blank">
+                                        Help
+                                    </Link>
                                 </div>
                                 {/* <div className="hidden text-sm text-teal-300 hover:text-teal-100 sm:block">
                                     <Link href={'/about'}>About</Link>
@@ -121,7 +135,7 @@ export default function Navbar() {
                                     />
                                 </button> */}
                                 {/* Profile dropdown */}
-                                {mounted && address ? (
+                                {mounted && address && avatarUrl ? (
                                     <Menu as="div" className="relative">
                                         <div>
                                             <Menu.Button className="flex rounded-full bg-black text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-black">
@@ -150,17 +164,19 @@ export default function Navbar() {
                                                 <Menu.Item>
                                                     {({ active }) => (
                                                         <a
-                                                            href="#"
+                                                            href={`https://${networkStrings.etherscan}etherscan.io/address/${address}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
                                                             className={classNames(
                                                                 active ? 'bg-gray-100' : '',
                                                                 'block px-4 py-2 text-sm text-gray-700',
                                                             )}
                                                         >
-                                                            Your Profile
+                                                            {readableName}
                                                         </a>
                                                     )}
                                                 </Menu.Item>
-                                                <Menu.Item>
+                                                {/* <Menu.Item>
                                                     {({ active }) => (
                                                         <a
                                                             href="#"
@@ -172,7 +188,7 @@ export default function Navbar() {
                                                             Settings
                                                         </a>
                                                     )}
-                                                </Menu.Item>
+                                                </Menu.Item> */}
                                                 <Menu.Item>
                                                     {({ active }) => (
                                                         <a
@@ -193,7 +209,7 @@ export default function Navbar() {
                                         </Transition>
                                     </Menu>
                                 ) : (
-                                    <div className="h-8 w-8 "></div>
+                                    <div className="h-8 w-8"></div>
                                 )}
                             </div>
                         </div>

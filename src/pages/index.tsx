@@ -6,8 +6,12 @@ import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { pageToLoad } from 'utils'
 import { trpc } from 'utils/trpc'
+import type { SubdomainConfig } from 'utils/types'
+import { SubdomainOrgs } from 'utils/types'
+import SheFiHomepage from './shefi'
+import { defaultConfig } from './_app'
 
-const Home: NextPage = () => {
+const Home: NextPage = ({ subdomainConfig = defaultConfig }: { subdomainConfig?: SubdomainConfig }) => {
     const router = useRouter()
     const { login, authenticated, ready } = usePrivy()
     const { data: user } = trpc.member.homePage.useQuery(undefined, { enabled: authenticated })
@@ -17,6 +21,9 @@ const Home: NextPage = () => {
     }, [authenticated, router, user])
 
     if (!ready || (ready && authenticated)) return <FullPageLoading />
+
+    if (subdomainConfig.name === SubdomainOrgs.sheFi) return <SheFiHomepage />
+
     return (
         <>
             <Head>

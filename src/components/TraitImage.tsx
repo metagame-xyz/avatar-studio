@@ -38,7 +38,7 @@ const TraitImage = ({
                     const useNewTrait = existingTrait.category === trait.category
                     const t = useNewTrait ? trait : existingTrait
                     const pngUrl = (t.pngUrlMap[baseName] || t.pngUrlMap['defaultVariant']) as string
-                    const style = 'absolute left-0 top-0 group-disabled:opacity-60 group-disabled:grayscale'
+                    const style = 'absolute left-0 top-0 group-disabled:opacity-60'
                     return (
                         <Image
                             width={112}

@@ -3,7 +3,7 @@ import type {
     Achievement,
     AchievementCategory,
     MemberAchievements,
-    MembersOfProjects,
+    MembersOfOrganizations,
     NftMetadata,
     Organization,
     Project,
@@ -33,6 +33,19 @@ export type Signature = {
 export type MostTypes = string | number | boolean | null | undefined | unknown[]
 
 export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never
+
+export const enum SubdomainOrgs {
+    sheFi = 'SheFi',
+    default = 'default',
+}
+
+export type SubdomainConfig = {
+    name: SubdomainOrgs
+    logoSrc: string
+    logoSize: string
+    logoAlt: string
+    font: string
+}
 
 export const enum Status {
     loading = 'loading',
@@ -167,14 +180,12 @@ export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
 
 export type MemberWithAProject = Prettify<
     User & {
-        projects: (MembersOfProjects & {
-            project: Project & {
-                traitCategories: (TraitCategory & {
-                    traits: Trait[]
-                })[]
-                organization: Organization
-            }
-        })[]
+        project?: Project & {
+            traitCategories: (TraitCategory & {
+                traits: Trait[]
+            })[]
+            organization: Organization
+        }
         achievements: (MemberAchievements & {
             achievement: Achievement & {
                 traits: Trait[]
@@ -186,6 +197,7 @@ export type MemberWithAProject = Prettify<
                 traitCategory: TraitCategory
             })[]
         })[]
+        organizations: MembersOfOrganizations[]
     }
 >
 
@@ -211,5 +223,42 @@ export type NonEmptyRecord<T extends string, V> = AtLeastOne<Record<T, V>>
 declare global {
     namespace PrismaJson {
         type PngUrlMap = NonEmptyRecord<string, string>
+    }
+}
+
+export type AlchemyWebhookData = {
+    webhookId: string
+    id: string
+    createdAt: string
+    type: string
+    event: {
+        network: string
+        activity: [
+            {
+                fromAddress: string
+                toAddress: string
+                contractAddress: string
+                blockNum: string
+                hash: string
+                erc1155Metadata: [
+                    {
+                        tokenId: string
+                        value: string
+                    },
+                ]
+                category: string
+                log: {
+                    address: string
+                    topics: string[]
+                    data: string
+                    blockNumber: string
+                    transactionHash: string
+                    transactionIndex: string
+                    blockHash: string
+                    logIndex: string
+                    removed: boolean
+                }
+            },
+        ]
     }
 }

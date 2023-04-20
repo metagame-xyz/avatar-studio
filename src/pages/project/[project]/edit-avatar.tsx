@@ -46,7 +46,9 @@ const EditAvatar = () => {
     const trpcUtils = trpc.useContext()
 
     const { data: project } = trpc.project.getProject.useQuery()
-    const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
+    const { data: assetData, status } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
+
+    if (status === 'error') router.push('/')
 
     const correctChain = [sepolia, mainnet].find((chain) => chain.network === NETWORK) || sepolia
     const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(!!(chain?.id !== correctChain?.id))
@@ -87,8 +89,9 @@ const EditAvatar = () => {
     }
 
     const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
-    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create)
+    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create) // TODO don't load until you know which one it is
     const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
+    const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     // set existing pfp state if user has an nft
     // set nft state (data in db, and then also if minted and has a tokenId)
     useEffect(() => {
@@ -113,10 +116,8 @@ const EditAvatar = () => {
             setNftState(NftState.noDataNoNft)
             setAllowedAction(AllowedAction.create)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [existingNftMetadata])
+    }, [existingNftMetadata, pfpState, NftState.hasDataAndNft, NftState.hasDataNoNft, NftState.noDataNoNft])
 
-    const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [signatureForMint, setSignatureForMint] = useState<Signature>()
 
@@ -142,9 +143,9 @@ const EditAvatar = () => {
 
     // set initial pfpState
     useEffect(() => {
-        if (existingNftMetadata?.traits && assetData && !createOrUpdateNftMetadata.isLoading) {
-            setPfpState(existingNftMetadata.traits)
-        } else if (assetData && !pfpState.length && usedCombos) {
+        if (pfpState.length) return // skip once set
+        else if (existingNftMetadata?.traits && assetData) setPfpState(existingNftMetadata.traits)
+        else if (assetData && usedCombos) {
             let defaultPfpState: AssembledNftTraits | undefined = undefined
 
             let safety = 0
@@ -167,7 +168,7 @@ const EditAvatar = () => {
             if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
             setPfpState(defaultPfpState)
         }
-    }, [assetData, createOrUpdateNftMetadata.isLoading, existingNftMetadata?.traits, pfpState.length, usedCombos])
+    }, [assetData, existingNftMetadata, pfpState.length, usedCombos])
 
     // Signing transaction (pre-mint & for updating pfp)
     const { isLoading: userIsSigning, signMessage } = useSignMessage({
@@ -337,7 +338,7 @@ const EditAvatar = () => {
                             !(allowedAction === AllowedAction.update)
                                 ? `Once it's done being assembled, you will be able to mint it! `
                                 : ''
-                        }${project?.name} is complicated to assemble, this may take up to 2 minutes. `}
+                        }`}
                     </div>
                     <Loading />
                 </div>

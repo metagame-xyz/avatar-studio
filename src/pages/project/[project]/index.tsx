@@ -1,22 +1,25 @@
-import AchievementCategoriesList from 'components/AchievementCategoriesList'
 import AirtableAchievementsModal from 'components/AirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
 import Loading from 'components/Loading'
+import MemberAchievementsList from 'components/MemberAchievementsList'
+import MembersList from 'components/MembersList'
 import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
+import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { slugify } from 'utils'
+import { getPlaceholderImageUrl } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
     const router = useRouter()
     const { data: project, error, status } = trpc.project.getProject.useQuery()
-    const { data: user, status: userStatus } = trpc.member.me.useQuery()
+    const { data: member, status: userStatus } = trpc.member.memberWithAProject.useQuery()
 
     if (userStatus === 'error') router.push('/')
 
@@ -26,7 +29,7 @@ const Project: NextPage = () => {
 
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
-    const isOrgAdmin = !!user?.organizations?.find((o) => o.id == project?.organization?.id)
+    const isOrgAdmin = !!member?.organizations?.find((o) => o.organizationId == project?.organization?.id)
 
     const organizationSlug = project?.organization?.slug as string
 
@@ -39,18 +42,18 @@ const Project: NextPage = () => {
         if (data?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkAirtableModal(true)
     }, [data, setOpenRelinkAirtableModal, openRelinkAirtableModal])
 
-    // check is user is an org admin
-    // const isOrgAdmin = user?.organizations?.find((o) => o.id == project?.id)
-
     if (error) <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
 
     if (status !== 'success' || userStatus !== 'success') return <FullPageLoading />
 
     const { name, slug } = project
-    const hasMinted = user.nftMetadata.filter((n) => n.projectSlug === project.slug).length > 0
+    const hasMinted = member.nftMetadata.filter((n) => n.projectSlug === project.slug).length > 0
 
     const isDataLoaded = isOrgAdmin && data && !data.error
     const isProjectConfigured = !!(isDataLoaded && data.members && data.achievementFields)
+
+    const memberAchievements = member.achievements
+    const nftImageUrl = member.nftMetadata[0]?.image
 
     const handleEditAvatarClick = () => {
         router.push(`/project/${slug}/edit-avatar`)
@@ -94,8 +97,17 @@ const Project: NextPage = () => {
                     />
                 }
 
-                <div className="flex flex-col">
-                    <div className="pb-4 text-2xl font-bold md:text-3xl">{name}</div>
+                <div className="flex flex-col gap-4">
+                    <div className="text-2xl font-bold md:text-3xl">{name}</div>
+                    {nftImageUrl ? (
+                        <div className="relative flex h-64 w-64 self-center">
+                            <Image fill src={nftImageUrl} alt="placeholder nft" />
+                        </div>
+                    ) : (
+                        <div className="relative flex h-64 w-64 self-center grayscale">
+                            <Image fill src={getPlaceholderImageUrl(slug)} alt="placeholder nft" />
+                        </div>
+                    )}
 
                     <div className="flex flex-col space-y-8">
                         <div>
@@ -161,7 +173,7 @@ const Project: NextPage = () => {
                 <div className="flex flex-col space-y-4">
                     <div className="text-2xl font-bold md:text-3xl">Achievements</div>
                     {project?.achievementCategories?.length > 0 ? (
-                        <AchievementCategoriesList achievementCategories={project.achievementCategories} />
+                        <MemberAchievementsList memberAchievements={memberAchievements} />
                     ) : (
                         <div>No achievements yet</div>
                     )}
@@ -169,10 +181,12 @@ const Project: NextPage = () => {
                 <div className="flex flex-col space-y-4">
                     <div className="text-lg font-bold md:text-xl">More Achievements coming soon...</div>
                 </div>
-                {/* <div className="flex flex-col space-y-4">
-                    <div className="text-2xl font-bold md:text-3xl">Members</div>
-                    <MembersList membersList={project.members} />
-                </div> */}
+                {isOrgAdmin && (
+                    <div className="flex flex-col space-y-4">
+                        <div className="text-2xl font-bold md:text-3xl">Members</div>
+                        <MembersList membersList={project.members} />
+                    </div>
+                )}
             </div>
         </Shell>
     )
