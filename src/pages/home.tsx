@@ -1,16 +1,20 @@
-import { Dialog, Transition } from '@headlessui/react'
+import { Dialog } from '@headlessui/react'
 import { usePrivy } from '@privy-io/react-auth'
 import FullPageLoading from 'components/FullPageLoading'
+import Modal from 'components/Modal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
 import NextError from 'next/error'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import react, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
+import type { SubdomainConfig } from 'utils/types'
+import { SubdomainOrgs } from 'utils/types'
+import { defaultConfig } from './_app'
 
-const Home: NextPage = () => {
+const Home: NextPage = ({ subdomainConfig = defaultConfig }: { subdomainConfig?: SubdomainConfig }) => {
     const router = useRouter()
     const trpcUtils = trpc.useContext()
 
@@ -105,74 +109,66 @@ const Home: NextPage = () => {
         )
     }
 
+    const SorryCopy =
+        subdomainConfig.name === SubdomainOrgs.sheFi ? subdomainConfig.name : 'an Organization with an Earnable NFT'
+
+    const RedirectCopy = () =>
+        subdomainConfig.name === SubdomainOrgs.sheFi ? (
+            <div className="pt-4 text-3xl">
+                {'Apply for next cohort '}
+                <a
+                    href="https://www.shefi.org/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-teal-200 hover:text-teal-300"
+                >
+                    here
+                </a>
+            </div>
+        ) : null
+
     if (!userHasOrgOrProject)
         return (
             <Shell pageTitle="Earnable Avatar Studio">
                 <div>
-                    <Transition.Root show={openNoOrgsModal} as={react.Fragment}>
-                        <Dialog as="div" className="relative z-10" onClose={() => null}>
-                            <Transition.Child
-                                as={react.Fragment}
-                                enter="ease-out duration-300"
-                                enterFrom="opacity-0"
-                                enterTo="opacity-100"
-                                leave="ease-in duration-200"
-                                leaveFrom="opacity-100"
-                                leaveTo="opacity-0"
-                            >
-                                <div className="fixed inset-0 bg-transparent" />
-                            </Transition.Child>
-
-                            <div className="fixed inset-0 z-10 overflow-y-auto bg-gray-900/60">
-                                <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                                    <Transition.Child
-                                        as={react.Fragment}
-                                        enter="ease-out duration-300"
-                                        enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                                        enterTo="opacity-100 translate-y-0 sm:scale-100"
-                                        leave="ease-in duration-200"
-                                        leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                                        leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                                    >
-                                        <Dialog.Panel className="relative w-full max-w-fit transform rounded-lg bg-black p-4 text-left shadow-xl transition-all sm:m-8 sm:p-16">
-                                            <div>
-                                                <Dialog.Title as="h3" className="text-2xl font-bold">
-                                                    {`This address (${
-                                                        user.ens || truncateAddress(user.address)
-                                                    }) isn’t part of an Organization with an Earnable Avatar.`}
-                                                </Dialog.Title>
-                                            </div>
-                                            <div className="pt-4 pb-12 text-lg">
-                                                If you’d like to create an Earnable Avatar for your own community,
-                                                please reach out directly to{' '}
-                                                <a
-                                                    href="https://twitter.com/metagame"
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-teal-200 hover:text-teal-300"
-                                                >
-                                                    @Metagame
-                                                </a>
-                                                .
-                                            </div>
-                                            <div className="text-center">
-                                                Or, log out and try logging in with a different wallet address.
-                                            </div>
-                                            <div className="mt-5 flex flex-col items-center sm:mt-6">
-                                                <button
-                                                    type="button"
-                                                    className="btn-primary w-32 sm:text-sm"
-                                                    onClick={logout}
-                                                >
-                                                    Log Out
-                                                </button>
-                                            </div>
-                                        </Dialog.Panel>
-                                    </Transition.Child>
+                    <Modal
+                        open={openNoOrgsModal}
+                        setOpen={setOpenNoOrgsModal}
+                        title=""
+                        hideButtons
+                        className="rounded-3xl"
+                    >
+                        <div className="flex flex-col gap-8 text-left">
+                            <Dialog.Title as="h3" className="text-3xl font-bold">
+                                <div>
+                                    {`Sorry! This address (${
+                                        user.ens || truncateAddress(user.address)
+                                    }) is not a member of ${SorryCopy}`}
+                                    <RedirectCopy />
                                 </div>
+                            </Dialog.Title>
+                            <div className="text-sm">
+                                If you’d like to create an Earnable NFT for your own community, please reach out
+                                directly to{' '}
+                                <a
+                                    href="https://twitter.com/metagame"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-teal-200 hover:text-teal-300"
+                                >
+                                    @Metagame
+                                </a>
                             </div>
-                        </Dialog>
-                    </Transition.Root>
+                            <div className="flex flex-col items-center gap-2 self-center">
+                                <div className="text-center text-sm">
+                                    Or try logging in with a different wallet address
+                                </div>
+                                <button type="button" className="btn-primary w-64 self-center" onClick={logout}>
+                                    Log out & switch wallets
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
                 </div>
                 <div></div>
             </Shell>
