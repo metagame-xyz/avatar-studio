@@ -91,6 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } catch (e) {
         console.error(e)
+        console.log(req.body)
     } finally {
         return res.status(200).json({ message: 'ok' })
     }

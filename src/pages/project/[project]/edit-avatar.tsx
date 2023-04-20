@@ -89,7 +89,7 @@ const EditAvatar = () => {
     }
 
     const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
-    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create)
+    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create) // TODO don't load until you know which one it is
     const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
     const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     // set existing pfp state if user has an nft
@@ -108,7 +108,6 @@ const EditAvatar = () => {
             setNftState(NftState.hasDataNoNft)
 
             const statesAreSame = areTraitArraysEqual(existingNftMetadata?.traits, pfpState)
-            console.log('statesAreSame', statesAreSame)
             setAllowedAction(statesAreSame ? AllowedAction.mint : AllowedAction.update)
         }
 
@@ -117,8 +116,7 @@ const EditAvatar = () => {
             setNftState(NftState.noDataNoNft)
             setAllowedAction(AllowedAction.create)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [existingNftMetadata, pfpState])
+    }, [existingNftMetadata, pfpState, NftState.hasDataAndNft, NftState.hasDataNoNft, NftState.noDataNoNft])
 
     const [txHash, setTxHash] = useState<`0x${string}`>()
     const [signatureForMint, setSignatureForMint] = useState<Signature>()
@@ -145,9 +143,9 @@ const EditAvatar = () => {
 
     // set initial pfpState
     useEffect(() => {
-        if (existingNftMetadata?.traits && assetData && !createOrUpdateNftMetadata.isLoading) {
-            setPfpState(existingNftMetadata.traits)
-        } else if (assetData && !pfpState.length && usedCombos) {
+        if (pfpState.length) return // skip once set
+        else if (existingNftMetadata?.traits && assetData) setPfpState(existingNftMetadata.traits)
+        else if (assetData && usedCombos) {
             let defaultPfpState: AssembledNftTraits | undefined = undefined
 
             let safety = 0
@@ -170,7 +168,7 @@ const EditAvatar = () => {
             if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
             setPfpState(defaultPfpState)
         }
-    }, [assetData, createOrUpdateNftMetadata.isLoading, existingNftMetadata?.traits, pfpState.length, usedCombos])
+    }, [assetData, existingNftMetadata, pfpState.length, usedCombos])
 
     // Signing transaction (pre-mint & for updating pfp)
     const { isLoading: userIsSigning, signMessage } = useSignMessage({
