@@ -5,6 +5,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from 'server/db/client'
 import { achievementRouter } from 'server/trpc/router/achievement'
 import { memberRouter } from 'server/trpc/router/member'
+import { isValidAlchemySignature } from 'utils/backend'
 import type { AlchemyWebhookData } from 'utils/types'
 
 const trpcCallerConfig = {
@@ -30,6 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     /****************/
     /*     AUTH     */
     /****************/
+    isValidAlchemySignature(req)
     // if (!isValidAlchemySignature(req)) {
     //     const error = 'invalid event-forwarder Signature';
     //     logger.error({ error });
@@ -41,6 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // console.log(req.body)
 
     const { type, event } = req.body as AlchemyWebhookData
+
+    console.log(req.body)
 
     const { network, activity: activityArr } = event
 

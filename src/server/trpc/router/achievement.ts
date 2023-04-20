@@ -195,6 +195,9 @@ export const achievementRouter = router({
                 },
             })
 
+            /* Create webhook for existing members going forwards */
+            await createOrUpdateNftWebhook(contractAddress, network)
+
             /* Backfill existing members achievements */
             const memberAddresses = await getAddressesByRequirement(contractAddress, network, action)
 
@@ -218,9 +221,6 @@ export const achievementRouter = router({
                 data: memberAchievements,
                 skipDuplicates: true,
             })
-
-            /* Create webhook for existing members going forwards */
-            await createOrUpdateNftWebhook(contractAddress, network)
 
             /* Connect requirement to achievement */
             return prisma.achievement.update({

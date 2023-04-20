@@ -96,6 +96,7 @@ const AdminDashboard: NextPage = () => {
             setNewRequirementAction(RequirementAction.OWN)
             setNewContractAddress('')
             trpcUtils.org.getAllOrgs.invalidate()
+            trpcUtils.achievement.getAllRequirements.invalidate()
         },
         onError: (error) => {
             console.log('error', error)

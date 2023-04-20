@@ -1,10 +1,10 @@
 import { RequirementAction } from '@prisma/client'
-import type { NftWebhookParams } from 'alchemy-sdk'
-import { Alchemy, Network, WebhookType } from 'alchemy-sdk'
+import type { Network, NftWebhookParams } from 'alchemy-sdk'
+import { Alchemy, WebhookType } from 'alchemy-sdk'
 import { env as clientEnv } from 'env/client.mjs'
 import { env as serverEnv } from 'env/server.mjs'
 
-export const getAlchemy = (network = Network.MATIC_MAINNET as string) => {
+export const getAlchemy = (network: string) => {
     return new Alchemy({
         apiKey: clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID,
         network: network as Network,
@@ -14,10 +14,7 @@ export const getAlchemy = (network = Network.MATIC_MAINNET as string) => {
 
 const webhookUrl = `${serverEnv.BASE_URL}/api/alchemy/webhook`
 
-export const getOwnersForContract = async (
-    contractAddress: string,
-    network = Network.MATIC_MAINNET as string,
-): Promise<string[]> => {
+export const getOwnersForContract = async (contractAddress: string, network: string): Promise<string[]> => {
     const alchemy = getAlchemy(network)
 
     const response = await alchemy.nft.getOwnersForContract(contractAddress)
@@ -27,7 +24,7 @@ export const getOwnersForContract = async (
 
 export const getAddressesByRequirement = async (
     contractAddress: string,
-    network = Network.MATIC_MAINNET as string,
+    network: string,
     action: RequirementAction,
 ) => {
     if (action === RequirementAction.OWN) {
@@ -35,7 +32,7 @@ export const getAddressesByRequirement = async (
     }
 }
 
-export const createNftWebhook = async (contractAddress: string, network = Network.MATIC_MAINNET as string) => {
+export const createNftWebhook = async (contractAddress: string, network: string) => {
     const alchemy = getAlchemy(network)
 
     const params: NftWebhookParams = {
@@ -47,25 +44,38 @@ export const createNftWebhook = async (contractAddress: string, network = Networ
         network: network as Network,
     }
 
-    const response = await alchemy.notify.createWebhook(webhookUrl, WebhookType.NFT_ACTIVITY, params)
+    console.log(params)
+    console.log(webhookUrl)
 
-    return response
+    try {
+        const response = await alchemy.notify.createWebhook(webhookUrl, WebhookType.NFT_ACTIVITY, params)
+        console.log('response:', response)
+        return response
+    } catch (e) {
+        console.log('error obj', JSON.stringify(e))
+        // console.log('error message', e.message)
+        // console.log()
+        throw e
+    }
 }
 
-export const createOrUpdateNftWebhook = async (contractAddress: string, network = Network.MATIC_MAINNET as string) => {
+export const createOrUpdateNftWebhook = async (contractAddress: string, network: string) => {
     const alchemy = getAlchemy(network)
 
     const { webhooks } = await alchemy.notify.getAllWebhooks()
 
+    console.log('webhooks:', webhooks)
     // find the webhook that matches the network, webhook type, and env (via url)
     const webhook = webhooks.find(
         (w) => w.network === network && w.type === WebhookType.NFT_ACTIVITY && w.url === webhookUrl,
     )
 
     if (!webhook) {
+        console.log('creating new webhook')
         await createNftWebhook(contractAddress, network)
         console.log('new webhook created')
     } else {
+        console.log('updating webhook')
         await alchemy.notify.updateWebhook(webhook.id, {
             addFilters: [
                 {
