@@ -169,11 +169,6 @@ export const isValidAirtableWebhook = (request: NextApiRequest, macSecret: strin
 }
 
 export const isValidAlchemySignature = (request: NextApiRequest) => {
-    console.log(request.headers['x-alchemy-signature'] || 'no signature')
-    if (process.env.VERCEL_ENV !== 'production') {
-        console.log(process.env.VERCEL_ENV, 'isValidAlchemySignature skipped')
-        return true
-    }
     const token = serverEnv.ALCHEMY_NOTIFY_TOKEN
     const headers = request.headers
     const signature = headers['x-alchemy-signature'] || 'no signature'
@@ -182,7 +177,13 @@ export const isValidAlchemySignature = (request: NextApiRequest) => {
     hmac.update(JSON.stringify(body), 'utf8') // Update the token hash with the request body using utf8
     const digest = hmac.digest('hex')
     console.log('isValidAlchemySignature:', signature === digest)
-    return signature === digest
+
+    if (process.env.VERCEL_ENV !== 'production') {
+        console.log(process.env.VERCEL_ENV, 'isValidAlchemySignature skipped')
+        return true
+    } else {
+        return signature === digest
+    }
 
     // function isValidSignatureForStringBody(
     //     body: string, // must be raw string body, not json transformed version of the body

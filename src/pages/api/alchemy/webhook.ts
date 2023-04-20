@@ -22,72 +22,76 @@ const memberTrpc = memberRouter.createCaller(trpcCallerConfig)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // const { contractAddress } = req.query as { contractAddress: string }
-    if (req.method !== 'POST') {
-        const metadata = {}
-        res.setHeader('Content-Type', 'application/json')
-        return res.status(200).send(metadata)
-    }
-
-    /****************/
-    /*     AUTH     */
-    /****************/
-    isValidAlchemySignature(req)
-    // if (!isValidAlchemySignature(req)) {
-    //     const error = 'invalid event-forwarder Signature';
-    //     logger.error({ error });
-    //     return res.status(400).send({ error });
-    // }
-
-    // console.log('alchemy webhook')
-    // console.log(req.headers)
-    // console.log(req.body)
-
-    const { type, event } = req.body as AlchemyWebhookData
-
-    console.log(req.body)
-
-    const { network, activity: activityArr } = event
-
-    if (type === WebhookType.NFT_ACTIVITY) {
-        // get the requirement, which gets the achievements. then get the user based on the toAddress. then connect the user to all of the achievements
-
-        for (const activity of activityArr) {
-            const { contractAddress, toAddress } = activity
-            console.log('activity', activity)
-
-            const requirement = await achievementTrpc.getRequirement({
-                contractAddress,
-                network,
-                action: RequirementAction.OWN,
-            })
-
-            if (!requirement) {
-                console.log(`no requirement found for ${contractAddress} ${network} ${RequirementAction.OWN}`)
-                continue
-            }
-
-            const member = await memberTrpc.getByAddress({
-                address: toAddress,
-            })
-
-            if (!member) {
-                console.log(`no member found for ${toAddress}`)
-                continue
-            }
-
-            // TODO if it's the fromAddress, then we need set the achievementStatus to false
-
-            // TODO handle RequirementLogic.AND
-            const achievementIds = requirement.achievements
-                .filter((a) => a.requirementLogic === RequirementLogic.OR)
-                .map((a) => a.id)
-
-            await achievementTrpc.createOrUpdateAchievementsForMember({
-                memberId: member.id,
-                achievementIds,
-            })
+    try {
+        if (req.method !== 'POST') {
+            const metadata = {}
+            res.setHeader('Content-Type', 'application/json')
+            return res.status(200).send(metadata)
         }
-    }
 
-    return res.status(200).json({ message: 'ok' })
+        /****************/
+        /*     AUTH     */
+        /****************/
+        isValidAlchemySignature(req)
+        // if (!isValidAlchemySignature(req)) {
+        //     const error = 'invalid event-forwarder Signature';
+        //     logger.error({ error });
+        //     return res.status(400).send({ error });
+        // }
+
+        // console.log('alchemy webhook')
+        // console.log(req.headers)
+        // console.log(req.body)
+
+        const { type, event } = req.body as AlchemyWebhookData
+
+        console.log(req.body)
+
+        const { network, activity: activityArr } = event
+
+        if (type === WebhookType.NFT_ACTIVITY) {
+            // get the requirement, which gets the achievements. then get the user based on the toAddress. then connect the user to all of the achievements
+
+            for (const activity of activityArr) {
+                const { contractAddress, toAddress } = activity
+                console.log('activity', activity)
+
+                const requirement = await achievementTrpc.getRequirement({
+                    contractAddress,
+                    network,
+                    action: RequirementAction.OWN,
+                })
+
+                if (!requirement) {
+                    console.log(`no requirement found for ${contractAddress} ${network} ${RequirementAction.OWN}`)
+                    continue
+                }
+
+                const member = await memberTrpc.getByAddress({
+                    address: toAddress,
+                })
+
+                if (!member) {
+                    console.log(`no member found for ${toAddress}`)
+                    continue
+                }
+
+                // TODO if it's the fromAddress, then we need set the achievementStatus to false
+
+                // TODO handle RequirementLogic.AND
+                const achievementIds = requirement.achievements
+                    .filter((a) => a.requirementLogic === RequirementLogic.OR)
+                    .map((a) => a.id)
+
+                await achievementTrpc.createOrUpdateAchievementsForMember({
+                    memberId: member.id,
+                    achievementIds,
+                })
+            }
+        }
+    } catch (e) {
+        console.error(e)
+    } finally {
+        return res.status(200).json({ message: 'ok' })
+    }
 }
