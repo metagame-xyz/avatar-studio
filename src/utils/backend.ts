@@ -167,3 +167,27 @@ export const isValidAirtableWebhook = (request: NextApiRequest, macSecret: strin
     console.log('expectedContentHmac', expectedContentHmac)
     return signature === expectedContentHmac
 }
+
+export const isValidAlchemySignature = (request: NextApiRequest) => {
+    // if (process.env.VERCEL_ENV !== 'production') {
+    //     return true;
+    // }
+    // const token = serverEnv.ALCHEMY_NOTIFY_TOKEN;
+    // const headers = request.headers;
+    // const signature = headers['x-alchemy-signature'] || 'no signature';
+    // const body = request.body;
+    // const hmac = createHmac('sha256', token); // Create a HMAC SHA256 hash using the auth token
+    // hmac.update(JSON.stringify(body), 'utf8'); // Update the token hash with the request body using utf8
+    // const digest = hmac.digest('hex');
+    // return signature === digest;
+    // function isValidSignatureForStringBody(
+    //     body: string, // must be raw string body, not json transformed version of the body
+    //     signature: string, // your "x-alchemy-signature" from header
+    //     signingKey: string, // taken from dashboard for specific webhook
+    //   ): boolean {
+    //     const hmac = crypto.createHmac("sha256", signingKey); // Create a HMAC SHA256 hash using the signing key
+    //     hmac.update(body, "utf8"); // Update the token hash with the request body using utf8
+    //     const digest = hmac.digest("hex");
+    //     return signature === digest;
+    // }
+}

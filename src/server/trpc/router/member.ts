@@ -26,6 +26,13 @@ export const memberRouter = router({
             },
         })
     }),
+    getByAddress: publicProcedure.input(z.object({ address: z.string() })).query(async ({ ctx, input }) => {
+        return ctx.prisma.user.findUnique({
+            where: {
+                address: input.address,
+            },
+        })
+    }),
     createOrUpdate: protectedProcedure.input(z.object({ privyUser: privyUserZ })).mutation(async ({ ctx, input }) => {
         const { privyUser } = input
 

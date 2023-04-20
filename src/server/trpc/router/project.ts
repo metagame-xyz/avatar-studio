@@ -1,5 +1,5 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
-import { User as PrivyUser } from '@privy-io/server-auth'
+import type { User as PrivyUser } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
 import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'

@@ -225,3 +225,40 @@ declare global {
         type PngUrlMap = NonEmptyRecord<string, string>
     }
 }
+
+export type AlchemyWebhookData = {
+    webhookId: string
+    id: string
+    createdAt: string
+    type: string
+    event: {
+        network: string
+        activity: [
+            {
+                fromAddress: string
+                toAddress: string
+                contractAddress: string
+                blockNum: string
+                hash: string
+                erc1155Metadata: [
+                    {
+                        tokenId: string
+                        value: string
+                    },
+                ]
+                category: string
+                log: {
+                    address: string
+                    topics: string[]
+                    data: string
+                    blockNumber: string
+                    transactionHash: string
+                    transactionIndex: string
+                    blockHash: string
+                    logIndex: string
+                    removed: boolean
+                }
+            },
+        ]
+    }
+}

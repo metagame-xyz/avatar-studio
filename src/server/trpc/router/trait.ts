@@ -97,12 +97,7 @@ export const traitRouter = router({
             z.object({
                 traitId: z.number(),
                 levelRequired: z.number(),
-                levelLogic: z.enum([
-                    LevelLogic.GREATER_THAN_OR_EQUAL_TO,
-                    LevelLogic.LESS_THAN_OR_EQUAL_TO,
-                    LevelLogic.EQUAL_TO,
-                    LevelLogic.MORE_THAN_OR_EQUAL_TO, // TODO remove this
-                ]),
+                levelLogic: z.nativeEnum(LevelLogic),
                 levelCategoryId: z.number(),
                 achievementsRequiredDescription: z.string(),
             }),

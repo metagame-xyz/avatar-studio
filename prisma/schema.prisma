@@ -200,6 +200,7 @@ model AchievementCategory {
   projectId Int
 
   @@unique([projectId, airtableId])
+  @@unique([projectId, name])
 }
 
 model Achievement {
@@ -210,8 +211,12 @@ model Achievement {
   members             MemberAchievements[]
   traits              Trait[]
   airtableId          String?              @unique
+  requirementLogic    RequirementLogic     @default(OR)
+  requirements        Requirement[]
 
   achievementCategoryId Int
+
+  @@unique([achievementCategoryId, name])
 }
 
 model MemberAchievements {
@@ -224,6 +229,14 @@ model MemberAchievements {
   userId        String
 
   @@id([userId, achievementId])
+}
+
+model Requirement {
+  id              Int               @id @unique @default(autoincrement())
+  achievements    Achievement[]
+  contractAddress String
+  network         String
+  action          RequirementAction
 }
 
 model NftMetadata {
@@ -284,4 +297,15 @@ enum InvitationStatus {
   ACCEPTED
   REJECTED
   REVOKED
+}
+
+enum RequirementLogic {
+  OR
+  AND
+}
+
+enum RequirementAction {
+  OWN
+  MINTED
+  CUSTOM_METHOD_CALLED
 }
