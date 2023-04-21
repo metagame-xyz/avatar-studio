@@ -1,5 +1,6 @@
 import { LockClosedIcon } from '@heroicons/react/24/solid'
 import Tooltip from 'components/Tooltip'
+import type { DebouncedFunc } from 'lodash'
 import Image from 'next/image'
 import { getBaseName } from 'utils'
 import type { AssembledNftTraits, TraitWithEarnedBool } from 'utils/types'
@@ -8,22 +9,24 @@ type TraitImageProps = {
     trait: TraitWithEarnedBool
     pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
-    updatePreviewPfpState: (trait: TraitWithEarnedBool) => void
     selected: boolean
     disabled?: boolean
     disabledMessage?: string
     className?: string
+    onMouseEnter: (trait: TraitWithEarnedBool) => void
+    onMouseLeave: DebouncedFunc<(trait: TraitWithEarnedBool) => void>
 }
 
 const TraitImage = ({
     trait,
     pfpState,
     updatePfpState,
-    updatePreviewPfpState,
     selected,
     disabled = false,
     disabledMessage = '',
     className,
+    onMouseEnter,
+    onMouseLeave,
 }: TraitImageProps) => {
     const isBaseCategory = trait.category === 'Base'
     const baseName = isBaseCategory ? trait.name : getBaseName(pfpState)
@@ -35,11 +38,8 @@ const TraitImage = ({
                 } ${className}`}
                 disabled={(!trait.earned && trait.earned !== null) || disabled}
                 onClick={() => updatePfpState(trait)}
-                onMouseEnter={() => updatePreviewPfpState(trait)}
-                onMouseLeave={() => {
-                    const oldTrait = pfpState.find((t) => t.category === trait.category)
-                    if (oldTrait) updatePreviewPfpState(oldTrait)
-                }}
+                onMouseEnter={() => onMouseEnter(trait)}
+                onMouseLeave={() => onMouseLeave(trait)}
             >
                 {pfpState.map((existingTrait, i) => {
                     const useNewTrait = existingTrait.category === trait.category
