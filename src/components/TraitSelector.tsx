@@ -11,9 +11,10 @@ type TraitSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
     pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
+    updatePreviewPfpState: (trait: TraitWithEarnedBool) => void
 }
 
-const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelectorProps) => {
+const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewPfpState }: TraitSelectorProps) => {
     const { chain } = useNetwork() // TODO
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
@@ -81,6 +82,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelecto
                                         : 'Sorry, someone else already has that combo!'
                                 }
                                 updatePfpState={updatePfpState}
+                                updatePreviewPfpState={updatePreviewPfpState}
                             />
                         ))}
                 </div>

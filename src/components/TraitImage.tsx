@@ -8,6 +8,7 @@ type TraitImageProps = {
     trait: TraitWithEarnedBool
     pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
+    updatePreviewPfpState: (trait: TraitWithEarnedBool) => void
     selected: boolean
     disabled?: boolean
     disabledMessage?: string
@@ -18,6 +19,7 @@ const TraitImage = ({
     trait,
     pfpState,
     updatePfpState,
+    updatePreviewPfpState,
     selected,
     disabled = false,
     disabledMessage = '',
@@ -33,12 +35,18 @@ const TraitImage = ({
                 } ${className}`}
                 disabled={(!trait.earned && trait.earned !== null) || disabled}
                 onClick={() => updatePfpState(trait)}
+                onMouseEnter={() => updatePreviewPfpState(trait)}
+                onMouseLeave={() => {
+                    const oldTrait = pfpState.find((t) => t.category === trait.category)
+                    if (oldTrait) updatePreviewPfpState(oldTrait)
+                }}
             >
                 {pfpState.map((existingTrait, i) => {
                     const useNewTrait = existingTrait.category === trait.category
                     const t = useNewTrait ? trait : existingTrait
                     const pngUrl = (t.pngUrlMap[baseName] || t.pngUrlMap['defaultVariant']) as string
-                    const style = 'absolute left-0 top-0 group-disabled:opacity-60'
+                    const grayedOut = useNewTrait ? '' : 'grayscale' // gray all layers except the new trait
+                    const style = `absolute left-0 top-0 group-disabled:opacity-60 ${grayedOut}`
                     return (
                         <Image
                             width={112}
