@@ -16,7 +16,7 @@ import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router, webhookOrOrgAdminProcedure } from '../trpc'
 
 export const projectRouter = router({
-    getProject: publicProcedure.query(async ({ ctx }) => {
+    getProject: publicProcedure.input(z.string()).query(async ({ ctx }) => {
         try {
             if (!ctx.projectSlug) throw new Error('Cant get slug from context')
             const data = await ctx.prisma.project.findUniqueOrThrow({

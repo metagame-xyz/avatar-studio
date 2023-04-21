@@ -18,8 +18,17 @@ import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
     const router = useRouter()
-    const { data: project, error, status } = trpc.project.getProject.useQuery()
-    const { data: member, status: userStatus } = trpc.member.memberWithAProject.useQuery()
+    const projectSlug = router.query.project as string
+    const {
+        data: project,
+        error,
+        status,
+    } = trpc.project.getProject.useQuery(projectSlug, {
+        enabled: !!projectSlug,
+    })
+    const { data: member, status: userStatus } = trpc.member.memberWithAProject.useQuery(projectSlug, {
+        enabled: !!projectSlug,
+    })
 
     if (userStatus === 'error') router.push('/')
 
@@ -54,6 +63,7 @@ const Project: NextPage = () => {
 
     const memberAchievements = member.achievements
     const nftImageUrl = member.nftMetadata[0]?.image
+    console.log('nftImageUrl', nftImageUrl)
 
     const handleEditAvatarClick = () => {
         router.push(`/project/${slug}/edit-avatar`)

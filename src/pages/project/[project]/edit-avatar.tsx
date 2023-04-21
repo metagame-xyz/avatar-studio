@@ -45,7 +45,7 @@ const EditAvatar = () => {
     const switchChainRef = useRef(null)
     const trpcUtils = trpc.useContext()
 
-    const { data: project } = trpc.project.getProject.useQuery()
+    const { data: project } = trpc.project.getProject.useQuery(projectSlug, { enabled: !!projectSlug })
     const { data: assetData, status } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
     if (status === 'error') router.push('/')

@@ -261,7 +261,7 @@ export const memberRouter = router({
         return getEarnedTraits(member)
     }),
 
-    memberWithAProject: protectedProcedure.query(async ({ ctx }) => {
+    memberWithAProject: protectedProcedure.input(z.string()).query(async ({ ctx }) => {
         if (!ctx.projectSlug) throw new Error('Cant get slug from context')
         const member = await getMemberWithProject(ctx.prisma, ctx.session.userId, ctx.projectSlug)
         return member

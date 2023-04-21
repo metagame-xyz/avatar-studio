@@ -546,7 +546,7 @@ async function main() {
                 userId: member.id,
                 projectSlug: llamaPfp.slug,
                 tokenId: (i % 2) + 1,
-                image: `${member.address}-${i + 1}.png`,
+                image: `${member.address}-${i + 1}.png`, // TODO make this right
                 name: `${member.firstName}'s Llama`,
                 description: 'TODO',
                 externalUrl: 'TODO',

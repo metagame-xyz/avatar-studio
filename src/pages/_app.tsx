@@ -43,7 +43,7 @@ const getSubdomainConfig = (host: string | null): SubdomainConfig => {
     switch (host) {
         case 'robonova.shefi.org':
         case 'shefi-dev.avatar-studio.xyz':
-        case 'localhost:3000':
+            // case 'localhost:3000':
             return shefiConfig
         default:
             return defaultConfig
