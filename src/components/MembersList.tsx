@@ -1,7 +1,7 @@
 import { UserCircleIcon } from '@heroicons/react/24/solid'
 import type { MembersOfOrganizations, MembersOfProjects, User } from '@prisma/client'
 import { truncateAddress } from 'utils'
-import { MostTypes } from 'utils/types'
+import type { MostTypes } from 'utils/types'
 
 type MembersListProps = {
     membersList:
@@ -18,6 +18,7 @@ const MembersList: React.FC<MembersListProps> = ({ membersList }) => {
 
     return members.length > 0 ? (
         <div className="flex-row space-y-2">
+            <div>{`count: ${members.length}`}</div>
             {members.map(({ firstName, lastName, address }) => (
                 <div className="flex items-center" key={address}>
                     {/* <Link className="text-lg hover:text-teal-200" href={`/project/${slug}`}> */}

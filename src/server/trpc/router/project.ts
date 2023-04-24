@@ -1,6 +1,7 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
 import type { User as PrivyUser } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
+import Bottleneck from 'bottleneck'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
 import { filterToAchievementFields, getEmailFromString, slugify } from 'utils'
@@ -283,8 +284,8 @@ export const projectRouter = router({
                             const address = await getAddressFromString(member[walletAddressFieldName] as string) // shouldn't need this, the check is done in the if statement above...?
                             member[walletAddressFieldName] = address?.toLowerCase()
 
-                            const ens = await provider.lookupAddress(address)
-                            member.ens = ens
+                            // const ens = await provider.lookupAddress(address)
+                            // member.ens = ens
                         } catch (err: Error | any) {
                             // console.error(err)
                             member.error = err.message
@@ -306,8 +307,15 @@ export const projectRouter = router({
                     return member
                 }
 
+                const limiter = new Bottleneck({
+                    maxConcurrent: 30,
+                    minTime: (1000 / 30) * 1.3,
+                })
+
                 const validMembers = await (
-                    await Promise.all(unvalidatedMembers.map(async (member) => cleanAndParseMember(member)))
+                    await Promise.all(
+                        unvalidatedMembers.map(async (member) => limiter.schedule(() => cleanAndParseMember(member))),
+                    )
                 )
                     .filter((member) => !!member[walletAddressFieldName])
                     .filter((member) => {
