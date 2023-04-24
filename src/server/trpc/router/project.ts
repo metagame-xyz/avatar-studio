@@ -1,10 +1,9 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
 import type { User as PrivyUser } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
-import type { FieldSet } from 'airtable'
 import { clientEnv } from 'env/schema.mjs'
 import { providers } from 'ethers'
-import { filterToAchievementFields, slugify } from 'utils'
+import { filterToAchievementFields, getEmailFromString, slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
 import type { AirtableFieldType, AirtableWebhookResponse } from 'utils/airtableFrontend'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
@@ -255,18 +254,30 @@ export const projectRouter = router({
 
                 if (!project.airtableProject) return { bases, members: null, achievementFields: null, error: null }
 
-                const members = await airtable.getMembers(project.airtableProject)
+                const unvalidatedMembers = await airtable.getMembers(project.airtableProject)
+
+                // console.log(members)
 
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
 
                 const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
 
-                async function updateMember(member: Record<string, MostTypes>) {
+                const membersWithBadData: Record<string, MostTypes>[] = []
+
+                async function cleanAndParseMember(member: Record<string, MostTypes>) {
+                    // if ens, get address from ens
                     if (member.ens && typeof member.ens === 'string') {
-                        const address = await provider.resolveName(member.ens)
-                        member[walletAddressFieldName] = address?.toLowerCase()
+                        try {
+                            const address = await provider.resolveName(member.ens)
+                            member[walletAddressFieldName] = address?.toLowerCase()
+                        } catch (err: Error | any) {
+                            // console.error(err)
+                            member.error = err.message
+                            membersWithBadData.push(member)
+                        }
                     }
 
+                    // if address string, get ens or address from address string
                     if (member[walletAddressFieldName] && typeof member[walletAddressFieldName] === 'string') {
                         try {
                             const address = await getAddressFromString(member[walletAddressFieldName] as string) // shouldn't need this, the check is done in the if statement above...?
@@ -275,23 +286,53 @@ export const projectRouter = router({
                             const ens = await provider.lookupAddress(address)
                             member.ens = ens
                         } catch (err: Error | any) {
-                            console.error(err)
+                            // console.error(err)
+                            member.error = err.message
+                            membersWithBadData.push(member)
                         }
                     }
 
-                    return member as FieldSet
+                    // clean email string
+                    if (member.email) {
+                        try {
+                            member.email = getEmailFromString(member.email as string)
+                        } catch (err: Error | any) {
+                            // console.error(err)
+                            member.error = err.message
+                            membersWithBadData.push(member)
+                        }
+                    }
+
+                    return member
                 }
 
-                const updatedMembers = await (
-                    await Promise.all(members.map(async (member) => updateMember(member)))
-                ).filter((member) => !!member[walletAddressFieldName])
+                const validMembers = await (
+                    await Promise.all(unvalidatedMembers.map(async (member) => cleanAndParseMember(member)))
+                )
+                    .filter((member) => !!member[walletAddressFieldName])
+                    .filter((member) => {
+                        const parsedMember = newAirtableMemberSchema.safeParse(member)
+                        if (!parsedMember.success) membersWithBadData.push(member)
+                        return parsedMember.success
+                    })
+
+                // validMembers.forEach((m) => {
+                //     try {
+                //         newAirtableMemberSchema.parse(m)
+                //     } catch (err: Error | any) {
+                //         console.error(err)
+                //         membersWithBadData.push(m)
+                //     }
+                // })
+
+                console.log(membersWithBadData)
 
                 let airtableFields = await airtable.getTableFields(project.airtableProject)
                 airtableFields = airtableFields || []
 
                 const achievementFields = filterToAchievementFields(airtableFields, walletAddressFieldName)
 
-                return { bases, members: updatedMembers, achievementFields, error: null }
+                return { bases, members: validMembers, achievementFields, error: null, membersWithBadData }
             } catch (err) {
                 if (err instanceof AirtableAuthError) {
                     return { bases: null, members: null, achievementFields: null, error: airtableAuthExpiredObj }
