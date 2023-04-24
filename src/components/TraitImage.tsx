@@ -1,5 +1,6 @@
 import { LockClosedIcon } from '@heroicons/react/24/solid'
 import Tooltip from 'components/Tooltip'
+import type { DebouncedFunc } from 'lodash'
 import Image from 'next/image'
 import { getBaseName } from 'utils'
 import type { AssembledNftTraits, TraitWithEarnedBool } from 'utils/types'
@@ -12,6 +13,8 @@ type TraitImageProps = {
     disabled?: boolean
     disabledMessage?: string
     className?: string
+    onMouseEnter: (trait: TraitWithEarnedBool) => void
+    onMouseLeave: DebouncedFunc<(trait: TraitWithEarnedBool) => void>
 }
 
 const TraitImage = ({
@@ -22,6 +25,8 @@ const TraitImage = ({
     disabled = false,
     disabledMessage = '',
     className,
+    onMouseEnter,
+    onMouseLeave,
 }: TraitImageProps) => {
     const isBaseCategory = trait.category === 'Base'
     const baseName = isBaseCategory ? trait.name : getBaseName(pfpState)
@@ -33,12 +38,15 @@ const TraitImage = ({
                 } ${className}`}
                 disabled={(!trait.earned && trait.earned !== null) || disabled}
                 onClick={() => updatePfpState(trait)}
+                onMouseEnter={() => onMouseEnter(trait)}
+                onMouseLeave={() => onMouseLeave(trait)}
             >
                 {pfpState.map((existingTrait, i) => {
                     const useNewTrait = existingTrait.category === trait.category
                     const t = useNewTrait ? trait : existingTrait
                     const pngUrl = (t.pngUrlMap[baseName] || t.pngUrlMap['defaultVariant']) as string
-                    const style = 'absolute left-0 top-0 group-disabled:opacity-60'
+                    const grayedOut = useNewTrait ? '' : 'grayscale' // gray all layers except the new trait
+                    const style = `absolute left-0 top-0 group-disabled:opacity-60 ${grayedOut}`
                     return (
                         <Image
                             width={112}

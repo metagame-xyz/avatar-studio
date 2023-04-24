@@ -13,6 +13,7 @@ const getBaseUrl = () => {
     return `http://localhost:${process.env.PORT ?? 3000}` // dev SSR should use localhost
 }
 
+// TODO don't do this anymore bc it fucks up useQuery's caching (use input instead of ctx)
 const getSlugs = (): Record<string, string | undefined> => {
     if (typeof window === 'undefined') return {}
     const path = window.location.pathname
@@ -26,6 +27,7 @@ const getSlugs = (): Record<string, string | undefined> => {
     return { projectslug, orgslug }
 }
 
+//TODO maybe don't do this anymore bc it fucks up useQuery's caching (use input instead of ctx)
 const getChain = (): string => {
     if (typeof window === 'undefined') return 'undefined'
     const { chain } = getNetwork()

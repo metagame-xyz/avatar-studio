@@ -1,9 +1,9 @@
-import type { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
 import { useRef } from 'react'
 import { addSpacesBeforeCapitalLetters } from 'utils'
 import type { AirtableField } from 'utils/airtableFrontend'
 import { trpc } from 'utils/trpc'
+import type { MostTypes } from 'utils/types'
 import Modal from './Modal'
 
 export default function AirtableAchievementsModal({
@@ -17,7 +17,7 @@ export default function AirtableAchievementsModal({
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
     airtableFields: AirtableField[]
-    airtableMembers: FieldSet[]
+    airtableMembers: Record<string, MostTypes>[]
 }) {
     const cancelButtonRef = useRef(null)
 

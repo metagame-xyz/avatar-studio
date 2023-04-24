@@ -20,6 +20,17 @@ export const slugify = (name: string) => {
     })
 }
 
+// take a string and pull the email out of it
+export const getEmailFromString = (string: string): string => {
+    const emailRegex = /[\w.]+@[\w.]+/
+    const email = string.match(emailRegex)
+    if (email) {
+        return email[0]
+    } else {
+        throw new Error(`No email found in string: ${string}`)
+    }
+}
+
 export const getBaseName = (
     traits: (
         | (Trait & {

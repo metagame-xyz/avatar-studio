@@ -1,9 +1,9 @@
 import { UserCircleIcon } from '@heroicons/react/24/solid'
-import type { FieldSet } from 'airtable'
 import type { Dispatch, SetStateAction } from 'react'
 import { useRef } from 'react'
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
+import type { MostTypes } from 'utils/types'
 import { newAirtableMemberSchema } from 'utils/types'
 import Modal from './Modal'
 
@@ -17,7 +17,7 @@ export default function ConfigureAirtableMembersModal({
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
-    members: FieldSet[]
+    members: Record<string, MostTypes>[]
     walletAddressFieldName: string | undefined
 }) {
     const cancelButtonRef = useRef(null)
@@ -32,7 +32,7 @@ export default function ConfigureAirtableMembersModal({
         },
     })
 
-    const AirtableMembersList: React.FC<{ membersList: FieldSet[] }> = ({ membersList }) => {
+    const AirtableMembersList: React.FC<{ membersList: Record<string, MostTypes>[] }> = ({ membersList }) => {
         const members = walletAddressFieldName
             ? membersList.map((member) => ({
                   walletAddress: member[walletAddressFieldName] as string,

@@ -22,6 +22,7 @@ import Loading from './Loading'
 
 type PfpPreviewProps = {
     pfpState: AssembledNftTraits
+    previewPfpState: AssembledNftTraits
     txHash?: string
     openSeaUrl?: string | null
     signMessage: (args?: SignMessageArgs | undefined) => void
@@ -38,6 +39,7 @@ type PfpPreviewProps = {
 
 const PfpPreview = ({
     pfpState,
+    previewPfpState,
     txHash = '',
     openSeaUrl = '',
     signMessage,
@@ -61,8 +63,8 @@ const PfpPreview = ({
     const [allImagesLoaded, setAllImagesLoaded] = useState<boolean>(false)
 
     useEffect(() => {
-        if (imagesLoadedCount === pfpState.length) setAllImagesLoaded(true)
-    }, [imagesLoadedCount, pfpState.length])
+        if (imagesLoadedCount === previewPfpState.length) setAllImagesLoaded(true)
+    }, [imagesLoadedCount, previewPfpState.length])
 
     // if (!user) return <></>
     // const [user, setUser] = React.useState({} as UserData)
@@ -195,13 +197,13 @@ const PfpPreview = ({
                             </div>
                         )}
                         <AnimatePresence initial={false}>
-                            {pfpState.map(({ name, category, pngUrl, zIndex }) => {
+                            {previewPfpState.map(({ name, category, pngUrl, zIndex }) => {
                                 return (
-                                    <motion.div
+                                    <div //motion.div but it was acting ugly
                                         key={category + ' ' + name}
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0 }}
+                                        // initial={{ opacity: 0, scale: 0.9 }}
+                                        // animate={{ opacity: 1, scale: 1 }}
+                                        // exit={{ opacity: 0 }}
                                         style={{ zIndex }}
                                     >
                                         <Image
@@ -214,7 +216,7 @@ const PfpPreview = ({
                                             fill
                                             priority
                                         />
-                                    </motion.div>
+                                    </div>
                                 )
                             })}
                         </AnimatePresence>

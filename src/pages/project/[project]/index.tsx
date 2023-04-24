@@ -1,10 +1,11 @@
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 import AirtableAchievementsModal from 'components/AirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
 import FullPageLoading from 'components/FullPageLoading'
 import Loading from 'components/Loading'
 import MemberAchievementsList from 'components/MemberAchievementsList'
-import MembersList from 'components/MembersList'
+import MembersList, { BadMembersList } from 'components/MembersList'
 import RelinkAirtableAuthModal from 'components/RelinkAirtableAuthModal'
 import Shell from 'components/Shell'
 import { type NextPage } from 'next'
@@ -12,14 +13,24 @@ import NextError from 'next/error'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import AnimateHeight from 'react-animate-height'
 import { slugify } from 'utils'
 import { getPlaceholderImageUrl } from 'utils/constants'
 import { trpc } from 'utils/trpc'
 
 const Project: NextPage = () => {
     const router = useRouter()
-    const { data: project, error, status } = trpc.project.getProject.useQuery()
-    const { data: member, status: userStatus } = trpc.member.memberWithAProject.useQuery()
+    const projectSlug = router.query.project as string
+    const {
+        data: project,
+        error,
+        status,
+    } = trpc.project.getProject.useQuery(projectSlug, {
+        enabled: !!projectSlug,
+    })
+    const { data: member, status: userStatus } = trpc.member.memberWithAProject.useQuery(projectSlug, {
+        enabled: !!projectSlug,
+    })
 
     if (userStatus === 'error') router.push('/')
 
@@ -37,6 +48,9 @@ const Project: NextPage = () => {
         { organizationSlug },
         { enabled: !!organizationSlug && isOrgAdmin },
     )
+
+    const [memberListOpen, setMemberListOpen] = useState<boolean>(false)
+    const [badDataMemberListOpen, setBadDataMemberListOpen] = useState<boolean>(false)
 
     useEffect(() => {
         if (data?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkAirtableModal(true)
@@ -182,10 +196,40 @@ const Project: NextPage = () => {
                     <div className="text-lg font-bold md:text-xl">More Achievements coming soon...</div>
                 </div>
                 {isOrgAdmin && (
-                    <div className="flex flex-col space-y-4">
-                        <div className="text-2xl font-bold md:text-3xl">Members</div>
-                        <MembersList membersList={project.members} />
-                    </div>
+                    <>
+                        <div className="flex flex-col space-y-4">
+                            <div
+                                className="flex w-full items-center"
+                                onClick={() => setMemberListOpen(memberListOpen === false ? true : false)}
+                            >
+                                <div className="text-2xl font-bold md:text-3xl">Members</div>
+                                <ChevronRightIcon
+                                    className={`h-8 w-8 transform transition-transform duration-300 ${
+                                        memberListOpen ? 'rotate-90' : 'rotate-0'
+                                    } text-teal-500`}
+                                />
+                            </div>
+                            <AnimateHeight animateOpacity duration={300} height={memberListOpen ? 'auto' : 0}>
+                                <MembersList membersList={project.members} />
+                            </AnimateHeight>
+                        </div>
+                        <div className="flex flex-col space-y-4">
+                            <div
+                                className="flex w-full items-center"
+                                onClick={() => setBadDataMemberListOpen(badDataMemberListOpen === false ? true : false)}
+                            >
+                                <div className="text-2xl font-bold md:text-3xl">Airtable Members with bad data</div>
+                                <ChevronRightIcon
+                                    className={`h-8 w-8 transform transition-transform duration-300 ${
+                                        badDataMemberListOpen ? 'rotate-90' : 'rotate-0'
+                                    } text-teal-500`}
+                                />
+                            </div>
+                            <AnimateHeight animateOpacity duration={300} height={badDataMemberListOpen ? 'auto' : 0}>
+                                <BadMembersList membersList={data?.membersWithBadData || []} />
+                            </AnimateHeight>
+                        </div>
+                    </>
                 )}
             </div>
         </Shell>

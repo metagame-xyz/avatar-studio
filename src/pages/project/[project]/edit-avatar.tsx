@@ -45,7 +45,7 @@ const EditAvatar = () => {
     const switchChainRef = useRef(null)
     const trpcUtils = trpc.useContext()
 
-    const { data: project } = trpc.project.getProject.useQuery()
+    const { data: project } = trpc.project.getProject.useQuery(projectSlug, { enabled: !!projectSlug })
     const { data: assetData, status } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
     if (status === 'error') router.push('/')
@@ -92,6 +92,7 @@ const EditAvatar = () => {
     const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create) // TODO don't load until you know which one it is
     const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
     const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
+    const [previewPfpState, setPreviewPfpState] = useState<AssembledNftTraits>([])
     // set existing pfp state if user has an nft
     // set nft state (data in db, and then also if minted and has a tokenId)
     useEffect(() => {
@@ -275,7 +276,14 @@ const EditAvatar = () => {
         setAllowedAction(stateToActionMap[nftState])
 
         setPfpState(traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait]))
-        return
+    }
+
+    const updatePreviewPfpState = (newTrait: TraitWithEarnedBool): void => {
+        if (!newTrait.category) {
+            setPreviewPfpState([])
+        }
+        const oldStateMinusNewTrait = pfpState.filter((t) => t.category !== newTrait.category)
+        setPreviewPfpState(traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait]))
     }
 
     if (!assetData || !chain) return <FullPageLoading />
@@ -347,6 +355,7 @@ const EditAvatar = () => {
                 <motion.div layout transition={springAnimation} className="sticky top-0">
                     <PfpPreview
                         pfpState={pfpState}
+                        previewPfpState={previewPfpState}
                         txHash={txHash}
                         openSeaUrl={openseaUrl}
                         existingPfpState={existingPfpState}
@@ -374,6 +383,7 @@ const EditAvatar = () => {
                                             traitCategory={tc}
                                             pfpState={pfpState}
                                             updatePfpState={updatePfpState}
+                                            updatePreviewPfpState={updatePreviewPfpState}
                                         />
                                     )
                                 })}

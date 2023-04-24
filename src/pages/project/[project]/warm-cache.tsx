@@ -8,7 +8,7 @@ const WarmCache = () => {
     // const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork()
     // console.log('switchNetwork', switchNetwork)
 
-    const { data: project } = trpc.project.getProject.useQuery()
+    const { data: project } = trpc.project.getProject.useQuery(projectSlug, { enabled: !!projectSlug })
     const { data: assetData } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
 
     if (!project || !assetData) return null

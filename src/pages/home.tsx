@@ -137,6 +137,7 @@ const Home: NextPage = ({ subdomainConfig = defaultConfig }: { subdomainConfig?:
                         title=""
                         hideButtons
                         className="rounded-3xl"
+                        uncloseable
                     >
                         <div className="flex flex-col gap-8 text-left">
                             <Dialog.Title as="h3" className="text-3xl font-bold">

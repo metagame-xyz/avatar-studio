@@ -1,5 +1,6 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
 import TraitImage from 'components/TraitImage'
+import { debounce } from 'lodash'
 import { useState } from 'react'
 import AnimateHeight from 'react-animate-height'
 import { IsNewComboAllowed } from 'utils'
@@ -11,9 +12,10 @@ type TraitSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
     pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
+    updatePreviewPfpState: (trait: TraitWithEarnedBool) => void
 }
 
-const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelectorProps) => {
+const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewPfpState }: TraitSelectorProps) => {
     const { chain } = useNetwork() // TODO
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
         {
@@ -25,6 +27,18 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelecto
     const [open, setOpen] = useState<boolean>(false)
 
     const { name, traits: traitOptions, isModifiable } = traitCategory
+
+    const onMouseEnter = (trait: TraitWithEarnedBool) => {
+        onMouseLeaveDebounced.cancel()
+        updatePreviewPfpState(trait)
+    }
+
+    const onMouseLeave = (trait: TraitWithEarnedBool) => {
+        const oldTrait = pfpState.find((t) => t.category === trait.category)
+        if (oldTrait) updatePreviewPfpState(oldTrait)
+    }
+
+    const onMouseLeaveDebounced = debounce(onMouseLeave, 250)
 
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'
     const traitTypeText = isModifiable ? 'Can be changed at any time' : 'Cannot be changed after minting'
@@ -81,6 +95,8 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState }: TraitSelecto
                                         : 'Sorry, someone else already has that combo!'
                                 }
                                 updatePfpState={updatePfpState}
+                                onMouseEnter={onMouseEnter}
+                                onMouseLeave={onMouseLeaveDebounced}
                             />
                         ))}
                 </div>
