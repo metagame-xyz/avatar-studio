@@ -1,4 +1,5 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { UserRole } from '@prisma/client'
 import AirtableAchievementsModal from 'components/AirtableAchievementsModal'
 import ConfigureAirtableMembersModal from 'components/ConfigureAirtableMembersModal'
 import ConfigureAirtableModal from 'components/ConfigureAirtableModal'
@@ -40,7 +41,9 @@ const Project: NextPage = () => {
 
     const [openRelinkAirtableModal, setOpenRelinkAirtableModal] = useState(false)
 
-    const isOrgAdmin = !!member?.organizations?.find((o) => o.organizationId == project?.organization?.id)
+    const isOrgAdmin =
+        !!member?.organizations?.find((o) => o.organizationId == project?.organization?.id) ||
+        member?.role === UserRole.METAGAME_OWNER
 
     const organizationSlug = project?.organization?.slug as string
 
