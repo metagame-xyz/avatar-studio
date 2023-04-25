@@ -96,7 +96,10 @@ const EditAvatar = () => {
     // set existing pfp state if user has an nft
     // set nft state (data in db, and then also if minted and has a tokenId)
     useEffect(() => {
-        existingNftMetadata?.traits && setExistingPfpState(existingNftMetadata?.traits)
+        if (existingNftMetadata?.traits) {
+            setExistingPfpState(existingNftMetadata.traits)
+            // setPreviewPfpState(existingNftMetadata.traits)
+        }
 
         // user already has an nft, as shown by having a tokenId
         if (existingNftMetadata?.tokenId) {
@@ -145,8 +148,10 @@ const EditAvatar = () => {
     // set initial pfpState
     useEffect(() => {
         if (pfpState.length) return // skip once set
-        else if (existingNftMetadata?.traits && assetData) setPfpState(existingNftMetadata.traits)
-        else if (assetData && usedCombos) {
+        else if (existingNftMetadata?.traits && assetData) {
+            setPfpState(existingNftMetadata.traits)
+            setPreviewPfpState(existingNftMetadata.traits)
+        } else if (assetData && usedCombos) {
             let defaultPfpState: AssembledNftTraits | undefined = undefined
 
             let safety = 0
@@ -168,6 +173,7 @@ const EditAvatar = () => {
             }
             if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
             setPfpState(defaultPfpState)
+            setPreviewPfpState(defaultPfpState)
         }
     }, [assetData, existingNftMetadata, pfpState.length, usedCombos])
 

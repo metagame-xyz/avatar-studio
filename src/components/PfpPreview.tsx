@@ -107,53 +107,57 @@ const PfpPreview = ({
                     <div className={`relative mx-auto flex aspect-square w-full overflow-hidden rounded-xl bg-ui-gray`}>
                         {(mintStatus === Status.loading || mintStatus === Status.success) && (
                             <div className="relative flex h-full w-full items-center justify-center">
-                                <motion.div
+                                {/* <motion.div
                                     layout
                                     className="z-[101] rounded-full border-2 border-white bg-opacity-20"
                                     variants={variants}
                                     animate={mintStatus}
                                     transition={{ springAnimation }}
-                                >
-                                    <AnimatePresence>
-                                        {mintStatus === Status.loading && (
-                                            <motion.div
-                                                className="overflow-hidden rounded-full"
-                                                initial={{ width: '64px', opacity: 0 }}
-                                                animate={{ width: 'auto', opacity: 1 }}
-                                                exit={{ width: 0, opacity: 0 }}
-                                                transition={{ springAnimation }}
+                                > */}
+                                <AnimatePresence>
+                                    {mintStatus === Status.loading && (
+                                        <motion.div
+                                            className="z-[101] overflow-hidden rounded-full border-2 border-white bg-opacity-20"
+                                            initial={{ width: '64px', opacity: 0 }}
+                                            animate={{
+                                                width: 'auto',
+                                                opacity: 1,
+                                                backgroundColor: 'rgb(17, 24, 39, 0.2)',
+                                            }}
+                                            exit={{ width: 0, opacity: 0 }}
+                                            transition={{ springAnimation }}
+                                        >
+                                            <Link
+                                                href={`https://${networkStrings.etherscan}etherscan.io/tx/${txHash}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-title flex items-center px-8 py-3 text-lg text-white transition-all duration-100 ease-in-out hover:bg-gray-900 hover:bg-opacity-40"
                                             >
-                                                <Link
-                                                    href={`https://${networkStrings.etherscan}etherscan.io/tx/${txHash}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="font-title flex items-center px-8 py-3 text-lg text-white transition-all duration-100 ease-in-out hover:bg-gray-900 hover:bg-opacity-40"
+                                                <span>Minting</span>
+                                                <ThreeDotsWave />
+                                                <motion.span
+                                                    initial={{
+                                                        opacity: 0,
+                                                        scale: 0.5,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        scale: 1,
+                                                    }}
+                                                    transition={{
+                                                        duration: 0.05,
+                                                        type: 'spring',
+                                                        stiffness: 100,
+                                                        damping: 15,
+                                                        mass: 1,
+                                                    }}
                                                 >
-                                                    <span>Minting</span>
-                                                    <ThreeDotsWave />
-                                                    <motion.span
-                                                        initial={{
-                                                            opacity: 0,
-                                                            scale: 0.5,
-                                                        }}
-                                                        animate={{
-                                                            opacity: 1,
-                                                            scale: 1,
-                                                        }}
-                                                        transition={{
-                                                            duration: 0.05,
-                                                            type: 'spring',
-                                                            stiffness: 100,
-                                                            damping: 15,
-                                                            mass: 1,
-                                                        }}
-                                                    >
-                                                        <Icon className="ml-3" image={upperRightArrow} size={0} />
-                                                    </motion.span>
-                                                </Link>
-                                            </motion.div>
-                                        )}
-                                        {/* {mintStatus === Status.success && (
+                                                    <Icon className="ml-3" image={upperRightArrow} size={0} />
+                                                </motion.span>
+                                            </Link>
+                                        </motion.div>
+                                    )}
+                                    {/* {mintStatus === Status.success && (
                                             <>
                                                 <motion.span
                                                     initial={{
@@ -191,8 +195,8 @@ const PfpPreview = ({
                                                 </motion.span>
                                             </>
                                         )} */}
-                                    </AnimatePresence>
-                                </motion.div>
+                                </AnimatePresence>
+                                {/* </motion.div> */}
                                 {/* <div className="absolute inset-0 z-[100] bg-gray-900 opacity-50" /> */}
                             </div>
                         )}
