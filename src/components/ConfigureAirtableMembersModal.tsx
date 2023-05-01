@@ -67,7 +67,7 @@ export default function ConfigureAirtableMembersModal({
         <Modal
             open={open}
             setOpen={setOpen}
-            title="Members"
+            title={`Members (${members.length})`}
             onClick={() => {
                 if (members && airtableMembers) {
                     syncMemberList.mutate({

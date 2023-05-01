@@ -42,6 +42,7 @@ export const createNftWebhook = async (contractAddress: string, network: string)
             },
         ],
         network: network as Network,
+        // network: 'ETH_SEPOLIA' as Network,
     }
 
     console.log(params)

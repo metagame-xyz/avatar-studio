@@ -47,7 +47,7 @@ const Project: NextPage = () => {
 
     const organizationSlug = project?.organization?.slug as string
 
-    const { data } = trpc.project.getAllAirtableData.useQuery(
+    const { data: airtableData } = trpc.project.getAllAirtableData.useQuery(
         { organizationSlug },
         { enabled: !!organizationSlug && isOrgAdmin },
     )
@@ -56,8 +56,8 @@ const Project: NextPage = () => {
     const [badDataMemberListOpen, setBadDataMemberListOpen] = useState<boolean>(false)
 
     useEffect(() => {
-        if (data?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkAirtableModal(true)
-    }, [data, setOpenRelinkAirtableModal, openRelinkAirtableModal])
+        if (airtableData?.error?.action === 'REAUTH_AIRTABLE') setOpenRelinkAirtableModal(true)
+    }, [airtableData, setOpenRelinkAirtableModal, openRelinkAirtableModal])
 
     if (error) <NextError title={error.message} statusCode={error.data?.httpStatus ?? 500} />
 
@@ -66,8 +66,8 @@ const Project: NextPage = () => {
     const { name, slug } = project
     const hasMinted = member.nftMetadata.filter((n) => n.projectSlug === project.slug).length > 0
 
-    const isDataLoaded = isOrgAdmin && data && !data.error
-    const isProjectConfigured = !!(isDataLoaded && data.members && data.achievementFields)
+    const isDataLoaded = isOrgAdmin && airtableData && !airtableData.error
+    const isProjectConfigured = !!(isDataLoaded && airtableData.members && airtableData.achievementFields)
 
     const memberAchievements = member.achievements
     const nftImageUrl = member.nftMetadata[0]?.image
@@ -85,7 +85,7 @@ const Project: NextPage = () => {
                         setOpen={setOpenAirtableModal}
                         organizationSlug={project.organization.slug}
                         projectSlug={project.slug}
-                        bases={data.bases}
+                        bases={airtableData.bases}
                     />
                 )}
                 {isProjectConfigured && (
@@ -94,15 +94,15 @@ const Project: NextPage = () => {
                             open={openAirtableMembersModal}
                             setOpen={setOpenAirtableMembersModal}
                             organizationSlug={project.organization.slug}
-                            members={data.members}
+                            members={airtableData.members}
                             walletAddressFieldName={slugify(project?.airtableProject?.walletAddressFieldName || '')}
                         />
                         <AirtableAchievementsModal
                             open={openAirtableAchievementsModal}
                             setOpen={setOpenAirtableAchievementsModal}
                             organizationSlug={project.organization.slug}
-                            airtableFields={data.achievementFields}
-                            airtableMembers={data.members}
+                            airtableFields={airtableData.achievementFields}
+                            airtableMembers={airtableData.members}
                         />
                     </>
                 )}
@@ -205,7 +205,7 @@ const Project: NextPage = () => {
                                 className="flex w-full items-center"
                                 onClick={() => setMemberListOpen(memberListOpen === false ? true : false)}
                             >
-                                <div className="text-2xl font-bold md:text-3xl">Members</div>
+                                <div className="text-2xl font-bold md:text-3xl">{`Members (${project?.members?.length})`}</div>
                                 <ChevronRightIcon
                                     className={`h-8 w-8 transform transition-transform duration-300 ${
                                         memberListOpen ? 'rotate-90' : 'rotate-0'
@@ -221,7 +221,7 @@ const Project: NextPage = () => {
                                 className="flex w-full items-center"
                                 onClick={() => setBadDataMemberListOpen(badDataMemberListOpen === false ? true : false)}
                             >
-                                <div className="text-2xl font-bold md:text-3xl">Airtable Members with bad data</div>
+                                <div className="text-2xl font-bold md:text-3xl">{`Airtable Members with bad data (${airtableData?.membersWithBadData?.length})`}</div>
                                 <ChevronRightIcon
                                     className={`h-8 w-8 transform transition-transform duration-300 ${
                                         badDataMemberListOpen ? 'rotate-90' : 'rotate-0'
@@ -229,7 +229,7 @@ const Project: NextPage = () => {
                                 />
                             </div>
                             <AnimateHeight animateOpacity duration={300} height={badDataMemberListOpen ? 'auto' : 0}>
-                                <BadMembersList membersList={data?.membersWithBadData || []} />
+                                <BadMembersList membersList={airtableData?.membersWithBadData || []} />
                             </AnimateHeight>
                         </div>
                     </>
