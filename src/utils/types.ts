@@ -168,7 +168,7 @@ export const getNewAirtableMemberSchema = (walletAddressFieldNameSlug: string) =
     return z
         .object({
             [walletAddressFieldNameSlug]: z.string(),
-            ['first-name']: z.string(),
+            ['first-name']: z.string().optional(),
             ['last-name']: z.string().optional(),
             email: z.string().email().optional(),
             error: z.undefined(),
