@@ -323,9 +323,9 @@ export const projectRouter = router({
                 const membersWithBadData: Record<string, MostTypes>[] = []
                 const validMembers: Record<string, MostTypes>[] = []
 
-                cleanMembers.forEach((member) => {
+                cleanMembers.forEach((member, i) => {
                     const parsedMember = newAirtableMemberSchema.safeParse(member)
-
+                    if (i % 50 === 0) console.log(parsedMember)
                     parsedMember.success ? validMembers.push(member) : membersWithBadData.push(member)
                 })
 
