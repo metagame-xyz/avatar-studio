@@ -393,6 +393,7 @@ export const projectRouter = router({
                 input.airtableMembers.map(async (airtableMember) => {
                     const walletAddress = airtableMember[walletAddressFieldName]
 
+                    console.log('walletAddress (user.findUnique):', walletAddress)
                     const existingUser = await ctx.prisma.user.findUnique({
                         where: { address: walletAddress },
                     })
@@ -434,6 +435,7 @@ export const projectRouter = router({
                     }
 
                     const privyDID = (existingUser?.privyDID || privyUser?.id) as string
+                    console.log('privyDID (user.upsert):', privyDID)
                     const user = await ctx.prisma.user.upsert({
                         where: {
                             privyDID,
