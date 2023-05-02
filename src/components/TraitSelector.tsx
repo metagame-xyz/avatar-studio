@@ -15,6 +15,12 @@ type TraitSelectorProps = {
     updatePreviewPfpState: (trait: TraitWithEarnedBool) => void
 }
 
+// hardcode if trait name is X, Y, then colorpicker = true
+// hardcode color list, and color css classes, maybe grey border for some colors
+// create color picker component. border for selected color
+// filter traitOptions based on if the color is in the name of the trait
+// update the name to remove the color from the name
+
 const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewPfpState }: TraitSelectorProps) => {
     const { chain } = useNetwork() // TODO
     const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
@@ -25,6 +31,8 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     )
 
     const [open, setOpen] = useState<boolean>(false)
+
+    const [color, setColor] = useState<string>('')
 
     const { name, traits: traitOptions, isModifiable } = traitCategory
 
@@ -40,10 +48,48 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
 
     const onMouseLeaveDebounced = debounce(onMouseLeave, 250)
 
+    const coloredTraits = ['Hair', 'Bangs']
+    const useColorPicker = coloredTraits.includes(name)
+
+    const colors = {
+        Black: 'black',
+        Purple: 'purple',
+        Teal: 'teal',
+        'Dark Blue': 'blue',
+        'Dark Brown': 'brown',
+        Dream: 'light-purple',
+        Evergreen: 'light-green',
+        Gold: 'gold',
+        Green: 'green',
+        Magenta: 'pink',
+        Orange: 'orange',
+        Raven: 'dark-gray',
+        Silver: 'gray',
+    }
+
+    const colorNames = Object.keys(colors)
+
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'
     const traitTypeText = isModifiable ? 'Can be changed at any time' : 'Cannot be changed after minting'
     const traitTypeStyle = isModifiable ? 'text-purple-300 border-purple-300' : 'text-yellow-300 border-yellow-300'
     const traitTypeBg = isModifiable ? 'bg-purple-300' : 'bg-yellow-300'
+
+    const colorPicker = () => {
+        return (
+            <div>
+                {Object.entries(colors).map(([colorName, colorClass]) => (
+                    <div key={colorName}>
+                        <div className={`h-4 w-4 rounded-full ${colorClass}`}></div>
+                    </div>
+                ))}
+            </div>
+        )
+    }
+
+    // a function  include the trait if the trait's name includes any of the
+    const colorFilteredTraitOptions = useColorPicker
+        ? traitOptions.filter((trait) => colorNames.some((color) => trait.name.includes(color)))
+        : traitOptions
 
     return (
         <div>

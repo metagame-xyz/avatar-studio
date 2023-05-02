@@ -123,6 +123,56 @@ export const privyGetAllUsers = async (
     return data.data
 }
 
+// export const privyGetAllUsers = async (
+//     appId: string | undefined = undefined,
+//     appSecret: string | undefined = undefined,
+// ): Promise<PrivyUser[]> => {
+//     const app = appId || clientEnv.NEXT_PUBLIC_PRIVY_APP_ID
+//     const secret = appSecret || serverEnv.PRIVY_APP_SECRET
+//     const options = {
+//         method: 'GET',
+//         headers: {
+//             'privy-app-id': app,
+//             'Content-Type': 'application/json',
+//             Authorization: createAuthHeader(app, secret),
+//         },
+//     }
+
+//     const getUsers = async (cursor?: string) => {
+//         const url = 'https://auth.privy.io/api/v1/users' + (cursor ? `?cursor=${cursor}` : '')
+//         const response = (await fetch(url, options).then((res) => res.json())) as {
+//             data: PrivyUser[]
+//             next_cursor: string | null | undefined
+//         }
+//         return response
+//     }
+
+//     // Iteratively requesting all users
+//     let cursor
+//     let query
+//     let users: PrivyUser[] = []
+//     // This loop will terminate after there are no more users to request,
+//     // which occurs when the `next_cursor` is null.
+//     do {
+//         query = await getUsers(cursor)
+//         users.concat(query.data)
+//         cursor = query.next_cursor
+//     } while (cursor !== null)
+
+//     users = users.map((user: any) => {
+//         return objectToCamel(user) as unknown as PrivyUser
+//     })
+
+//     return users
+
+//     // const remappedUsers = users.map((user: any) => ({
+//     //     ...user,
+//     //     address: user.linkedAccounts[0]?.address.toLowerCase(),
+//     // })) as PrivyUser[]
+
+//     // return remappedUsers
+// }
+
 export const privyDeleteUser = async (id: string): Promise<void> => {
     const url = `https://auth.privy.io/api/v1/users/${id}`
 

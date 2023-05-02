@@ -11,12 +11,14 @@ export default function ConfigureAirtableMembersModal({
     open,
     setOpen,
     organizationSlug,
+    projectSlug,
     members,
     walletAddressFieldName,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
+    projectSlug: string
     members: Record<string, MostTypes>[]
     walletAddressFieldName: string | undefined
 }) {
@@ -73,6 +75,7 @@ export default function ConfigureAirtableMembersModal({
                     syncMemberList.mutate({
                         organizationSlug,
                         airtableMembers,
+                        projectSlug,
                     })
                 }
             }}
