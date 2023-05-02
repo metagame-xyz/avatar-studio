@@ -66,8 +66,15 @@ const Project: NextPage = () => {
     const { name, slug } = project
     const hasMinted = member.nftMetadata.filter((n) => n.projectSlug === project.slug).length > 0
 
+    const walletAddressFieldNameSlug = slugify(project?.airtableProject?.walletAddressFieldName || '') || null
+
     const isDataLoaded = isOrgAdmin && airtableData && !airtableData.error
-    const isProjectConfigured = !!(isDataLoaded && airtableData.members && airtableData.achievementFields)
+    const isProjectConfigured = !!(
+        isDataLoaded &&
+        airtableData.members &&
+        airtableData.achievementFields &&
+        walletAddressFieldNameSlug
+    )
 
     const memberAchievements = member.achievements
     const nftImageUrl = member.nftMetadata[0]?.image
@@ -96,7 +103,7 @@ const Project: NextPage = () => {
                             organizationSlug={project.organization.slug}
                             projectSlug={project.slug}
                             members={airtableData.members}
-                            walletAddressFieldName={slugify(project?.airtableProject?.walletAddressFieldName || '')}
+                            walletAddressFieldNameSlug={walletAddressFieldNameSlug}
                         />
                         <AirtableAchievementsModal
                             open={openAirtableAchievementsModal}

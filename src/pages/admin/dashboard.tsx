@@ -19,7 +19,7 @@ import { truncateAddress } from 'utils'
 import { getEns } from 'utils/needEnvUtils'
 import { trpc } from 'utils/trpc'
 import type { ArrayElement } from 'utils/types'
-import { newAirtableMemberSchema } from 'utils/types'
+import { newAirtableMemberSchemaOld } from 'utils/types'
 
 const AdminDashboard: NextPage = () => {
     const { data: orgs, isLoading: isOrgsLoading } = trpc.org.getAllOrgs.useQuery()
@@ -156,7 +156,7 @@ const AdminDashboard: NextPage = () => {
             return
         }
 
-        const airtableMembers = airtableData?.members?.map((m) => newAirtableMemberSchema.parse(m))
+        const airtableMembers = airtableData?.members?.map((m) => newAirtableMemberSchemaOld.parse(m))
 
         if (!airtableMembers || !airtableData?.achievementFields) {
             console.log('No airtable members or achievement fields found')

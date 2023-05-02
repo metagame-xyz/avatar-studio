@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { truncateAddress } from 'utils'
 import { trpc } from 'utils/trpc'
 import type { MostTypes } from 'utils/types'
-import { newAirtableMemberSchema } from 'utils/types'
+import { getNewAirtableMemberSchema } from 'utils/types'
 import Modal from './Modal'
 
 export default function ConfigureAirtableMembersModal({
@@ -13,14 +13,14 @@ export default function ConfigureAirtableMembersModal({
     organizationSlug,
     projectSlug,
     members,
-    walletAddressFieldName,
+    walletAddressFieldNameSlug,
 }: {
     open: boolean
     setOpen: Dispatch<SetStateAction<boolean>>
     organizationSlug: string
     projectSlug: string
     members: Record<string, MostTypes>[]
-    walletAddressFieldName: string | undefined
+    walletAddressFieldNameSlug: string
 }) {
     const cancelButtonRef = useRef(null)
 
@@ -35,15 +35,13 @@ export default function ConfigureAirtableMembersModal({
     })
 
     const AirtableMembersList: React.FC<{ membersList: Record<string, MostTypes>[] }> = ({ membersList }) => {
-        const members = walletAddressFieldName
-            ? membersList.map((member) => ({
-                  walletAddress: member[walletAddressFieldName] as string,
-                  firstName: member['first-name'] as string,
-                  lastName: member['last-name'] as string,
-                  name: member['name'] as string,
-                  ens: member['ens'] as string | undefined,
-              }))
-            : []
+        const members = membersList.map((member) => ({
+            walletAddress: member[walletAddressFieldNameSlug] as string,
+            firstName: member['first-name'] as string,
+            lastName: member['last-name'] as string,
+            name: member['name'] as string,
+            ens: member['ens'] as string | undefined,
+        }))
 
         return members.length > 0 ? (
             <div className="flex flex-col gap-2">
@@ -62,6 +60,8 @@ export default function ConfigureAirtableMembersModal({
             </div>
         ) : null
     }
+
+    const newAirtableMemberSchema = getNewAirtableMemberSchema(walletAddressFieldNameSlug)
 
     const airtableMembers = members?.map((m) => newAirtableMemberSchema.parse(m))
 

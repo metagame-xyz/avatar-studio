@@ -164,7 +164,21 @@ export const traitWithEarnedBoolSchema = traitSchema.and(
     }),
 )
 
-export const newAirtableMemberSchema = z
+export const getNewAirtableMemberSchema = (walletAddressFieldNameSlug: string) => {
+    return z
+        .object({
+            [walletAddressFieldNameSlug]: z.string(),
+            ['first-name']: z.string(),
+            ['last-name']: z.string().optional(),
+            email: z.string().email().optional(),
+            error: z.never(),
+            // add an option to expect any string as the key and any string as the value
+        })
+        .and(z.record(z.any()))
+}
+
+// TODO use upgraded version everywhere
+export const newAirtableMemberSchemaOld = z
     .object({
         ['first-name']: z.string().optional(),
         ['last-name']: z.string().optional(),
@@ -174,7 +188,7 @@ export const newAirtableMemberSchema = z
     })
     .and(z.record(z.any()))
 
-export type NewAirtableMember = z.infer<typeof newAirtableMemberSchema>
+export type NewAirtableMember = z.infer<typeof newAirtableMemberSchemaOld>
 
 export const traitWithEarnedBoolArrSchema = z.array(traitWithEarnedBoolSchema)
 

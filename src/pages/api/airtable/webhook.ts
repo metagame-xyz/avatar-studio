@@ -2,7 +2,7 @@ import { env } from 'env/server.mjs'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from 'server/db/client'
 import { projectRouter } from 'server/trpc/router/project'
-import { newAirtableMemberSchema } from 'utils/types'
+import { newAirtableMemberSchemaOld } from 'utils/types'
 import { z } from 'zod'
 
 // export const config = {
@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).send({})
     }
 
-    const airtableMembers = data.members.map((m) => newAirtableMemberSchema.parse(m))
+    const airtableMembers = data.members.map((m) => newAirtableMemberSchemaOld.parse(m))
 
     await projectTrpc.syncAirtableMembers({ organizationSlug, airtableMembers, projectSlug })
     await projectTrpc.syncAirtableAchievements({

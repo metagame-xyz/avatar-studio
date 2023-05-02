@@ -10,8 +10,7 @@ import type { AirtableFieldType, AirtableWebhookResponse } from 'utils/airtableF
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privy, privyAddUser } from 'utils/backend'
 import { getAddressFromString } from 'utils/needEnvUtils'
-import type { MostTypes } from 'utils/types'
-import { newAirtableMemberSchema } from 'utils/types'
+import { getNewAirtableMemberSchema, MostTypes, newAirtableMemberSchemaOld } from 'utils/types'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router, webhookOrOrgAdminProcedure } from '../trpc'
 
@@ -261,35 +260,40 @@ export const projectRouter = router({
 
                 const provider = new providers.AlchemyProvider('homestead', clientEnv.NEXT_PUBLIC_ALCHEMY_PROJECT_ID)
 
-                const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
+                const walletAddressFieldNameSlug = slugify(project.airtableProject.walletAddressFieldName)
 
-                const membersWithBadData: Record<string, MostTypes>[] = []
+                const newAirtableMemberSchema = getNewAirtableMemberSchema(walletAddressFieldNameSlug)
 
-                async function cleanAndParseMember(member: Record<string, MostTypes>) {
+                // update and clean members to best of ability
+                // if there's a problem, add an error field to the member
+                // filter out members with errors, add them to membersWithBadData
+                // use safeParse as a 2nd guard to filter out members with bad data, add them to membersWithBadData
+
+                async function cleanMember(member: Record<string, MostTypes>) {
                     // if ens, get address from ens
                     if (member.ens && typeof member.ens === 'string') {
                         try {
                             const address = await provider.resolveName(member.ens)
-                            member[walletAddressFieldName] = address?.toLowerCase()
+                            member[walletAddressFieldNameSlug] = address?.toLowerCase()
                         } catch (err: Error | any) {
                             // console.error(err)
                             member.error = err.message
-                            membersWithBadData.push(member)
+                            // membersWithBadData.push(member)
                         }
                     }
 
                     // if address string, get ens or address from address string
-                    if (member[walletAddressFieldName] && typeof member[walletAddressFieldName] === 'string') {
+                    if (member[walletAddressFieldNameSlug] && typeof member[walletAddressFieldNameSlug] === 'string') {
                         try {
-                            const address = await getAddressFromString(member[walletAddressFieldName] as string) // shouldn't need this, the check is done in the if statement above...?
-                            member[walletAddressFieldName] = address?.toLowerCase()
+                            const address = await getAddressFromString(member[walletAddressFieldNameSlug] as string) // shouldn't need this, the check is done in the if statement above...?
+                            member[walletAddressFieldNameSlug] = address?.toLowerCase()
 
                             // const ens = await provider.lookupAddress(address)
                             // member.ens = ens
                         } catch (err: Error | any) {
                             // console.error(err)
                             member.error = err.message
-                            membersWithBadData.push(member)
+                            // membersWithBadData.push(member)
                         }
                     }
 
@@ -300,7 +304,7 @@ export const projectRouter = router({
                         } catch (err: Error | any) {
                             // console.error(err)
                             member.error = err.message
-                            membersWithBadData.push(member)
+                            // membersWithBadData.push(member)
                         }
                     }
 
@@ -312,17 +316,18 @@ export const projectRouter = router({
                     minTime: (1000 / 30) * 1.3,
                 })
 
-                const validMembers = await (
-                    await Promise.all(
-                        unvalidatedMembers.map(async (member) => limiter.schedule(() => cleanAndParseMember(member))),
-                    )
+                const cleanMembers = await await Promise.all(
+                    unvalidatedMembers.map(async (member) => limiter.schedule(() => cleanMember(member))),
                 )
-                    .filter((member) => !!member[walletAddressFieldName])
-                    .filter((member) => {
-                        const parsedMember = newAirtableMemberSchema.safeParse(member)
-                        if (!parsedMember.success) membersWithBadData.push(member)
-                        return parsedMember.success
-                    })
+
+                const membersWithBadData: Record<string, MostTypes>[] = []
+                const validMembers: Record<string, MostTypes>[] = []
+
+                cleanMembers.forEach((member) => {
+                    const parsedMember = newAirtableMemberSchema.safeParse(member)
+
+                    parsedMember.success ? validMembers.push(member) : membersWithBadData.push(member)
+                })
 
                 // validMembers.forEach((m) => {
                 //     try {
@@ -333,12 +338,12 @@ export const projectRouter = router({
                 //     }
                 // })
 
-                console.log(membersWithBadData)
+                // console.log(membersWithBadData)
 
                 let airtableFields = await airtable.getTableFields(project.airtableProject)
                 airtableFields = airtableFields || []
 
-                const achievementFields = filterToAchievementFields(airtableFields, walletAddressFieldName)
+                const achievementFields = filterToAchievementFields(airtableFields, walletAddressFieldNameSlug)
 
                 return { bases, members: validMembers, achievementFields, error: null, membersWithBadData }
             } catch (err) {
@@ -357,7 +362,7 @@ export const projectRouter = router({
         .input(
             z.object({
                 organizationSlug: z.string(),
-                airtableMembers: z.array(newAirtableMemberSchema),
+                airtableMembers: z.array(newAirtableMemberSchemaOld),
                 projectSlug: z.string().optional(),
             }),
         )
@@ -504,7 +509,7 @@ export const projectRouter = router({
             z.object({
                 organizationSlug: z.string(),
                 airtableFields: z.array(airtableFieldSchema),
-                airtableMembers: z.array(newAirtableMemberSchema),
+                airtableMembers: z.array(newAirtableMemberSchemaOld),
                 projectSlug: z.string().optional(),
             }),
         ) // for protectedOrgProcedure to work

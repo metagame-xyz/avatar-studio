@@ -27,8 +27,9 @@ export async function getAddressFromString(addressString: string): Promise<strin
         const resolvedAddress = await provider.resolveName(ensMatch[0])
         if (!resolvedAddress) {
             throw new Error(`Could not resolve ENS name: ${ensMatch[0]}`)
+        } else {
+            return resolvedAddress
         }
-        return resolvedAddress
     } catch (e) {
         // If it's not a valid ENS name, throw an error
         console.log(`Could not resolve ENS name: ${lowercaseAddress}`)
