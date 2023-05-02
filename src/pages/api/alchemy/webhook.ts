@@ -23,12 +23,6 @@ const memberTrpc = memberRouter.createCaller(trpcCallerConfig)
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // const { contractAddress } = req.query as { contractAddress: string }
     try {
-        if (req.method !== 'POST') {
-            const metadata = {}
-            res.setHeader('Content-Type', 'application/json')
-            return res.status(200).send(metadata)
-        }
-
         /****************/
         /*     AUTH     */
         /****************/
@@ -93,6 +87,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error(e)
         console.log(req.body)
     } finally {
+        if (req.method !== 'POST') {
+            const metadata = {}
+            res.setHeader('Content-Type', 'application/json')
+            return res.status(200).send(metadata)
+        }
         return res.status(200).json({ message: 'ok' })
     }
 }

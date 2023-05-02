@@ -2,13 +2,13 @@ import type { AchievementType, NftMetadata } from '@prisma/client'
 import type { User as PrivyUser } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
 import Bottleneck from 'bottleneck'
-import { clientEnv } from 'env/schema.mjs'
+import { env as clientEnv } from 'env/client.mjs'
 import { providers } from 'ethers'
 import { filterToAchievementFields, getEmailFromString, slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
 import type { AirtableFieldType, AirtableWebhookResponse } from 'utils/airtableFrontend'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
-import { privyAddUser } from 'utils/backend'
+import { privy, privyAddUser } from 'utils/backend'
 import { getAddressFromString } from 'utils/needEnvUtils'
 import type { MostTypes } from 'utils/types'
 import { newAirtableMemberSchema } from 'utils/types'
@@ -379,30 +379,56 @@ export const projectRouter = router({
             // TODO update this to somehow use field id instead of name
             const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
 
+            const allPrivyUsers = await privy.getUsers()
+
+            // map where the key is the wallet address and the value is the user
+            const privyUsersByWalletAddress = allPrivyUsers.reduce((acc, user) => {
+                if (user.wallet?.address) {
+                    acc[user.wallet.address.toLowerCase()] = user
+                }
+                return acc
+            }, {} as Record<string, PrivyUser>)
+
             const users = await Promise.all(
-                input.airtableMembers.map(async (member) => {
+                input.airtableMembers.map(async (airtableMember) => {
+                    const walletAddress = airtableMember[walletAddressFieldName]
+
                     const existingUser = await ctx.prisma.user.findUnique({
-                        where: { address: member[walletAddressFieldName] },
+                        where: { address: walletAddress },
                     })
                     let privyUser: PrivyUser | null = null
+                    let existingPrivyUser: PrivyUser | null | undefined = null
 
                     // TODO update this to "privyUpdateUser once Privy adds that option"
                     if (!existingUser) {
-                        privyUser = await privyAddUser(member, walletAddressFieldName)
+                        existingPrivyUser = privyUsersByWalletAddress[walletAddress]
+
+                        if (existingPrivyUser) {
+                            console.log(
+                                'existing privy user:',
+                                existingPrivyUser?.email?.address,
+                                ' | ',
+                                existingPrivyUser?.id,
+                            )
+                            privyUser = existingPrivyUser
+                        } else {
+                            console.log('adding privy user:', airtableMember.email)
+                            privyUser = await privyAddUser(airtableMember, walletAddressFieldName)
+                        }
                     }
 
                     let lastName: string | null = null
                     let firstName: string | null = null
 
-                    if (member.name) {
+                    if (airtableMember.name) {
                         // pop off the last word in the string
-                        const nameArr = member.name.split(' ')
+                        const nameArr = airtableMember.name.split(' ')
                         if (nameArr.length > 1) {
-                            lastName = member.name.split(' ').pop() || null
+                            lastName = airtableMember.name.split(' ').pop() || null
                             // combine the rest of the words into a string
-                            firstName = member.name.split(' ').slice(0, -1).join(' ') || null
+                            firstName = airtableMember.name.split(' ').slice(0, -1).join(' ') || null
                         } else {
-                            firstName = member.name
+                            firstName = airtableMember.name
                             lastName = null
                         }
                     }
@@ -413,16 +439,16 @@ export const projectRouter = router({
                             privyDID,
                         },
                         update: {
-                            firstName: member['first-name'] || firstName || existingUser?.firstName,
-                            lastName: member['last-name'] || lastName || existingUser?.lastName,
-                            email: member.email || existingUser?.email,
+                            firstName: airtableMember['first-name'] || firstName || existingUser?.firstName,
+                            lastName: airtableMember['last-name'] || lastName || existingUser?.lastName,
+                            email: airtableMember.email || existingUser?.email,
                         },
                         create: {
                             privyDID,
-                            address: member[walletAddressFieldName],
-                            firstName: member['first-name'] || firstName,
-                            lastName: member['last-name'] || lastName,
-                            email: member.email,
+                            address: airtableMember[walletAddressFieldName],
+                            firstName: airtableMember['first-name'] || firstName,
+                            lastName: airtableMember['last-name'] || lastName,
+                            email: airtableMember.email,
                         },
                     })
 

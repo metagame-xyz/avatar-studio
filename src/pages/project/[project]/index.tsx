@@ -94,6 +94,7 @@ const Project: NextPage = () => {
                             open={openAirtableMembersModal}
                             setOpen={setOpenAirtableMembersModal}
                             organizationSlug={project.organization.slug}
+                            projectSlug={project.slug}
                             members={airtableData.members}
                             walletAddressFieldName={slugify(project?.airtableProject?.walletAddressFieldName || '')}
                         />

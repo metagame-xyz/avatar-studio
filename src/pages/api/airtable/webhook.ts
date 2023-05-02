@@ -92,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const airtableMembers = data.members.map((m) => newAirtableMemberSchema.parse(m))
 
-    await projectTrpc.syncAirtableMembers({ organizationSlug, airtableMembers })
+    await projectTrpc.syncAirtableMembers({ organizationSlug, airtableMembers, projectSlug })
     await projectTrpc.syncAirtableAchievements({
         organizationSlug,
         airtableMembers,
