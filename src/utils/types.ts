@@ -171,7 +171,7 @@ export const getNewAirtableMemberSchema = (walletAddressFieldNameSlug: string) =
             ['first-name']: z.string(),
             ['last-name']: z.string().optional(),
             email: z.string().email().optional(),
-            error: z.never(),
+            error: z.undefined(),
             // add an option to expect any string as the key and any string as the value
         })
         .and(z.record(z.any()))
