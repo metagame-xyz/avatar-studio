@@ -58,6 +58,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
         'Dark Brown': 'bg-yellow-950',
         Evergreen: 'bg-emerald-950',
         'Dark Blue': 'bg-blue-900',
+        Blue: 'bg-blue-500',
         Indigo: 'bg-indigo-500',
         Purple: 'bg-purple-500',
         Dream: 'bg-violet-500',
