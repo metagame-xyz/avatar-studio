@@ -1104,10 +1104,10 @@
     web3-core-helpers "^1.8.0"
     wicg-inert "^3.1.2"
 
-"@privy-io/server-auth@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@privy-io/server-auth/-/server-auth-1.2.0.tgz#286003e2147575d200e0c556f5d801c08945b54d"
-  integrity sha512-11BJYSNnLhQCZZ4sLY4YgG41U8wx35i3oW236705bpODKulxSgn9taRGRY+d6EV5UDU4kO/GF5cyj5RKtMnBSA==
+"@privy-io/server-auth@1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@privy-io/server-auth/-/server-auth-1.3.0.tgz#83c0357d3458fa1bc9fb369594909ec12c2c9150"
+  integrity sha512-wVOMfO+kqwFJ61LKMIZD77v2zp5C/XmV9pZ3ZQS4yxvc7DNbpGPnovJDW7zHhDJO82AYXirkeY5mi7pqSuC8bQ==
   dependencies:
     axios "^1.1.2"
     dotenv "^16.0.3"

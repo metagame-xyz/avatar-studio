@@ -19,7 +19,7 @@ const walletSchema = z.object({
     address: z.string(),
     chainType: z.union([z.literal('ethereum'), z.literal('solana')]),
     chainId: z.string().optional(),
-    walletClient: z.union([z.literal('privy'), z.literal('unknown')]),
+    // walletClient: z.union([z.literal('privy'), z.literal('unknown')]),
 })
 
 const emailSchema = z.object({
@@ -92,6 +92,8 @@ const linkedAccountWithMetadataSchema = z.union([
     discordOAuthWithMetadataSchema,
     githubOAuthWithMetadataSchema,
 ])
+
+export type LinkedAccountWithMetadata = z.infer<typeof linkedAccountWithMetadataSchema>
 
 export const privyUserZ = z.object({
     id: z.string(),

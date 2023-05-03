@@ -1,18 +1,20 @@
 import type { AchievementType, NftMetadata } from '@prisma/client'
-import type { User as PrivyUser } from '@privy-io/server-auth'
+import type { EmailWithMetadata, User as PrivyUser, WalletWithMetadata } from '@privy-io/server-auth'
 import { TRPCError } from '@trpc/server'
 import Bottleneck from 'bottleneck'
 import { env as clientEnv } from 'env/client.mjs'
 import { providers } from 'ethers'
-import { filterToAchievementFields, getEmailFromString, slugify } from 'utils'
+import { filterToAchievementFields, getEmailFromString, isNotNull, slugify } from 'utils'
 import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLockErrorObj } from 'utils/airtable'
 import type { AirtableFieldType, AirtableWebhookResponse } from 'utils/airtableFrontend'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
-import { privy, privyAddUser } from 'utils/backend'
+import { privy } from 'utils/backend'
 import { getAddressFromString } from 'utils/needEnvUtils'
-import { getNewAirtableMemberSchema, MostTypes, newAirtableMemberSchemaOld } from 'utils/types'
+import type { MostTypes } from 'utils/types'
+import { getNewAirtableMemberSchema, newAirtableMemberSchemaOld } from 'utils/types'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router, webhookOrOrgAdminProcedure } from '../trpc'
+import { testData } from './testData'
 
 export const projectRouter = router({
     getProject: publicProcedure.input(z.string()).query(async ({ ctx }) => {
@@ -325,7 +327,6 @@ export const projectRouter = router({
 
                 cleanMembers.forEach((member, i) => {
                     const parsedMember = newAirtableMemberSchema.safeParse(member)
-                    if (i % 50 === 0) console.log(parsedMember)
                     parsedMember.success ? validMembers.push(member) : membersWithBadData.push(member)
                 })
 
@@ -382,106 +383,166 @@ export const projectRouter = router({
             }
 
             // TODO update this to somehow use field id instead of name
-            const walletAddressFieldName = slugify(project.airtableProject.walletAddressFieldName)
+            const walletAddressFieldNameSlug = slugify(project.airtableProject.walletAddressFieldName)
 
+            // const allPrivyUsers = await privyGetAllUsers(clientEnv.NEXT_PUBLIC_PRIVY_APP_ID, serverEnv.PRIVY_APP_SECRET)
             const allPrivyUsers = await privy.getUsers()
 
+            // console.log('allPrivyUsers length:', allPrivyUsers.length)
+
             // map where the key is the wallet address and the value is the user
-            const privyUsersByWalletAddress = allPrivyUsers.reduce((acc, user) => {
+            const privyUsersByWalletAddress: Record<string, PrivyUser> = {}
+
+            allPrivyUsers.forEach((user) => {
                 if (user.wallet?.address) {
-                    acc[user.wallet.address.toLowerCase()] = user
+                    privyUsersByWalletAddress[user.wallet.address.toLowerCase()] = user
                 }
-                return acc
-            }, {} as Record<string, PrivyUser>)
+            })
+
+            // console.log('first privy user:', Object.entries(privyUsersByWalletAddress).length)
+
+            // const airtableMembers = input.airtableMembers
+            const airtableMembers = testData as Record<string, string>[]
+
+            const airtableMembersDedupedMap: Record<string, Record<string, string>> = {}
+
+            airtableMembers.forEach((member) => {
+                const walletAddress = member[walletAddressFieldNameSlug] as string
+                airtableMembersDedupedMap[walletAddress] = member
+            })
+
+            // console.log('airtableMembers length:', airtableMembers.length)
+            // console.log('airtableMembersDedupedMap length:', Object.entries(airtableMembersDedupedMap).length)
 
             const users = await Promise.all(
-                input.airtableMembers.map(async (airtableMember) => {
-                    const walletAddress = airtableMember[walletAddressFieldName]
-
-                    console.log('walletAddress (user.findUnique):', walletAddress)
-                    const existingUser = await ctx.prisma.user.findUnique({
-                        where: { address: walletAddress },
-                    })
+                airtableMembers.map(async (airtableMember) => {
                     let privyUser: PrivyUser | null = null
-                    let existingPrivyUser: PrivyUser | null | undefined = null
+                    try {
+                        const walletAddress = airtableMember[walletAddressFieldNameSlug] as string
 
-                    // TODO update this to "privyUpdateUser once Privy adds that option"
-                    if (!existingUser) {
-                        existingPrivyUser = privyUsersByWalletAddress[walletAddress]
-
-                        if (existingPrivyUser) {
-                            console.log(
-                                'existing privy user:',
-                                existingPrivyUser?.email?.address,
-                                ' | ',
-                                existingPrivyUser?.id,
-                            )
-                            privyUser = existingPrivyUser
-                        } else {
-                            console.log('adding privy user:', airtableMember.email)
-                            privyUser = await privyAddUser(airtableMember, walletAddressFieldName)
-                        }
-                    }
-
-                    let lastName: string | null = null
-                    let firstName: string | null = null
-
-                    if (airtableMember.name) {
-                        // pop off the last word in the string
-                        const nameArr = airtableMember.name.split(' ')
-                        if (nameArr.length > 1) {
-                            lastName = airtableMember.name.split(' ').pop() || null
-                            // combine the rest of the words into a string
-                            firstName = airtableMember.name.split(' ').slice(0, -1).join(' ') || null
-                        } else {
-                            firstName = airtableMember.name
-                            lastName = null
-                        }
-                    }
-
-                    const privyDID = (existingUser?.privyDID || privyUser?.id) as string
-                    console.log('privyDID (user.upsert):', privyDID)
-                    const user = await ctx.prisma.user.upsert({
-                        where: {
-                            privyDID,
-                        },
-                        update: {
-                            firstName: airtableMember['first-name'] || firstName || existingUser?.firstName,
-                            lastName: airtableMember['last-name'] || lastName || existingUser?.lastName,
-                            email: airtableMember.email || existingUser?.email,
-                        },
-                        create: {
-                            privyDID,
-                            address: airtableMember[walletAddressFieldName],
-                            firstName: airtableMember['first-name'] || firstName,
-                            lastName: airtableMember['last-name'] || lastName,
-                            email: airtableMember.email,
-                        },
-                    })
-
-                    if (privyUser) {
-                        const accounts = privyUser.linkedAccounts.map((account) => {
-                            const data = {
-                                userId: user.privyDID,
-                                type: account.type,
-                                address: null as string | null,
-                                chainType: null as string | null,
-                                email: null as string | null,
-                            }
-                            if (account.type === 'email') data.email = account.address
-                            if (account.type === 'wallet') {
-                                data.address = account.address
-                                data.chainType = account.chainType
-                            }
-                            return data
+                        // console.log('walletAddress (user.findUnique):', walletAddress)
+                        const existingUser = await ctx.prisma.user.findUnique({
+                            where: { address: walletAddress },
                         })
+                        let existingPrivyUser: PrivyUser | null | undefined = null
 
-                        await ctx.prisma.account.createMany({ data: accounts })
+                        // TODO update this to "privyUpdateUser once Privy adds that option"
+                        if (!existingUser) {
+                            existingPrivyUser = privyUsersByWalletAddress[walletAddress]
+
+                            if (existingPrivyUser) {
+                                // console.log(
+                                //     'existing privy user:',
+                                //     existingPrivyUser?.email?.address,
+                                //     ' | ',
+                                //     existingPrivyUser?.id,
+                                // )
+                                privyUser = existingPrivyUser
+                            } else {
+                                // console.log('adding privy user:', airtableMember.email)
+
+                                // type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never
+                                const linkedAccounts = []
+
+                                if (airtableMember[walletAddressFieldNameSlug]) {
+                                    linkedAccounts.push({
+                                        address: airtableMember[walletAddressFieldNameSlug] as string,
+                                        type: 'wallet',
+                                        chainType: 'ethereum',
+                                    } as WalletWithMetadata)
+                                }
+                                if (airtableMember.email) {
+                                    linkedAccounts.push({
+                                        address: airtableMember.email,
+                                        type: 'email',
+                                    } as EmailWithMetadata)
+                                }
+
+                                privyUser = await privy.importUser({
+                                    linkedAccounts,
+                                })
+                                // privyUser = await privyAddUser(airtableMember, walletAddressFieldNameSlug)
+                            }
+                        }
+
+                        let lastName: string | null = null
+                        let firstName: string | null = null
+
+                        if (airtableMember.name) {
+                            // pop off the last word in the string
+                            const nameArr = airtableMember.name.split(' ')
+                            if (nameArr.length > 1) {
+                                lastName = airtableMember.name.split(' ').pop() || null
+                                // combine the rest of the words into a string
+                                firstName = airtableMember.name.split(' ').slice(0, -1).join(' ') || null
+                            } else {
+                                firstName = airtableMember.name
+                                lastName = null
+                            }
+                        }
+
+                        // console.log('existingUser:', existingUser?.privyDID)
+                        // console.log('privyUser:', privyUser?.id)
+                        const privyDID = existingUser?.privyDID || privyUser?.id
+                        // console.log('privyDID (user.upsert):', privyDID)
+                        if (privyDID) {
+                            const user = await ctx.prisma.user.upsert({
+                                where: {
+                                    privyDID,
+                                },
+                                update: {
+                                    firstName: airtableMember['first-name'] || firstName || existingUser?.firstName,
+                                    lastName: airtableMember['last-name'] || lastName || existingUser?.lastName,
+                                    email: airtableMember.email || existingUser?.email,
+                                },
+                                create: {
+                                    privyDID,
+                                    address: airtableMember[walletAddressFieldNameSlug],
+                                    firstName: airtableMember['first-name'] || firstName,
+                                    lastName: airtableMember['last-name'] || lastName,
+                                    email: airtableMember.email,
+                                },
+                            })
+
+                            if (privyUser) {
+                                const accounts = privyUser.linkedAccounts.map((account) => {
+                                    const data = {
+                                        userId: user.privyDID,
+                                        type: account.type,
+                                        address: null as string | null,
+                                        chainType: null as string | null,
+                                        email: null as string | null,
+                                    }
+                                    if (account.type === 'email') data.email = account.address
+                                    if (account.type === 'wallet') {
+                                        data.address = account.address
+                                        data.chainType = account.chainType
+                                    }
+                                    return data
+                                })
+
+                                await ctx.prisma.account.createMany({ data: accounts })
+                            }
+
+                            if (!user.id) {
+                                // console.log('user:', user)
+                            }
+
+                            return user
+                        } else {
+                            // console.log('existingUser:', existingUser)
+                            // console.log('privyUser:', privyUser)
+                            return null
+                        }
+                    } catch (error) {
+                        // console.log('USER UPSERT error:', privyUser)
+
+                        return null
                     }
-
-                    return user
                 }),
-            )
+            ).then((users) => users.filter(isNotNull))
+
+            // console.log('users length:', users.length)
 
             await Promise.all(
                 users.map(async (user) => {

@@ -32,7 +32,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
 
     const [open, setOpen] = useState<boolean>(false)
 
-    const [color, setColor] = useState<string>('')
+    const [color, setColor] = useState<string>('Silver')
 
     const { name, traits: traitOptions, isModifiable } = traitCategory
 
@@ -52,45 +52,59 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     const useColorPicker = coloredTraits.includes(name)
 
     const colors = {
-        Black: 'black',
-        Purple: 'purple',
-        Teal: 'teal',
-        'Dark Blue': 'blue',
-        'Dark Brown': 'brown',
-        Dream: 'light-purple',
-        Evergreen: 'light-green',
-        Gold: 'gold',
-        Green: 'green',
-        Magenta: 'pink',
-        Orange: 'orange',
-        Raven: 'dark-gray',
-        Silver: 'gray',
+        Black: 'bg-black-500 border border-gray-700 border-2 p-1',
+        Purple: 'bg-purple-500',
+        Teal: 'bg-teal-500',
+        'Dark Blue': 'bg-blue-500',
+        'Dark Brown': 'bg-brown-500',
+        Dream: 'bg-light-purple-500',
+        Evergreen: 'bg-light-green-500',
+        Gold: 'bg-gold-500',
+        Green: 'bg-green-500',
+        Magenta: 'bg-pink-500',
+        Orange: 'bg-orange-500',
+        Raven: 'bg-dark-gray-500',
+        Silver: 'bg-gray-500',
     }
-
-    const colorNames = Object.keys(colors)
 
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'
     const traitTypeText = isModifiable ? 'Can be changed at any time' : 'Cannot be changed after minting'
     const traitTypeStyle = isModifiable ? 'text-purple-300 border-purple-300' : 'text-yellow-300 border-yellow-300'
     const traitTypeBg = isModifiable ? 'bg-purple-300' : 'bg-yellow-300'
 
-    const colorPicker = () => {
+    const ColorPicker = () => {
         return (
-            <div>
-                {Object.entries(colors).map(([colorName, colorClass]) => (
-                    <div key={colorName}>
-                        <div className={`h-4 w-4 rounded-full ${colorClass}`}></div>
-                    </div>
-                ))}
+            <div
+                className="mt-4 grid justify-items-center gap-3"
+                style={{
+                    gridTemplateColumns: `repeat(auto-fill, minmax(2rem, 1fr))`,
+                }}
+            >
+                {Object.entries(colors).map(([colorName, colorClass]) => {
+                    const isSelected = color === colorName
+                    return (
+                        <button key={colorName} onClick={() => setColor(colorName)}>
+                            <div
+                                className={`h-8 w-8 rounded-full ${colorClass} ${
+                                    isSelected && 'outline outline-2 outline-teal-400'
+                                }`}
+                            ></div>
+                        </button>
+                    )
+                })}
             </div>
         )
     }
 
-    // a function  include the trait if the trait's name includes any of the
+    // a function include the trait if the trait's name includes any of the
     const colorFilteredTraitOptions = useColorPicker
-        ? traitOptions.filter((trait) => colorNames.some((color) => trait.name.includes(color)))
+        ? traitOptions.filter((trait) => trait.name.includes(color))
         : traitOptions
 
+    if (useColorPicker) {
+        console.log(name)
+        console.log(colorFilteredTraitOptions.length)
+    }
     return (
         <div>
             <div
@@ -113,13 +127,14 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
                     <div className={`whitespace-nowrap rounded border-2 px-1 ${traitTypeStyle}`}>{traitTypeHeader}</div>
                     <div className="text-sm text-teal-50/50">{traitTypeText}</div>
                 </div>
+                {useColorPicker && <ColorPicker />}
                 <div
-                    className="fill-28 mt-4 grid justify-items-center gap-4"
+                    className="mt-4 grid justify-items-center gap-4"
                     style={{
                         gridTemplateColumns: `repeat(auto-fill, minmax(7rem, 1fr))`,
                     }}
                 >
-                    {traitOptions
+                    {colorFilteredTraitOptions
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .sort((a, b) => (a.earned === b.earned ? 0 : a.earned ? -1 : 1))
                         .map((trait) => (

@@ -20,6 +20,10 @@ export const slugify = (name: string) => {
     })
 }
 
+export function isNotNull<T>(value: T | null): value is T {
+    return value !== null
+}
+
 // take a string and pull the email out of it
 export const getEmailFromString = (string: string): string => {
     const emailRegex = /[\w.]+@[\w.]+/
