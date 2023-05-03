@@ -52,19 +52,19 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     const useColorPicker = coloredTraits.includes(name)
 
     const colors = {
-        Black: 'bg-black-500 border border-gray-700 border-2 p-1',
-        Purple: 'bg-purple-500',
-        Teal: 'bg-teal-500',
-        'Dark Blue': 'bg-blue-500',
-        'Dark Brown': 'bg-brown-500',
-        Dream: 'bg-light-purple-500',
-        Evergreen: 'bg-light-green-500',
-        Gold: 'bg-gold-500',
-        Green: 'bg-green-500',
-        Magenta: 'bg-pink-500',
-        Orange: 'bg-orange-500',
-        Raven: 'bg-dark-gray-500',
         Silver: 'bg-gray-500',
+        Black: 'bg-black-500 border border-gray-700 border-2 p-1',
+        Raven: 'bg-[#2C192E]',
+        'Dark Brown': 'bg-yellow-950',
+        Evergreen: 'bg-emerald-950',
+        'Dark Blue': 'bg-blue-900',
+        Indigo: 'bg-indigo-500',
+        Purple: 'bg-purple-500',
+        Dream: 'bg-violet-500',
+        Magenta: 'bg-fuchsia-500',
+        Orange: 'bg-orange-400',
+        Gold: 'bg-amber-500',
+        Green: 'bg-green-600',
     }
 
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'

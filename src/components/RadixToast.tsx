@@ -79,7 +79,7 @@ const Toast = ({ children, data, setData }: ToastProps) => {
                     <p>{data.message}</p>
                 </ToastPrimitive.Title>
             </StyledToast>
-            <ToastPrimitive.Viewport className="fixed top-0 right-0 z-50 m-0 flex list-none flex-col gap-2.5 p-6 outline-none" />
+            <ToastPrimitive.Viewport className="fixed right-0 top-0 z-50 m-0 flex list-none flex-col gap-2.5 p-6 outline-none" />
         </ToastPrimitive.Provider>
     )
 }
