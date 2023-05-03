@@ -267,7 +267,15 @@ export const filterToAchievementFields = (
     airtableFields: AirtableField[],
     walletAddressFieldName: string,
 ): AirtableField[] => {
-    const nonAchievementFields = ['first-name', 'last-name', 'email', 'wallet-address', 'ens', walletAddressFieldName]
+    const nonAchievementFields = [
+        'first-name',
+        'last-name',
+        'name',
+        'email',
+        'wallet-address',
+        'ens',
+        walletAddressFieldName,
+    ]
     const allowedAchievementTypes = ['number', 'checkbox', 'singleLineText', 'singleSelect', 'multipleSelects']
     return airtableFields
         .filter((field) => !nonAchievementFields.includes(slugify(field.name)))
