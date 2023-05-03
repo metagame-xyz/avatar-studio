@@ -6,7 +6,7 @@ import { getBaseName } from 'utils'
 import type { AssembledNftTraits, TraitWithEarnedBool } from 'utils/types'
 
 type TraitImageProps = {
-    trait: TraitWithEarnedBool
+    trait: TraitWithEarnedBool & { displayName: string }
     pfpState: AssembledNftTraits
     updatePfpState: (trait: TraitWithEarnedBool) => void
     selected: boolean
@@ -66,7 +66,7 @@ const TraitImage = ({
                     </div>
                 )}
             </button>
-            <div className="pt-1 text-center text-xs text-teal-50">{trait.name}</div>
+            <div className="pt-1 text-center text-xs text-teal-50">{trait.displayName}</div>
         </div>
     )
 }

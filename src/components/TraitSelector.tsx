@@ -111,8 +111,8 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     const colorFilteredTraitOptions = useColorPicker
         ? traitOptions
               .filter((trait) => trait.name.includes(color))
-              .map((trait) => ({ ...trait, name: trait.name.replace(color, '') }))
-        : traitOptions
+              .map((trait) => ({ ...trait, displayName: trait.name.replace(color, '') }))
+        : traitOptions.map((trait) => ({ ...trait, displayName: trait.name }))
 
     // if (useColorPicker) {
     //     console.log(name)
@@ -148,11 +148,11 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
                     }}
                 >
                     {colorFilteredTraitOptions
-                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .sort((a, b) => a.displayName.localeCompare(b.displayName))
                         .sort((a, b) => (a.earned === b.earned ? 0 : a.earned ? -1 : 1))
                         .map((trait) => (
                             <TraitImage
-                                key={`${trait.category} ${trait.name}`}
+                                key={`${trait.category} ${trait.displayName}`}
                                 className="col-span-1"
                                 trait={trait}
                                 pfpState={pfpState}
