@@ -296,19 +296,24 @@ const EditAvatar = () => {
 
     const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
 
+    const sheFiTitle = allowedAction === AllowedAction.update ? `Update your ${project?.name}` : 'Build-a-Nova'
+    const genericTitle =
+        allowedAction === AllowedAction.update ? `Update your ${project?.name}` : `Create your ${project?.name}`
+    const title = project?.slug === 'robo-nova' ? sheFiTitle : genericTitle
+
+    const sheFiSubtext = `Unlock traits as you participate and contribute to SheFi`
+    const genericSubtext = `Earn more traits over time`
+    const subtext = project?.slug === 'robo-nova' ? sheFiSubtext : genericSubtext
+
     const Header = () => {
         return (
             <>
                 <div className="mx-auto flex items-center justify-center">
                     <div className="grid gap-y-2 text-center">
                         <Title level={3} className="font-title font-bold">
-                            {project
-                                ? allowedAction === AllowedAction.update
-                                    ? `Update your ${project.name}`
-                                    : `Create your ${project.name}`
-                                : null}
+                            {project ? title : null}
                         </Title>
-                        <p className="text-md text-teal-50/75">Earn more traits over time</p>
+                        <p className="text-md text-teal-50/75">{subtext}</p>
                     </div>
                 </div>
             </>
