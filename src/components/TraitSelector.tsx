@@ -51,7 +51,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     const coloredTraits = ['Hair', 'Bangs']
     const useColorPicker = coloredTraits.includes(name)
 
-    const colors = {
+    const baseColors = {
         Silver: 'bg-gray-500',
         Black: 'bg-black-500 border border-gray-700 border-2 p-1',
         Raven: 'bg-[#2C192E]',
@@ -63,9 +63,16 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
         Dream: 'bg-violet-500',
         Magenta: 'bg-fuchsia-500',
         Orange: 'bg-orange-400',
-        Gold: 'bg-amber-500',
-        Green: 'bg-green-600',
+        Gold: 'bg-[#604E15]',
+        Emerald: 'bg-green-600',
     }
+
+    const bangsAdditionalColors = {
+        Aqua: 'bg-sky-500',
+        'Electric Purple': 'bg-purple-400',
+    }
+
+    const colors = name === 'Bangs' ? { ...baseColors, ...bangsAdditionalColors } : baseColors
 
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'
     const traitTypeText = isModifiable ? 'Can be changed at any time' : 'Cannot be changed after minting'
@@ -75,20 +82,23 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     const ColorPicker = () => {
         return (
             <div
-                className="mt-4 grid justify-items-center gap-3"
+                className="mt-4 grid items-baseline justify-items-center gap-3 px-2"
                 style={{
-                    gridTemplateColumns: `repeat(auto-fill, minmax(2rem, 1fr))`,
+                    gridTemplateColumns: `repeat(auto-fill, minmax(3rem, 1fr))`,
                 }}
             >
                 {Object.entries(colors).map(([colorName, colorClass]) => {
                     const isSelected = color === colorName
                     return (
                         <button key={colorName} onClick={() => setColor(colorName)}>
-                            <div
-                                className={`h-8 w-8 rounded-full ${colorClass} ${
-                                    isSelected && 'outline outline-2 outline-teal-400'
-                                }`}
-                            ></div>
+                            <div className="flex flex-col items-center gap-1">
+                                <div
+                                    className={`h-12 w-12 rounded-full ${colorClass} ${
+                                        isSelected && 'outline outline-2 outline-teal-400'
+                                    }`}
+                                ></div>
+                                <div className="text-xs">{colorName}</div>
+                            </div>
                         </button>
                     )
                 })}
@@ -98,13 +108,15 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
 
     // a function include the trait if the trait's name includes any of the
     const colorFilteredTraitOptions = useColorPicker
-        ? traitOptions.filter((trait) => trait.name.includes(color))
+        ? traitOptions
+              .filter((trait) => trait.name.includes(color))
+              .map((trait) => ({ ...trait, name: trait.name.replace(color, '') }))
         : traitOptions
 
-    if (useColorPicker) {
-        console.log(name)
-        console.log(colorFilteredTraitOptions.length)
-    }
+    // if (useColorPicker) {
+    //     console.log(name)
+    //     console.log(colorFilteredTraitOptions.length)
+    // }
     return (
         <div>
             <div

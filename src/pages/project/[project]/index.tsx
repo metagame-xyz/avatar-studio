@@ -47,6 +47,7 @@ const Project: NextPage = () => {
 
     const organizationSlug = project?.organization?.slug as string
 
+    // TODO don't always call this on page load even if isOrgAdmin
     const { data: airtableData } = trpc.project.getAllAirtableData.useQuery(
         { organizationSlug },
         { enabled: !!organizationSlug && isOrgAdmin },
