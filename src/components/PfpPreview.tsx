@@ -61,6 +61,7 @@ const PfpPreview = ({
 
     const [imagesLoadedCount, setImagesLoaded] = useState<number>(0)
     const [allImagesLoaded, setAllImagesLoaded] = useState<boolean>(false)
+    const [isImageDownloaded, setIsImageDownloaded] = useState<boolean>(false)
 
     useEffect(() => {
         if (imagesLoadedCount === previewPfpState.length) setAllImagesLoaded(true)
@@ -76,12 +77,23 @@ const PfpPreview = ({
             .sort((a, b) => a.zIndex - b.zIndex)
             .map((trait) => '/_next/image?url=' + trait.pngUrl.replace(/&/g, encodeURIComponent('&')) + '&w=3840&q=75')
 
-        mergeImages(links, { crossOrigin: 'anonymous' }).then((b64: string) => {
-            const a = document.createElement('a')
-            a.href = b64
-            a.download = `${projectName}.png`
-            a.click()
-        })
+        mergeImages(links, { crossOrigin: 'anonymous' })
+            .then((b64: string) => {
+                const a = document.createElement('a')
+                a.href = b64
+                a.download = `${projectName}.png`
+                a.click()
+            })
+            .then(() => setIsImageDownloaded(true))
+    }
+
+    const handleTweetClick = (url: string) => {
+        const tweetText =
+            "I just minted my Robo Nova! As I participate & contribute to @She__Fi, I'll unlock more traits and accessories. \n\n In partnership with @Metagame"
+
+        const encodedTweet = encodeURIComponent(`${tweetText} \n ${url}`)
+
+        window.open(`https://twitter.com/intent/tweet?text=${encodedTweet}`, '_blank')
     }
 
     const variants = {
@@ -226,7 +238,7 @@ const PfpPreview = ({
                         </AnimatePresence>
                     </div>
                     {openSeaUrl && (
-                        <div className="mx-auto my-2 flex justify-center gap-3">
+                        <div className="mx-auto my-2 flex flex-wrap gap-3">
                             <a
                                 className="btn-ghost items-center gap-2"
                                 href={openSeaUrl}
@@ -234,7 +246,6 @@ const PfpPreview = ({
                                 rel="noreferrer"
                             >
                                 <Icon image={opensea} size={2} />
-                                OpenSea
                             </a>
                             <button
                                 className="btn-ghost items-center gap-2"
@@ -242,7 +253,20 @@ const PfpPreview = ({
                                 disabled={!areTraitsEqual(pfpState, existingPfpState)}
                             >
                                 <ArrowDownTrayIcon className="w-5" />
-                                Download <span className="text-sm font-light text-gray-400">PNG</span>
+                                Download <span className="text-sm font-light text-gray-400">png</span>
+                            </button>
+                            <button
+                                className="btn-ghost relative"
+                                onClick={() => handleTweetClick(openSeaUrl)}
+                                disabled={!isImageDownloaded}
+                            >
+                                Tweet
+                                {!isImageDownloaded && (
+                                    <Tooltip
+                                        text={'Download your Robo Nova first so you can put it in your tweet!'}
+                                        withInfoIcon
+                                    />
+                                )}
                             </button>
                         </div>
                     )}

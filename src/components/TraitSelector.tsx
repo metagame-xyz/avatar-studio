@@ -111,6 +111,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     const colorFilteredTraitOptions = useColorPicker
         ? traitOptions
               .filter((trait) => trait.name.includes(color))
+              .filter((trait) => (color === 'Blue' ? !trait.name.includes('Dark Blue') : true)) // TODO hack, maybe require colors not to be have a substring of another color
               .map((trait) => ({ ...trait, displayName: trait.name.replace(color, '') }))
         : traitOptions.map((trait) => ({ ...trait, displayName: trait.name }))
 

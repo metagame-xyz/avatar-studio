@@ -15,7 +15,7 @@
         @apply inline-flex items-center justify-center rounded-md border border-transparent bg-[#2D3836] px-4 py-2 text-base font-medium text-teal-50 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
     }
     .btn-ghost {
-        @apply inline-flex items-center justify-center rounded-md border border-teal-300 bg-transparent px-4 py-2 text-base font-medium text-gray-400 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1;
+        @apply inline-flex items-center justify-center rounded-md border border-teal-300 bg-transparent px-4 py-2 text-base font-medium text-gray-400 hover:bg-[#1B2221] focus:outline-none focus:ring-1 focus:ring-teal-50 focus:ring-offset-1 disabled:opacity-50;
     }
     .th-primary {
         @apply p-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500;
