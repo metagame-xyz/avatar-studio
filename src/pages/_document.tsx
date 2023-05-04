@@ -13,7 +13,7 @@ const WEBSITE_URL = clientEnv.NEXT_PUBLIC_WEBSITE_URL
 
 const meta: MetaProps = {
     title: 'Avatar Studio',
-    description: 'Earnable NFTs for your community',
+    description: 'Earnable NFTs for your community by @metagame',
     image: `https://${WEBSITE_URL}/site-preview.png`,
     type: 'website',
 }
