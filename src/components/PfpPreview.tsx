@@ -91,7 +91,7 @@ const PfpPreview = ({
         const tweetText =
             "I just minted my Robo Nova! As I participate & contribute to @She__Fi, I'll unlock more traits and accessories. \n\n In partnership with @Metagame"
 
-        const encodedTweet = encodeURIComponent(`${tweetText} \n ${url}`)
+        const encodedTweet = encodeURIComponent(`${tweetText} \n\n ${url}`)
 
         window.open(`https://twitter.com/intent/tweet?text=${encodedTweet}`, '_blank')
     }
