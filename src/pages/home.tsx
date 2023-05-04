@@ -151,13 +151,8 @@ const Home: NextPage = ({ subdomainConfig = defaultConfig }: { subdomainConfig?:
                             <div className="text-sm">
                                 If you’d like to create an Earnable NFT for your own community, please reach out
                                 directly to{' '}
-                                <a
-                                    href="https://twitter.com/metagame"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-teal-200 hover:text-teal-300"
-                                >
-                                    @Metagame
+                                <a href="mailto:brenner@themetagame.xyz" className="text-teal-200 hover:text-teal-300">
+                                    brenner@themetagame.xyz
                                 </a>
                             </div>
                             <div className="flex flex-col items-center gap-2 self-center">

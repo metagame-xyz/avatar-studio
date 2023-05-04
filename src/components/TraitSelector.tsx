@@ -48,10 +48,10 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
 
     const onMouseLeaveDebounced = debounce(onMouseLeave, 250)
 
-    const coloredTraits = ['Hair', 'Bangs']
+    const coloredTraits = ['Hair', 'Bangs', 'Eyes']
     const useColorPicker = coloredTraits.includes(name)
 
-    const baseColors = {
+    const hairColors = {
         Silver: 'bg-gray-500',
         Black: 'bg-black-500 border border-gray-700 border-2 p-1',
         Raven: 'bg-[#2C192E]',
@@ -68,12 +68,56 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
         Emerald: 'bg-green-600',
     }
 
-    const bangsAdditionalColors = {
+    const bangsColors = {
+        Silver: 'bg-gray-500',
+        Black: 'bg-black-500 border border-gray-700 border-2 p-1',
+        Raven: 'bg-[#2C192E]',
+        'Dark Brown': 'bg-yellow-950',
+        Evergreen: 'bg-emerald-950',
+        'Dark Blue': 'bg-blue-900',
+        Blue: 'bg-blue-500',
         Aqua: 'bg-sky-500',
+        Indigo: 'bg-indigo-500',
+        Purple: 'bg-purple-500',
+        Dream: 'bg-violet-500',
         'Electric Purple': 'bg-purple-400',
+        Magenta: 'bg-fuchsia-500',
+        Orange: 'bg-orange-400',
+        Gold: 'bg-[#604E15]',
+        Emerald: 'bg-green-600',
     }
 
-    const colors = name === 'Bangs' ? { ...baseColors, ...bangsAdditionalColors } : baseColors
+    const eyeColors = {
+        Space: 'bg-gray-900',
+        Wicked: 'bg-[#2C192E]',
+        Haze: 'bg-lime-700',
+        Green: 'bg-green-500',
+        Mango: 'bg-lime-200',
+        Lime: 'bg-lime-500',
+        Mint: 'bg-teal-500',
+        Sea: 'bg-cyan-500',
+        Blue: 'bg-blue-500',
+        Purple: 'bg-purple-500',
+        Dream: 'bg-violet-500',
+        Lilac: 'bg-violet-300',
+        Magenta: 'bg-fuchsia-500',
+        Sunset: 'bg-fuchsia-400',
+        Watermelon: 'bg-pink-300',
+        Peach: 'bg-pink-300',
+        Pink: 'bg-pink-400',
+        Red: 'bg-red-500',
+        Fire: 'bg-red-700',
+        Orange: 'bg-orange-400',
+        Yellow: 'bg-yellow-500',
+    }
+
+    const categoryColorMap: Record<string, Record<string, string>> = {
+        Hair: hairColors,
+        Bangs: bangsColors,
+        Eyes: eyeColors,
+    }
+
+    const colors = useColorPicker ? categoryColorMap[name] || {} : {}
 
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'
     const traitTypeText = isModifiable ? 'Can be changed at any time' : 'Cannot be changed after minting'
@@ -98,7 +142,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
                                         isSelected && 'outline outline-2 outline-teal-400'
                                     }`}
                                 ></div>
-                                <div className="text-xs">{colorName}</div>
+                                <div className="text-xs text-gray-400">{colorName}</div>
                             </div>
                         </button>
                     )
@@ -112,6 +156,7 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
         ? traitOptions
               .filter((trait) => trait.name.includes(color))
               .filter((trait) => (color === 'Blue' ? !trait.name.includes('Dark Blue') : true)) // TODO hack, maybe require colors not to be have a substring of another color
+              .filter((trait) => (color === 'Purple' ? !trait.name.includes('Electric Purple') : true))
               .map((trait) => ({ ...trait, displayName: trait.name.replace(color, '') }))
         : traitOptions.map((trait) => ({ ...trait, displayName: trait.name }))
 
