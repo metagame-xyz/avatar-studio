@@ -12,7 +12,7 @@ export const getAlchemy = (network: string) => {
     })
 }
 
-const webhookUrl = `${serverEnv.BASE_URL}/api/alchemy/webhook`
+const webhookUrl = `https://${clientEnv.NEXT_PUBLIC_WEBSITE_URL}/api/alchemy/webhook`
 
 export const getOwnersForContract = async (contractAddress: string, network: string): Promise<string[]> => {
     const alchemy = getAlchemy(network)

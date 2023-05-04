@@ -327,7 +327,7 @@ class Airtable {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.airtableAuth.accessToken}`,
         }
-        const notificationUrl = `${serverEnv.BASE_URL}/api/airtable/webhook`
+        const notificationUrl = `https://${clientEnv.NEXT_PUBLIC_WEBSITE_URL}/api/airtable/webhook`
         const body = {
             notificationUrl,
             specification: {

@@ -16,7 +16,6 @@ export const serverSchema = z.object({
     AIRTABLE_CLIENT_SECRET: z.string(),
     EVENT_FORWARDER_AUTH_TOKEN: z.string(),
     WEBHOOK_PASSWORD: z.string(),
-    BASE_URL: z.string(),
     ALCHEMY_NOTIFY_TOKEN: z.string(),
 })
 
@@ -33,6 +32,7 @@ export const clientSchema = z.object({
     NEXT_PUBLIC_AIRTABLE_CLIENT_ID: z.string(),
     NEXT_PUBLIC_AIRTABLE_REDIRECT_URI: z.string(),
     NEXT_PUBLIC_AIRTABLE_SCOPE: z.string(),
+    NEXT_PUBLIC_WEBSITE_URL: z.string(),
 })
 
 /**
@@ -48,5 +48,6 @@ export const clientEnv = {
     NEXT_PUBLIC_AIRTABLE_CLIENT_ID: process.env.NEXT_PUBLIC_AIRTABLE_CLIENT_ID,
     NEXT_PUBLIC_AIRTABLE_REDIRECT_URI: process.env.NEXT_PUBLIC_AIRTABLE_REDIRECT_URI,
     NEXT_PUBLIC_AIRTABLE_SCOPE: process.env.NEXT_PUBLIC_AIRTABLE_SCOPE,
+    NEXT_PUBLIC_WEBSITE_URL: process.env.NEXT_PUBLIC_WEBSITE_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 }
