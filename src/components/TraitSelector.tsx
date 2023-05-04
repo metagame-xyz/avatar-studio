@@ -32,8 +32,6 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
 
     const [open, setOpen] = useState<boolean>(false)
 
-    const [color, setColor] = useState<string>('Silver')
-
     const { name, traits: traitOptions, isModifiable } = traitCategory
 
     const onMouseEnter = (trait: TraitWithEarnedBool) => {
@@ -47,9 +45,6 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
     }
 
     const onMouseLeaveDebounced = debounce(onMouseLeave, 250)
-
-    const coloredTraits = ['Hair', 'Bangs', 'Eyes']
-    const useColorPicker = coloredTraits.includes(name)
 
     const hairColors = {
         Silver: 'bg-gray-500',
@@ -117,7 +112,13 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
         Eyes: eyeColors,
     }
 
-    const colors = useColorPicker ? categoryColorMap[name] || {} : {}
+    const colors = categoryColorMap[name] || {}
+    const defaultColor = Object.keys(colors)[0] || ''
+
+    const coloredTraits = Object.keys(categoryColorMap)
+    const useColorPicker = coloredTraits.includes(name)
+
+    const [color, setColor] = useState<string>(defaultColor)
 
     const traitTypeHeader = isModifiable ? 'Upgradeable trait' : 'Permanent trait'
     const traitTypeText = isModifiable ? 'Can be changed at any time' : 'Cannot be changed after minting'
