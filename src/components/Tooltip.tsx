@@ -12,7 +12,7 @@ type TooltipProps = {
 const Tooltip = ({ text, withInfoIcon = false, withLockIcon = false }: TooltipProps) => {
     const [open, setOpen] = React.useState(false)
     return (
-        <TooltipPrimitive.Provider delayDuration={50}>
+        <TooltipPrimitive.Provider delayDuration={30}>
             <TooltipPrimitive.Root open={open}>
                 <TooltipPrimitive.Trigger
                     asChild
