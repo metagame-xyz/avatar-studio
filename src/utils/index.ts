@@ -169,8 +169,8 @@ export const pageToLoad = (member: any): string => {
 export const getOpenseaUrl = (chain: Chain, contactAddress: string | null | undefined, tokenId?: number | null) => {
     if (!contactAddress || !tokenId) return null
     const testnetString = chain.testnet ? 'testnets.' : ''
-    const chainNetwork = chain.network.toLowerCase()
-    return `https://${testnetString}opensea.io/assets/${chainNetwork}/${contactAddress}/${tokenId}`
+    const chainName = chain.name.toLowerCase()
+    return `https://${testnetString}opensea.io/assets/${chainName}/${contactAddress}/${tokenId}`
 }
 
 export const isAddress = (value: string) => {
