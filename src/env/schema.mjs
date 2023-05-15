@@ -17,6 +17,7 @@ export const serverSchema = z.object({
     EVENT_FORWARDER_AUTH_TOKEN: z.string(),
     WEBHOOK_PASSWORD: z.string(),
     ALCHEMY_NOTIFY_TOKEN: z.string(),
+    DATADOG_API_KEY: z.string(),
 })
 
 /**

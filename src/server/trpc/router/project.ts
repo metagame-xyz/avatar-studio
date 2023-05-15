@@ -9,6 +9,7 @@ import airtable, { airtableAuthExpiredObj, airtableAuthNotPresentObj, airtableLo
 import type { AirtableFieldType, AirtableWebhookResponse } from 'utils/airtableFrontend'
 import { AirtableAuthError, airtableFieldSchema, AirtableLockError } from 'utils/airtableFrontend'
 import { privy } from 'utils/backend'
+import { LogData, logError, logSuccess } from 'utils/logging'
 import { getAddressFromString } from 'utils/needEnvUtils'
 import type { MostTypes } from 'utils/types'
 import { getNewAirtableMemberSchema, newAirtableMemberSchemaOld } from 'utils/types'
@@ -414,17 +415,103 @@ export const projectRouter = router({
             // console.log('airtableMembers length:', airtableMembers.length)
             // console.log('airtableMembersDedupedMap length:', Object.entries(airtableMembersDedupedMap).length)
 
+            // const loggableUser = {
+            //     airtable: {
+            //         email: 'maggie@shefi.org',
+            //         address: '0x0',
+            //         name: 'Maggie',
+            //     },
+            //     privy: {
+            //         exists: true,
+            //         isJustCreated: false,
+            //         email: 'maggie@shefi.org',
+            //         address: '0x0',
+            //         privyId: 'CSWA123',
+            //     },
+            //     database: {
+            //         exists: true,
+            //         isJustCreated: false,
+            //         projectId: 5,
+            //         address: '0x0',
+            //         email: 'maggie@shefi.org',
+            //         firstName: 'Maggie',
+            //     },
+            // }
+
+            type loggableUser = {
+                airtable: Record<string, MostTypes> | undefined
+                privy:
+                    | {
+                          exists: boolean
+                          isJustCreated: boolean
+                          email: string | null
+                          address: string | null
+                          privyId: string | null
+                      }
+                    | undefined
+                database:
+                    | {
+                          exists: boolean
+                          isJustCreated: boolean
+                          projectId: number | null
+                          address: string | null
+                          email: string | null
+                          firstName: string | null
+                      }
+                    | undefined
+            }
+
+            const loggableUsersMap: Record<string, loggableUser> = {}
+
+            Object.entries(airtableMembersDedupedMap).forEach(([address, airtableMember]) => {
+                const privyData = privyUsersByWalletAddress[address]
+                loggableUsersMap[address] = {
+                    airtable: airtableMember,
+                    privy: {
+                        exists: !!privyData,
+                        isJustCreated: false,
+                        email: privyData?.email?.address || null,
+                        address: privyData?.wallet?.address || null,
+                        privyId: privyData?.id || null,
+                    },
+                    database: undefined,
+                }
+            })
+
             const users = await Promise.all(
                 airtableMembers.map(async (airtableMember) => {
                     let privyUser: PrivyUser | null = null
+                    const walletAddress = airtableMember[walletAddressFieldNameSlug] as string
                     try {
-                        const walletAddress = airtableMember[walletAddressFieldNameSlug] as string
+                        const logData: LogData = {
+                            level: 'info',
+                            function_name: 'beginSyncAirtableMembers',
+                            wallet_address: walletAddress,
+                        }
+
+                        logSuccess(logData)
 
                         // console.log('walletAddress (user.findUnique):', walletAddress)
                         const existingUser = await ctx.prisma.user.findUnique({
                             where: { address: walletAddress },
                         })
                         let existingPrivyUser: PrivyUser | null | undefined = null
+
+                        if (existingUser) {
+                            loggableUsersMap[walletAddress] = {
+                                airtable: undefined,
+                                privy: undefined,
+                                ...(loggableUsersMap[walletAddress] || {}),
+                                database: {
+                                    exists: true,
+                                    isJustCreated: false,
+                                    projectId: null,
+                                    address: existingUser.address,
+                                    email: existingUser.email,
+                                    firstName: existingUser.firstName,
+                                },
+                            }
+                        }
 
                         // TODO update this to "privyUpdateUser once Privy adds that option"
                         if (!existingUser) {
@@ -461,6 +548,19 @@ export const projectRouter = router({
                                 privyUser = await privy.importUser({
                                     linkedAccounts,
                                 })
+
+                                loggableUsersMap[walletAddress] = {
+                                    airtable: undefined,
+                                    database: undefined,
+                                    ...(loggableUsersMap[walletAddress] || {}),
+                                    privy: {
+                                        exists: true,
+                                        isJustCreated: true,
+                                        email: privyUser?.email?.address || null,
+                                        address: privyUser?.wallet?.address || null,
+                                        privyId: privyUser?.id || null,
+                                    },
+                                }
                                 // privyUser = await privyAddUser(airtableMember, walletAddressFieldNameSlug)
                             }
                         }
@@ -537,7 +637,23 @@ export const projectRouter = router({
                     } catch (error) {
                         // console.log('USER UPSERT error:', privyUser)
 
+                        const logData: LogData = {
+                            level: 'error',
+                            function_name: 'syncAirtableMembersWithData',
+                            wallet_address: walletAddress,
+                        }
+
+                        logError(logData, error)
+
                         return null
+                    } finally {
+                        const logData: LogData = {
+                            level: 'info',
+                            function_name: 'syncAirtableMembersWithData',
+                            wallet_address: walletAddress,
+                        }
+
+                        logSuccess(logData, JSON.stringify(loggableUsersMap[walletAddress] || 'user not found'))
                     }
                 }),
             ).then((users) => users.filter(isNotNull))
@@ -546,7 +662,7 @@ export const projectRouter = router({
 
             await Promise.all(
                 users.map(async (user) => {
-                    await ctx.prisma.membersOfProjects.upsert({
+                    const response = await ctx.prisma.membersOfProjects.upsert({
                         where: {
                             userId_projectSlug: {
                                 userId: user.id,
@@ -562,6 +678,8 @@ export const projectRouter = router({
                             projectSlug: project.slug,
                         },
                     })
+
+                    return response
                 }),
             )
         }),

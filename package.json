@@ -43,6 +43,7 @@
         "aws-sdk": "^2.1294.0",
         "base64url": "^3.0.1",
         "bottleneck": "^2.19.5",
+        "datadog-winston": "^1.5.1",
         "ethereum-blockies-base64": "^1.0.2",
         "ethers": "^5.7.2",
         "framer-motion": "^8.4.3",
@@ -61,10 +62,12 @@
         "superjson": "1.9.1",
         "ts-case-convert": "^2.0.2",
         "wagmi": "^0.12.7",
+        "winston": "^3.8.2",
         "zod": "^3.18.0"
     },
     "devDependencies": {
         "@types/airtable": "^0.10.1",
+        "@types/datadog-winston": "^1.0.5",
         "@types/lodash.isequal": "^4.5.6",
         "@types/merge-images": "^1.2.1",
         "@types/node": "^18.0.0",
