@@ -478,6 +478,18 @@ export const projectRouter = router({
                 }
             })
 
+            const logDataLoggableUsers: LogData = {
+                level: 'info',
+                function_name: 'loggableUsersMap',
+            }
+            const logDataAirtableUsers: LogData = {
+                level: 'info',
+                function_name: 'airtableMembersDedupedMap',
+            }
+
+            logSuccess(logDataLoggableUsers, JSON.stringify(loggableUsersMap) || 'loggableUserMap not found')
+            logSuccess(logDataAirtableUsers, JSON.stringify(airtableMembersDedupedMap) || 'loggableUserMap not found')
+
             const users = await Promise.all(
                 airtableMembers.map(async (airtableMember) => {
                     let privyUser: PrivyUser | null = null
@@ -657,8 +669,17 @@ export const projectRouter = router({
                     }
                 }),
             ).then((users) => users.filter(isNotNull))
-
             // console.log('users length:', users.length)
+
+            const logDataLoggableUsersFilled: LogData = {
+                level: 'info',
+                function_name: 'loggableUsersMapFilled',
+            }
+
+            logSuccess(
+                logDataLoggableUsersFilled,
+                JSON.stringify(loggableUsersMap) || 'loggableUserMapFilled not found',
+            )
 
             await Promise.all(
                 users.map(async (user) => {
