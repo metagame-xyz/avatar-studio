@@ -495,14 +495,6 @@ export const projectRouter = router({
                     let privyUser: PrivyUser | null = null
                     const walletAddress = airtableMember[walletAddressFieldNameSlug] as string
                     try {
-                        const logData: LogData = {
-                            level: 'info',
-                            function_name: 'beginSyncAirtableMembers',
-                            wallet_address: walletAddress,
-                        }
-
-                        logSuccess(logData)
-
                         // console.log('walletAddress (user.findUnique):', walletAddress)
                         const existingUser = await ctx.prisma.user.findUnique({
                             where: { address: walletAddress },
@@ -658,14 +650,6 @@ export const projectRouter = router({
                         logError(logData, error)
 
                         return null
-                    } finally {
-                        const logData: LogData = {
-                            level: 'info',
-                            function_name: 'syncAirtableMembersWithData',
-                            wallet_address: walletAddress,
-                        }
-
-                        logSuccess(logData, JSON.stringify(loggableUsersMap[walletAddress] || 'user not found'))
                     }
                 }),
             ).then((users) => users.filter(isNotNull))
@@ -681,28 +665,15 @@ export const projectRouter = router({
                 JSON.stringify(loggableUsersMap) || 'loggableUserMapFilled not found',
             )
 
-            await Promise.all(
-                users.map(async (user) => {
-                    const response = await ctx.prisma.membersOfProjects.upsert({
-                        where: {
-                            userId_projectSlug: {
-                                userId: user.id,
-                                projectSlug: project.slug,
-                            },
-                        },
-                        update: {
-                            userId: user.id,
-                            projectSlug: project.slug,
-                        },
-                        create: {
-                            userId: user.id,
-                            projectSlug: project.slug,
-                        },
-                    })
+            const userProjectMappings = users.map((user) => ({
+                userId: user.id,
+                projectSlug: project.slug,
+            }))
 
-                    return response
-                }),
-            )
+            await ctx.prisma.membersOfProjects.createMany({
+                data: userProjectMappings,
+                skipDuplicates: true,
+            })
         }),
     syncAirtableAchievements: webhookOrOrgAdminProcedure
         .input(
