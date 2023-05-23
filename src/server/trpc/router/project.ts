@@ -15,7 +15,6 @@ import type { MostTypes } from 'utils/types'
 import { getNewAirtableMemberSchema, newAirtableMemberSchemaOld } from 'utils/types'
 import { z } from 'zod'
 import { protectedOrgProcedure, publicProcedure, router, webhookOrOrgAdminProcedure } from '../trpc'
-import { testData } from './testData'
 
 export const projectRouter = router({
     getProject: publicProcedure.input(z.string()).query(async ({ ctx }) => {
@@ -402,9 +401,7 @@ export const projectRouter = router({
 
             // console.log('first privy user:', Object.entries(privyUsersByWalletAddress).length)
 
-            // const airtableMembers = input.airtableMembers
-            const airtableMembers = testData as Record<string, string>[]
-
+            const airtableMembers = input.airtableMembers
             const airtableMembersDedupedMap: Record<string, Record<string, string>> = {}
 
             airtableMembers.forEach((member) => {
