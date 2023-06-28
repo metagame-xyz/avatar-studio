@@ -14,92 +14,96 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).send({})
     }
 
-    const webhookSchema = z.object({
-        base: z.object({
-            id: z.string(),
-        }),
-        webhook: z.object({
-            id: z.string(),
-        }),
-        timestamp: z.string(),
-    })
+    try {
+        const webhookSchema = z.object({
+            base: z.object({
+                id: z.string(),
+            }),
+            webhook: z.object({
+                id: z.string(),
+            }),
+            timestamp: z.string(),
+        })
 
-    const body = webhookSchema.parse(req.body)
-    const baseId = body.base.id
+        const body = webhookSchema.parse(req.body)
+        const baseId = body.base.id
 
-    const airtableProject = await prisma.airtableProject.findFirst({
-        where: {
-            baseId,
-            webhookId: body.webhook.id,
-        },
-        include: {
-            project: {
-                include: {
-                    organization: true,
+        const airtableProject = await prisma.airtableProject.findFirst({
+            where: {
+                baseId,
+                webhookId: body.webhook.id,
+            },
+            include: {
+                project: {
+                    include: {
+                        organization: true,
+                    },
                 },
             },
-        },
-    })
+        })
 
-    if (!airtableProject) {
-        const error = `no airtable project found for baseId ${baseId} webhookId ${body.webhook.id}`
-        console.log(error)
-        return res.status(200).send({})
+        if (!airtableProject) {
+            const error = `no airtable project found for baseId ${baseId} webhookId ${body.webhook.id}`
+            console.log(error)
+            return res.status(200).send({})
+        }
+
+        const macSecret = airtableProject?.macSecretBase64
+
+        if (!macSecret) {
+            const error = `no mac secret found for ${airtableProject?.baseName} ${airtableProject?.tableName}`
+            console.log(error)
+            return res.status(200).send({})
+        }
+
+        // TODO add this back in but the worst that happens is someone can spam the webhook, they cant send us bad data
+        // if (!isValidAirtableWebhook(req, macSecret)) {
+        //     const error = 'invalid airtable webhook signature'
+        //     return res.status(403).send({ error })
+        // }
+
+        const organizationSlug = airtableProject.project.organization.slug
+        const projectSlug = airtableProject.project.slug
+
+        const projectTrpc = projectRouter.createCaller({
+            session: null,
+            prisma: prisma,
+            projectSlug,
+            organizationSlug,
+            network: null,
+            webhookPassword: env.WEBHOOK_PASSWORD,
+        })
+
+        const data = await projectTrpc.getAllAirtableData({ organizationSlug })
+
+        if (!data || data.error) {
+            console.log('error getting airtable data', data?.error)
+            return res.status(200).send({})
+        }
+
+        if (!data.members) {
+            console.log('no members found')
+            return res.status(200).send({})
+        }
+
+        if (!data.achievementFields) {
+            console.log('no achievement fields found')
+            return res.status(200).send({})
+        }
+
+        const airtableMembers = data.members.map((m) => newAirtableMemberSchemaOld.parse(m))
+
+        await projectTrpc.syncAirtableMembers({ organizationSlug, airtableMembers, projectSlug })
+        await projectTrpc.syncAirtableAchievements({
+            organizationSlug,
+            airtableMembers,
+            airtableFields: data.achievementFields,
+        })
+
+        console.log(`synced ${airtableMembers.length} members and ${data.achievementFields.length} achievements`)
+    } catch (e) {
+        console.log('error', e)
+    } finally {
+        return res.status(200).json({})
     }
-
-    const macSecret = airtableProject?.macSecretBase64
-
-    if (!macSecret) {
-        const error = `no mac secret found for ${airtableProject?.baseName} ${airtableProject?.tableName}`
-        console.log(error)
-        return res.status(200).send({})
-    }
-
-    // TODO add this back in but the worst that happens is someone can spam the webhook, they cant send us bad data
-    // if (!isValidAirtableWebhook(req, macSecret)) {
-    //     const error = 'invalid airtable webhook signature'
-    //     return res.status(403).send({ error })
-    // }
-
-    const organizationSlug = airtableProject.project.organization.slug
-    const projectSlug = airtableProject.project.slug
-
-    const projectTrpc = projectRouter.createCaller({
-        session: null,
-        prisma: prisma,
-        projectSlug,
-        organizationSlug,
-        network: null,
-        webhookPassword: env.WEBHOOK_PASSWORD,
-    })
-
-    const data = await projectTrpc.getAllAirtableData({ organizationSlug })
-
-    if (!data || data.error) {
-        console.log('error getting airtable data', data?.error)
-        return res.status(200).send({})
-    }
-
-    if (!data.members) {
-        console.log('no members found')
-        return res.status(200).send({})
-    }
-
-    if (!data.achievementFields) {
-        console.log('no achievement fields found')
-        return res.status(200).send({})
-    }
-
-    const airtableMembers = data.members.map((m) => newAirtableMemberSchemaOld.parse(m))
-
-    await projectTrpc.syncAirtableMembers({ organizationSlug, airtableMembers, projectSlug })
-    await projectTrpc.syncAirtableAchievements({
-        organizationSlug,
-        airtableMembers,
-        airtableFields: data.achievementFields,
-    })
-
-    console.log(`synced ${airtableMembers.length} members and ${data.achievementFields.length} achievements`)
-
-    return res.status(200).json({})
 }
