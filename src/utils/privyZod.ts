@@ -55,6 +55,11 @@ const githubSchema = z.object({
     email: z.string().nullable(),
 })
 
+const appleSchema = z.object({
+    subject: z.string(),
+    email: z.string().nullable(),
+})
+
 const emailWithMetadataSchema = linkMetadataSchema.extend(emailSchema.shape).extend({
     type: z.literal('email'),
 })
@@ -83,6 +88,10 @@ const githubOAuthWithMetadataSchema = linkMetadataSchema.extend(githubSchema.sha
     type: z.literal('github_oauth'),
 })
 
+const appleOAuthWithMetadataSchema = linkMetadataSchema.extend(appleSchema.shape).extend({
+    type: z.literal('apple_oauth'),
+})
+
 const linkedAccountWithMetadataSchema = z.union([
     walletWithMetadataSchema,
     emailWithMetadataSchema,
@@ -91,6 +100,7 @@ const linkedAccountWithMetadataSchema = z.union([
     twitterOAuthWithMetadataSchema,
     discordOAuthWithMetadataSchema,
     githubOAuthWithMetadataSchema,
+    appleOAuthWithMetadataSchema,
 ])
 
 export type LinkedAccountWithMetadata = z.infer<typeof linkedAccountWithMetadataSchema>
