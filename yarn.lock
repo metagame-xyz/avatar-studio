@@ -1197,10 +1197,10 @@
     ts-case-convert "^2.0.2"
     type-fest "^3.6.1"
 
-"@privy-io/wagmi-connector@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@privy-io/wagmi-connector/-/wagmi-connector-0.0.7.tgz#ce02ead259cae7183fc2bdac16b7b509968082a6"
-  integrity sha512-eF3LH9sLgzngOX7tX/mbv+KGWfZT2ZBTaz8i6Rue+47btU0UE0wZ0JrxnNbNfATzOm5VNVf9VO2zEpYOW9UiYA==
+"@privy-io/wagmi-connector@0.0.11":
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/@privy-io/wagmi-connector/-/wagmi-connector-0.0.11.tgz#5c82c673c0611b3e659590b59d746c14a4a2e9d6"
+  integrity sha512-ufAfUDel9CmdZG+RmEQCQ7ScJGzMkAbrgENqZ2FdkglxOh36nMl2i947cLLvRi7ZxMukzdqjY6Fkn6utFYz6dQ==
 
 "@radix-ui/primitive@1.0.0":
   version "1.0.0"
