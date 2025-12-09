@@ -2,310 +2,311 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls", "extendedWhereUnique"]
+    provider        = "prisma-client-js"
+    previewFeatures = ["orderByNulls", "extendedWhereUnique"]
 }
 
 generator json {
-  provider = "prisma-json-types-generator"
+    provider = "prisma-json-types-generator"
 }
 
 datasource db {
-  provider  = "postgresql"
-  // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-  // Further reading:
-  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+    provider  = "postgresql"
+    // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+    // Further reading:
+    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
 }
 
 model Account {
-  id           String    @id @default(cuid())
-  userId       String
-  type         String // could be a privy enum 'email' | 'phone' | 'wallet'
-  subject      String?
-  email        String?
-  username     String?
-  name         String?
-  address      String?
-  number       String?
-  chainType    String?
-  walletClient String? // currently only 'privy' or 'unknown'
-  verifiedAt   DateTime?
-  user         User      @relation(fields: [userId], references: [privyDID], onDelete: Cascade)
+    id       String  @id @default(cuid())
+    userId   String
+    type     String // could be a privy enum 'email' | 'phone' | 'wallet'
+    subject  String?
+    email    String?
+    username String?
+    name     String?
+    address  String?
+    number   String?
+
+    chainType    String?
+    walletClient String? // currently only 'privy' or 'unknown'
+    verifiedAt   DateTime?
+    user         User      @relation(fields: [userId], references: [privyDID], onDelete: Cascade)
 }
 
 model User {
-  id                    String                     @id @default(cuid())
-  privyDID              String                     @unique
-  firstName             String?
-  lastName              String?
-  email                 String?                    @unique
-  image                 String?
-  address               String?                    @unique
-  accounts              Account[]
-  projects              MembersOfProjects[]
-  achievements          MemberAchievements[]
-  organizations         MembersOfOrganizations[]
-  invitations           OrganizationInvitation[]
-  role                  UserRole?
-  nftMetadata           NftMetadata[]
-  airtableAccessGranted OrganizationAirtableAuth[]
+    id                    String                     @id @default(cuid())
+    privyDID              String                     @unique
+    firstName             String?
+    lastName              String?
+    email                 String?                    @unique
+    image                 String?
+    address               String?                    @unique
+    accounts              Account[]
+    projects              MembersOfProjects[]
+    achievements          MemberAchievements[]
+    organizations         MembersOfOrganizations[]
+    invitations           OrganizationInvitation[]
+    role                  UserRole?
+    nftMetadata           NftMetadata[]
+    airtableAccessGranted OrganizationAirtableAuth[]
 }
 
 model OrganizationInvitation {
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId Int
-  // email          String
-  inviteeAddress String
-  role           OrganizationRole @default(ADMIN)
-  status         InvitationStatus @default(PENDING)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  issuedBy       User             @relation(fields: [issuedById], references: [id])
-  issuedById     String
+    organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId Int
+    // email          String
+    inviteeAddress String
+    role           OrganizationRole @default(ADMIN)
+    status         InvitationStatus @default(PENDING)
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    issuedBy       User             @relation(fields: [issuedById], references: [id])
+    issuedById     String
 
-  @@id([organizationId, inviteeAddress, role])
+    @@id([organizationId, inviteeAddress, role])
 }
 
 model Organization {
-  id           Int                       @id @unique @default(autoincrement())
-  name         String                    @unique
-  slug         String                    @unique
-  projects     Project[]
-  admins       MembersOfOrganizations[]
-  invitations  OrganizationInvitation[]
-  airtableAuth OrganizationAirtableAuth?
+    id           Int                       @id @unique @default(autoincrement())
+    name         String                    @unique
+    slug         String                    @unique
+    projects     Project[]
+    admins       MembersOfOrganizations[]
+    invitations  OrganizationInvitation[]
+    airtableAuth OrganizationAirtableAuth?
 }
 
 model OrganizationAirtableAuth {
-  id                     Int          @id @unique @default(autoincrement())
-  scope                  String
-  accessToken            String
-  accessTokenExpiration  DateTime
-  refreshToken           String
-  refreshTokenExpiration DateTime
-  organization           Organization @relation(fields: [organizationSlug], references: [slug])
-  organizationSlug       String       @unique
-  accessGrantedUser      User         @relation(fields: [accessGrantedUserId], references: [id])
-  accessGrantedUserId    String
+    id                     Int          @id @unique @default(autoincrement())
+    scope                  String
+    accessToken            String
+    accessTokenExpiration  DateTime
+    refreshToken           String
+    refreshTokenExpiration DateTime
+    organization           Organization @relation(fields: [organizationSlug], references: [slug])
+    organizationSlug       String       @unique
+    accessGrantedUser      User         @relation(fields: [accessGrantedUserId], references: [id])
+    accessGrantedUserId    String
 }
 
 model Lock {
-  id    String @id @unique
-  owner String
+    id    String @id @unique
+    owner String
 }
 
 model MembersOfOrganizations {
-  member         User             @relation(fields: [userId], references: [id])
-  userId         String
-  organization   Organization     @relation(fields: [organizationId], references: [id])
-  organizationId Int
-  role           OrganizationRole @default(ADMIN)
+    member         User             @relation(fields: [userId], references: [id])
+    userId         String
+    organization   Organization     @relation(fields: [organizationId], references: [id])
+    organizationId Int
+    role           OrganizationRole @default(ADMIN)
 
-  @@id([organizationId, userId])
+    @@id([organizationId, userId])
 }
 
 model Project {
-  id                    Int                   @id @unique @default(autoincrement())
-  name                  String                @unique
-  slug                  String                @unique
-  description           String?
-  traitCategories       TraitCategory[]
-  organization          Organization          @relation(fields: [organizationId], references: [id])
-  members               MembersOfProjects[]
-  organizationId        Int
-  achievementCategories AchievementCategory[]
-  nftMetadata           NftMetadata[]
+    id                    Int                   @id @unique @default(autoincrement())
+    name                  String                @unique
+    slug                  String                @unique
+    description           String?
+    traitCategories       TraitCategory[]
+    organization          Organization          @relation(fields: [organizationId], references: [id])
+    members               MembersOfProjects[]
+    organizationId        Int
+    achievementCategories AchievementCategory[]
+    nftMetadata           NftMetadata[]
 
-  contractAddress     String? @unique
-  network             String? @default("ethereum")
-  testContractAddress String? @unique
-  testNetwork         String? @default("sepolia")
+    contractAddress     String? @unique
+    network             String? @default("ethereum")
+    testContractAddress String? @unique
+    testNetwork         String? @default("sepolia")
 
-  airtableProject AirtableProject?
+    airtableProject AirtableProject?
 }
 
 model AirtableProject {
-  id                     Int     @id @unique @default(autoincrement())
-  project                Project @relation(fields: [projectId], references: [id])
-  projectId              Int     @unique
-  baseId                 String
-  baseName               String
-  tableId                String
-  tableName              String
-  walletAddressFieldId   String
-  walletAddressFieldName String
-  webhookId              String?
-  macSecretBase64        String?
+    id                     Int     @id @unique @default(autoincrement())
+    project                Project @relation(fields: [projectId], references: [id])
+    projectId              Int     @unique
+    baseId                 String
+    baseName               String
+    tableId                String
+    tableName              String
+    walletAddressFieldId   String
+    walletAddressFieldName String
+    webhookId              String?
+    macSecretBase64        String?
 }
 
 model MembersOfProjects {
-  member  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project Project     @relation(fields: [projectSlug], references: [slug])
-  role    ProjectRole @default(MEMBER)
+    member  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    project Project     @relation(fields: [projectSlug], references: [slug])
+    role    ProjectRole @default(MEMBER)
 
-  userId      String
-  projectSlug String
+    userId      String
+    projectSlug String
 
-  @@id([userId, projectSlug])
+    @@id([userId, projectSlug])
 }
 
 model TraitCategory {
-  project           Project @relation(fields: [projectId], references: [id])
-  traits            Trait[]
-  name              String
-  zIndex            Int
-  isModifiable      Boolean @default(true)
-  isDefaultAchieved Boolean @default(false)
+    project           Project @relation(fields: [projectId], references: [id])
+    traits            Trait[]
+    name              String
+    zIndex            Int
+    isModifiable      Boolean @default(true)
+    isDefaultAchieved Boolean @default(false)
 
-  projectId Int
+    projectId Int
 
-  @@id([projectId, name])
+    @@id([projectId, name])
 }
 
 model Trait {
-  id                              Int                  @id @unique @default(autoincrement())
-  traitCategory                   TraitCategory        @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
-  name                            String
-  ///                             [PngUrlMap]
-  pngUrlMap                       Json
-  isDefaultAchieved               Boolean?
-  achievementsRequired            Achievement[] // is empty if we're using levelLogic
-  levelLogic                      LevelLogic?
-  levelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
-  levelRequired                   Int?
-  achievementsRequiredDescription String?
+    id                              Int                  @id @unique @default(autoincrement())
+    traitCategory                   TraitCategory        @relation(fields: [projectId, traitCategoryName], references: [projectId, name], onDelete: Cascade)
+    name                            String
+    ///                             [PngUrlMap]
+    pngUrlMap                       Json
+    isDefaultAchieved               Boolean?
+    achievementsRequired            Achievement[] // is empty if we're using levelLogic
+    levelLogic                      LevelLogic?
+    levelCategory                   AchievementCategory? @relation(fields: [achievementCategoryId], references: [id])
+    levelRequired                   Int?
+    achievementsRequiredDescription String?
 
-  projectId             Int
-  traitCategoryName     String
-  achievementCategoryId Int?
+    projectId             Int
+    traitCategoryName     String
+    achievementCategoryId Int?
 
-  nftMetadata NftMetadata[]
+    nftMetadata NftMetadata[]
 
-  @@unique([projectId, traitCategoryName, name])
+    @@unique([projectId, traitCategoryName, name])
 }
 
 model AchievementCategory {
-  id           Int             @id @unique @default(autoincrement())
-  airtableId   String?
-  name         String
-  description  String?
-  project      Project         @relation(fields: [projectId], references: [id])
-  achievements Achievement[]
-  type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
-  traits       Trait[]
+    id           Int             @id @unique @default(autoincrement())
+    airtableId   String?
+    name         String
+    description  String?
+    project      Project         @relation(fields: [projectId], references: [id])
+    achievements Achievement[]
+    type         AchievementType @default(SPECIFIC_ACHIEVEMENT)
+    traits       Trait[]
 
-  projectId Int
+    projectId Int
 
-  @@unique([projectId, airtableId])
-  @@unique([projectId, name])
+    @@unique([projectId, airtableId])
+    @@unique([projectId, name])
 }
 
 model Achievement {
-  id                  Int                  @id @unique @default(autoincrement())
-  achievementCategory AchievementCategory  @relation(fields: [achievementCategoryId], references: [id])
-  name                String
-  level               Int?
-  members             MemberAchievements[]
-  traits              Trait[]
-  airtableId          String?              @unique
-  requirementLogic    RequirementLogic     @default(OR)
-  requirements        Requirement[]
+    id                  Int                  @id @unique @default(autoincrement())
+    achievementCategory AchievementCategory  @relation(fields: [achievementCategoryId], references: [id])
+    name                String
+    level               Int?
+    members             MemberAchievements[]
+    traits              Trait[]
+    airtableId          String?              @unique
+    requirementLogic    RequirementLogic     @default(OR)
+    requirements        Requirement[]
 
-  achievementCategoryId Int
+    achievementCategoryId Int
 
-  @@unique([achievementCategoryId, name])
+    @@unique([achievementCategoryId, name])
 }
 
 model MemberAchievements {
-  member      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  achievement Achievement @relation(fields: [achievementId], references: [id])
-  timestamp   DateTime    @default(now())
-  status      Boolean     @default(true)
+    member      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    achievement Achievement @relation(fields: [achievementId], references: [id])
+    timestamp   DateTime    @default(now())
+    status      Boolean     @default(true)
 
-  achievementId Int
-  userId        String
+    achievementId Int
+    userId        String
 
-  @@id([userId, achievementId])
+    @@id([userId, achievementId])
 }
 
 model Requirement {
-  id              Int               @id @unique @default(autoincrement())
-  achievements    Achievement[]
-  contractAddress String
-  network         String
-  action          RequirementAction
+    id              Int               @id @unique @default(autoincrement())
+    achievements    Achievement[]
+    contractAddress String
+    network         String
+    action          RequirementAction
 }
 
 model NftMetadata {
-  id            Int      @id @unique @default(autoincrement())
-  member        User     @relation(fields: [userId], references: [id])
-  project       Project  @relation(fields: [projectSlug], references: [slug])
-  name          String
-  image         String?  @unique
-  description   String
-  externalUrl   String?
-  tokenId       Int?
-  timestamp     DateTime @default(now())
-  walletAddress String
-  traits        Trait[]
-  traitHash     String
+    id            Int      @id @unique @default(autoincrement())
+    member        User     @relation(fields: [userId], references: [id])
+    project       Project  @relation(fields: [projectSlug], references: [slug])
+    name          String
+    image         String?  @unique
+    description   String
+    externalUrl   String?
+    tokenId       Int?
+    timestamp     DateTime @default(now())
+    walletAddress String
+    traits        Trait[]
+    traitHash     String
 
-  network String @default("sepolia")
+    network String @default("sepolia")
 
-  userId      String
-  projectSlug String
+    userId      String
+    projectSlug String
 
-  @@unique([traitHash, network, timestamp])
-  @@unique([tokenId, projectSlug, network, timestamp])
-  @@unique([walletAddress, projectSlug, network, timestamp])
-  @@unique([userId, projectSlug, network, timestamp])
+    @@unique([traitHash, network, timestamp])
+    @@unique([tokenId, projectSlug, network, timestamp])
+    @@unique([walletAddress, projectSlug, network, timestamp])
+    @@unique([userId, projectSlug, network, timestamp])
 }
 
 enum ProjectRole {
-  OWNER
-  ADMIN
-  MEMBER
+    OWNER
+    ADMIN
+    MEMBER
 }
 
 enum LevelLogic {
-  GREATER_THAN_OR_EQUAL_TO
-  MORE_THAN_OR_EQUAL_TO
-  LESS_THAN_OR_EQUAL_TO
-  EQUAL_TO
+    GREATER_THAN_OR_EQUAL_TO
+    MORE_THAN_OR_EQUAL_TO
+    LESS_THAN_OR_EQUAL_TO
+    EQUAL_TO
 }
 
 enum AchievementType {
-  SPECIFIC_ACHIEVEMENT
-  LEVEL
+    SPECIFIC_ACHIEVEMENT
+    LEVEL
 }
 
 enum OrganizationRole {
-  ADMIN
-  OWNER
+    ADMIN
+    OWNER
 }
 
 enum UserRole {
-  METAGAME_ADMIN
-  METAGAME_OWNER
+    METAGAME_ADMIN
+    METAGAME_OWNER
 }
 
 enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  REVOKED
+    PENDING
+    ACCEPTED
+    REJECTED
+    REVOKED
 }
 
 enum RequirementLogic {
-  OR
-  AND
+    OR
+    AND
 }
 
 enum RequirementAction {
-  OWN
-  MINTED
-  CUSTOM_METHOD_CALLED
+    OWN
+    MINTED
+    CUSTOM_METHOD_CALLED
 }
