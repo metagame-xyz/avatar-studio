@@ -30,9 +30,57 @@ Convert Avatar Studio from a full Privy/Ethereum-authenticated application to a 
 | Authentication | None required (anonymous demo user) |
 | Session | Browser-only (no server verification) |
 | User Data | localStorage with JSON serialization |
-| Wallet | Mock/simulated (no real connections) |
+| Wallet | removed
 | NFT Minting | Simulated (instant "mint" to localStorage) |
-| Achievements | Pre-populated demo achievements |
+| Achievements | Pre-populated demo achievements (already in Supabase DB) |
+| Project | Hardcoded to **CDMX Axolotls** (`cdmx-axolotls`) |
+
+---
+
+## Hardcoded Project: CDMX Axolotls
+
+The demo site is locked to a single project: **CDMX Axolotls** (slug: `cdmx-axolotls`).
+
+### Why CDMX Axolotls?
+- Contains 7 trait categories with 38 traits - enough variety for a compelling demo
+- Has 5 achievement categories for demonstrating the unlock system
+- No existing member data to conflict with demo users
+- Distinct, visually appealing theme
+
+### Implementation
+
+```typescript
+// src/constants/demo.ts
+export const DEMO_PROJECT_SLUG = 'cdmx-axolotls'
+export const DEMO_PROJECT_NAME = 'CDMX Axolotls'
+```
+
+### Routing Changes
+
+All project-specific routes redirect to the demo project:
+
+| Current Route | Demo Behavior |
+|---------------|---------------|
+| `/` | Landing page with "Try Demo" button |
+| `/home` | Redirects to `/project/cdmx-axolotls` |
+| `/project/[project]` | Only `cdmx-axolotls` is accessible; others redirect to demo project |
+| `/project/[project]/edit-avatar` | Only works for `cdmx-axolotls` |
+
+### Page Simplification
+
+Remove multi-project navigation entirely:
+- Remove project selector/switcher components
+- Remove organization views
+- Remove admin/settings pages
+- Landing page → "Try Demo" → directly to Axolotl avatar editor
+
+```typescript
+// Simplified routing in pages/index.tsx
+const handleDemoLogin = () => {
+  login()
+  router.push(`/project/${DEMO_PROJECT_SLUG}`)
+}
+```
 
 ---
 
@@ -40,13 +88,13 @@ Convert Avatar Studio from a full Privy/Ethereum-authenticated application to a 
 
 ### 1. Demo User Identity
 
-**Approach**: Generate a persistent anonymous user ID on first visit.
+**Approach**: Generate a persistent anonymous user ID on first visit, and lets them set their own display name
 
 ```typescript
 // src/utils/demoUser.ts
 interface DemoUser {
   id: string           // UUID, generated once and persisted
-  displayName: string  // "Demo User" or user-customizable
+  displayName: string  // form to set their name
   createdAt: string    // ISO timestamp
 }
 
@@ -58,7 +106,7 @@ export function getDemoUser(): DemoUser {
 
   const newUser: DemoUser = {
     id: crypto.randomUUID(),
-    displayName: 'Demo User',
+    displayName: '', // from a form they can set it in
     createdAt: new Date().toISOString()
   }
   localStorage.setItem(DEMO_USER_KEY, JSON.stringify(newUser))
@@ -155,11 +203,11 @@ interface DemoContextValue {
 
 | Page | Changes Required |
 |------|------------------|
-| `pages/index.tsx` | Replace Privy `login()` with demo login |
-| `pages/home.tsx` | Read from localStorage instead of tRPC |
+| `pages/index.tsx` | Replace Privy `login()` with demo login; redirect to `cdmx-axolotls` on login |
+| `pages/home.tsx` | Remove entirely or redirect to `/project/cdmx-axolotls` |
 | `pages/_app.tsx` | Remove PrivyProvider, add DemoProvider |
-| `pages/project/[project]/index.tsx` | Use demo achievements |
-| `pages/project/[project]/edit-avatar.tsx` | Remove wagmi, use demo state |
+| `pages/project/[project]/index.tsx` | Enforce `cdmx-axolotls` only; use demo achievements |
+| `pages/project/[project]/edit-avatar.tsx` | Enforce `cdmx-axolotls` only; remove wagmi, use demo state |
 
 ### 6. Navbar Changes
 
@@ -216,79 +264,15 @@ const handleMint = () => {
 
 ### 8. Demo Project & Traits
 
-**Option A: Hardcoded demo data**
-- Ship a demo project with traits baked into the codebase
-- No database needed at all
-- Simplest, but inflexible
-
-**Option B: Static JSON files**
-- Export current project/trait data to JSON
-- Load from `/public/demo-data/` at runtime
-- Easy to update without code changes
-
-**Option C: Keep read-only database**
 - Database remains for trait/project definitions
 - Only user data moves to localStorage
 - Most flexible, minimal changes to trait loading
-
-**Recommended**: Option C - preserves existing trait management while simplifying user data.
-
-### 9. Pre-populated Achievements
-
-Provide a set of demo achievements users can "earn" by exploring:
-
-```typescript
-const DEMO_ACHIEVEMENTS: DemoAchievement[] = [
-  {
-    id: 'demo-welcome',
-    name: 'Welcome Explorer',
-    description: 'Started your demo journey',
-    unlockedAt: '', // Set on grant
-    traitIds: ['trait-basic-hat', 'trait-basic-bg']
-  },
-  {
-    id: 'demo-customizer',
-    name: 'Style Master',
-    description: 'Customized 3 different trait categories',
-    unlockedAt: '',
-    traitIds: ['trait-gold-frame', 'trait-rare-eyes']
-  },
-  {
-    id: 'demo-completionist',
-    name: 'Completionist',
-    description: 'Tried every trait category',
-    unlockedAt: '',
-    traitIds: ['trait-legendary-crown']
-  }
-]
-```
-
-### 10. Achievement Triggers
-
-```typescript
-// src/hooks/useDemoAchievements.ts
-function useDemoAchievements() {
-  const { achievements, grantAchievement, selectedTraits } = useDemoContext()
-
-  useEffect(() => {
-    // Grant "Welcome Explorer" on first trait selection
-    if (Object.keys(selectedTraits).length > 0) {
-      maybeGrant('demo-welcome')
-    }
-
-    // Grant "Style Master" after 3 categories
-    if (Object.keys(selectedTraits).length >= 3) {
-      maybeGrant('demo-customizer')
-    }
-  }, [selectedTraits])
-}
-```
 
 ---
 
 ## API & Backend Changes
 
-### 11. tRPC Router Modifications
+### 11. tRPC Router Modifications (dont remove if not needed, the less changes the better)
 
 **Keep (read-only)**:
 - `project.getBySlug` - Load project definitions
@@ -305,7 +289,7 @@ function useDemoAchievements() {
 
 ### 12. Environment Simplification
 
-**No longer required**:
+**No longer required**: (but dont remove, its fine to just leave there)
 ```
 PRIVY_APP_SECRET
 VALIDATOR_PRIVATE_KEY
@@ -315,12 +299,11 @@ AIRTABLE_CLIENT_SECRET
 WEBHOOK_PASSWORD
 ```
 
-**Still required** (if keeping database for traits):
+**Still required**
 ```
 DATABASE_URL
 DIRECT_URL
-NEXT_PUBLIC_ALCHEMY_PROJECT_ID  (for trait image URLs only)
-METAGAME_AWS_*  (if S3 trait images stay)
+METAGAME_AWS_* 
 ```
 
 ---
@@ -343,7 +326,6 @@ Add clear visual indicators that this is demo mode:
 
 Toast notifications for key actions:
 - "Avatar saved to browser" (on trait changes)
-- "Achievement unlocked!" (on earning achievements)
 - "Demo reset complete" (on clearing data)
 
 ### 15. Export Option (Optional Enhancement)
@@ -380,12 +362,6 @@ const exportAvatar = () => {
 - [ ] Update `pages/project/[project]/index.tsx`
 - [ ] Update `pages/project/[project]/edit-avatar.tsx`
 
-### Phase 4: Backend Cleanup
-- [ ] Remove or stub unused tRPC routes
-- [ ] Remove webhook API routes
-- [ ] Clean up environment variables
-- [ ] Remove unused dependencies from package.json
-
 ### Phase 5: Demo Features
 - [ ] Add pre-populated demo achievements
 - [ ] Add achievement trigger system
@@ -393,40 +369,7 @@ const exportAvatar = () => {
 - [ ] Add "Reset Demo" functionality
 
 ### Phase 6: Testing & Polish
-- [ ] Test full demo flow end-to-end
+- [ ] Test full demo flow end-to-end vs playright mcp
 - [ ] Test localStorage persistence across sessions
 - [ ] Test "Reset Demo" clears everything properly
 - [ ] Verify no console errors from removed dependencies
-
----
-
-## Dependencies to Remove
-
-```json
-// package.json - can be removed
-"@privy-io/react-auth": "...",
-"@privy-io/wagmi-connector": "...",
-"wagmi": "...",
-"viem": "...",
-"ethers": "...",  // if present
-```
-
-**Note**: If keeping any blockchain-related display (like showing trait rarity from contract metadata), some dependencies may need to stay as read-only utilities.
-
----
-
-## Open Questions
-
-1. **Trait images**: Are trait images stored in S3 or on-chain? If S3, the AWS credentials and public URLs should continue working. If on-chain (IPFS gateway), those should still work without auth.
-
-2. **Multiple demo projects**: Should the demo support switching between multiple projects, or focus on a single showcase project?
-
-3. **Avatar composition**: Is avatar composition done client-side or server-side? If server-side, that API route needs to remain functional (but can be made public/unauthenticated).
-
-4. **Data export**: Do you want users to be able to export/share their demo avatar creations?
-
-5. **Reset scope**: Should "Reset Demo" clear just user selections, or also reset unlocked achievements?
-
----
-
-This spec provides a complete roadmap for converting Avatar Studio to a demo site. The core change is moving from server-authenticated user data to browser-persisted anonymous sessions, while preserving the visual avatar composition experience.
