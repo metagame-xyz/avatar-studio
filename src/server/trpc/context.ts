@@ -45,10 +45,14 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
     let verifiedClaims: AuthTokenClaims | null = null
 
-    try {
-        verifiedClaims = await privy.verifyAuthToken(authToken || '')
-    } catch (error) {
-        console.log(`Token verification failed with error ${error}.`)
+    // Only attempt to verify if there's actually a token
+    // In demo mode, no auth token is sent
+    if (authToken) {
+        try {
+            verifiedClaims = await privy.verifyAuthToken(authToken)
+        } catch (error) {
+            console.log(`Token verification failed with error ${error}.`)
+        }
     }
 
     return await createContextInner({ verifiedClaims, projectSlug, organizationSlug, network, webhookPassword })

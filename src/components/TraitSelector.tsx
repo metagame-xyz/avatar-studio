@@ -4,9 +4,7 @@ import { debounce } from 'lodash'
 import { useState } from 'react'
 import AnimateHeight from 'react-animate-height'
 import { IsNewComboAllowed } from 'utils'
-import { trpc } from 'utils/trpc'
 import type { AssembledNftTraits, TraitCategoryWithTraitsWithEarned, TraitWithEarnedBool } from 'utils/types'
-import { useNetwork } from 'wagmi'
 
 type TraitSelectorProps = {
     traitCategory: TraitCategoryWithTraitsWithEarned
@@ -22,13 +20,8 @@ type TraitSelectorProps = {
 // update the name to remove the color from the name
 
 const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewPfpState }: TraitSelectorProps) => {
-    const { chain } = useNetwork() // TODO
-    const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
-        {
-            chainNetwork: chain?.network || '',
-        },
-        { enabled: !!chain },
-    )
+    // In demo mode, we don't check for used combos since it's not real NFTs
+    const usedCombos: Record<string, string>[] = []
 
     const [open, setOpen] = useState<boolean>(false)
 
@@ -106,11 +99,9 @@ const TraitSelector = ({ traitCategory, pfpState, updatePfpState, updatePreviewP
         Yellow: 'bg-yellow-500',
     }
 
-    const categoryColorMap: Record<string, Record<string, string>> = {
-        Hair: hairColors,
-        Bangs: bangsColors,
-        Eyes: eyeColors,
-    }
+    // Color picker is only used for specific projects (robo-nova/SheFi)
+    // For demo mode with cdmx-axolotls, we disable it
+    const categoryColorMap: Record<string, Record<string, string>> = {}
 
     const colors = categoryColorMap[name] || {}
     const defaultColor = Object.keys(colors)[0] || ''

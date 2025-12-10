@@ -1,309 +1,166 @@
+import { useDemoContext } from 'contexts/DemoContext'
+import DemoPfpPreview from 'components/DemoPfpPreview'
 import FullPageLoading from 'components/FullPageLoading'
-import Loading from 'components/Loading'
-import Modal from 'components/Modal'
-import PfpPreview from 'components/PfpPreview'
 import Shell from 'components/Shell'
 import Title from 'components/Title'
 import TraitSelector from 'components/TraitSelector'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import {
-    areTraitArraysEqual,
-    getDecodedTransferEvent,
-    getOpenseaUrl,
-    isComboAllowed,
-    pfpStateToRequestedTraits,
-    springAnimation,
-    traitsToAssembledNftTraits,
-} from 'utils'
-import { NETWORK } from 'utils/constants'
-import { llamaPfpABI } from 'utils/llamaPfpABI'
+import { springAnimation, traitsToAssembledNftTraits } from 'utils'
+import { DEMO_PROJECT_SLUG } from 'utils/demo/constants'
 import { trpc } from 'utils/trpc'
-import type { AssembledNftTraits, Signature, Status, TraitWithEarnedBool } from 'utils/types'
-import { AllowedAction } from 'utils/types'
-import {
-    mainnet,
-    useAccount,
-    useContractWrite,
-    useNetwork,
-    usePrepareContractWrite,
-    useSignMessage,
-    useSwitchNetwork,
-    useWaitForTransaction,
-} from 'wagmi'
-import { sepolia } from 'wagmi/chains'
+import type { AssembledNftTraits, TraitWithEarnedBool } from 'utils/types'
+import { Status } from 'utils/types'
 
 const EditAvatar = () => {
     const router = useRouter()
     const projectSlug = router.query.project as string
+    const { isLoggedIn, ready, avatarState, saveAvatarState } = useDemoContext()
 
-    const { address } = useAccount()
-    const { chain } = useNetwork()
-    const { isLoading, pendingChainId, switchNetwork } = useSwitchNetwork()
-    const switchChainRef = useRef(null)
-    const trpcUtils = trpc.useContext()
-
-    const { data: project } = trpc.project.getProject.useQuery(projectSlug, { enabled: !!projectSlug })
-    const { data: assetData, status } = trpc.member.traitsAchieved.useQuery({ projectSlug }, { enabled: !!projectSlug })
-
-    if (status === 'error') router.push('/')
-
-    const correctChain = [sepolia, mainnet].find((chain) => chain.network === NETWORK) || sepolia
-    const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(!!(chain?.id !== correctChain?.id))
-    const [isUpdatingTraitsModalOpen, setIsUpdatingTraitsModalOpen] = useState<boolean>(false)
+    // Redirect non-demo projects to demo project
     useEffect(() => {
-        setIsChainModalOpen(chain?.id !== correctChain?.id)
-    }, [correctChain, chain])
+        if (projectSlug && projectSlug !== DEMO_PROJECT_SLUG) {
+            router.replace(`/project/${DEMO_PROJECT_SLUG}/edit-avatar`)
+        }
+    }, [projectSlug, router])
 
-    const network = chain?.network || ''
-
-    const { data: existingNftMetadata } = trpc.member.nftMetadata.useQuery(
-        {
-            projectSlug,
-            chainNetwork: network,
-        },
-        { enabled: !!projectSlug && !!chain },
-    )
-
-    const { data: signature } = trpc.member.getSignature.useQuery(
-        { projectSlug, chainNetwork: network },
-        { enabled: !!projectSlug && !!existingNftMetadata },
-    )
-
+    // Redirect to login if not logged in
     useEffect(() => {
-        if (signature) setSignatureForMint(signature)
-    }, [signature])
+        if (ready && !isLoggedIn) {
+            router.push('/')
+        }
+    }, [ready, isLoggedIn, router])
 
-    const { data: usedCombos } = trpc.project.getUsedNftCombos.useQuery(
-        { chainNetwork: network },
-        { enabled: !!projectSlug && !!chain },
-    )
+    const { data: project, status } = trpc.project.getProject.useQuery(DEMO_PROJECT_SLUG, {
+        enabled: !!projectSlug && projectSlug === DEMO_PROJECT_SLUG,
+    })
 
-    // TODO this will be cleaner if you use this instead
-    const enum NftState {
-        noDataNoNft = 'noDataNoNFT',
-        hasDataNoNft = 'hasDataNoNFT',
-        hasDataAndNft = 'noDataOrNFT',
-    }
+    // Get trait categories from the project data
+    const traitCategories = project?.traitCategories
 
-    const [nftState, setNftState] = useState<NftState>(NftState.noDataNoNft)
-    const [allowedAction, setAllowedAction] = useState<AllowedAction>(AllowedAction.create) // TODO don't load until you know which one it is
+    const [saveStatus, setSaveStatus] = useState<Status>(Status.idle)
     const [existingPfpState, setExistingPfpState] = useState<AssembledNftTraits | null>(null)
     const [pfpState, setPfpState] = useState<AssembledNftTraits>([])
     const [previewPfpState, setPreviewPfpState] = useState<AssembledNftTraits>([])
-    // set existing pfp state if user has an nft
-    // set nft state (data in db, and then also if minted and has a tokenId)
+
+    // Initialize state from saved avatar or default traits
     useEffect(() => {
-        if (existingNftMetadata?.traits) {
-            setExistingPfpState(existingNftMetadata.traits)
-            // setPreviewPfpState(existingNftMetadata.traits)
-        }
+        if (pfpState.length > 0) return // Skip if already set
+        if (!traitCategories) return
 
-        // user already has an nft, as shown by having a tokenId
-        if (existingNftMetadata?.tokenId) {
-            setNftState(NftState.hasDataAndNft)
-            setAllowedAction(AllowedAction.update)
-        }
+        // Convert trait categories to demo format where all traits are "earned" for the demo
+        const demoAssetData = traitCategories.map((tc) => ({
+            ...tc,
+            traits: tc.traits.map((t) => ({
+                ...t,
+                earned: true, // In demo mode, all traits are available
+                category: tc.name,
+                zIndex: tc.zIndex,
+                isModifiable: tc.isModifiable,
+            })),
+        }))
 
-        // user has data in db, so ready to mint, but no tokenId yet
-        if (existingNftMetadata && !existingNftMetadata?.tokenId) {
-            setNftState(NftState.hasDataNoNft)
+        // If user has saved avatar state, restore it
+        if (avatarState?.selectedTraits && Object.keys(avatarState.selectedTraits).length > 0) {
+            const restoredTraits: TraitWithEarnedBool[] = []
 
-            const statesAreSame = areTraitArraysEqual(existingNftMetadata?.traits, pfpState)
-            setAllowedAction(statesAreSame ? AllowedAction.mint : AllowedAction.update)
-        }
-
-        // user has no data in db, so not ready to mint
-        if (!existingNftMetadata) {
-            setNftState(NftState.noDataNoNft)
-            setAllowedAction(AllowedAction.create)
-        }
-    }, [existingNftMetadata, pfpState, NftState.hasDataAndNft, NftState.hasDataNoNft, NftState.noDataNoNft])
-
-    const [txHash, setTxHash] = useState<`0x${string}`>()
-    const [signatureForMint, setSignatureForMint] = useState<Signature>()
-
-    // upload data to db
-    const createOrUpdateNftMetadata = trpc.member.createOrUpdateNftMetadata.useMutation({
-        onSuccess: (data) => {
-            if (nftState === NftState.hasDataAndNft) {
-                toast.success(`Your ${project?.name} updated!`)
+            for (const [categoryName, traitName] of Object.entries(avatarState.selectedTraits)) {
+                const category = demoAssetData.find((c) => c.name === categoryName)
+                if (category) {
+                    const trait = category.traits.find((t) => t.name === traitName)
+                    if (trait) {
+                        restoredTraits.push(trait)
+                    }
+                }
             }
-            if ([NftState.hasDataNoNft, NftState.noDataNoNft].includes(nftState)) {
-                setSignatureForMint(data)
-                setNftState(NftState.hasDataNoNft)
-                setAllowedAction(AllowedAction.mint)
-                toast.success(`You may mint your ${project?.name} now`)
+
+            if (restoredTraits.length > 0) {
+                const assembled = traitsToAssembledNftTraits(restoredTraits)
+                setPfpState(assembled)
+                setPreviewPfpState(assembled)
+                setExistingPfpState(assembled)
+                return
             }
-            setIsUpdatingTraitsModalOpen(false)
-            trpcUtils.member.nftMetadata.invalidate()
-        },
-        onError: (error) => {
-            toast.error(error.message)
-        },
-    })
-
-    // set initial pfpState
-    useEffect(() => {
-        if (pfpState.length) return // skip once set
-        else if (existingNftMetadata?.traits && assetData) {
-            setPfpState(existingNftMetadata.traits)
-            setPreviewPfpState(existingNftMetadata.traits)
-        } else if (assetData && usedCombos) {
-            let defaultPfpState: AssembledNftTraits | undefined = undefined
-
-            let safety = 0
-            while (!isComboAllowed(usedCombos, defaultPfpState)) {
-                // create a new combo for defaultPfPState if taken
-                defaultPfpState = traitsToAssembledNftTraits(
-                    assetData
-                        .map((traitCategory) => {
-                            const earnedTraits = traitCategory.traits.filter((t) => t.earned)
-                            if (!earnedTraits.length) return null
-                            const i = Math.floor(Math.random() * earnedTraits.length)
-                            return earnedTraits[i] as TraitWithEarnedBool
-                        })
-                        .filter((t) => !!t) as TraitWithEarnedBool[],
-                )
-
-                safety++
-                if (safety > 144) throw new Error('Could not find an allowed combo. Call Brenner')
-            }
-            if (!defaultPfpState) throw new Error('defaultPfpState is undefined. Call Brenner')
-            setPfpState(defaultPfpState)
-            setPreviewPfpState(defaultPfpState)
         }
-    }, [assetData, existingNftMetadata, pfpState.length, usedCombos])
 
-    // Signing transaction (pre-mint & for updating pfp)
-    const { isLoading: userIsSigning, signMessage } = useSignMessage({
-        onSuccess(data) {
-            const sendablePfpState =
-                allowedAction == AllowedAction.create ? pfpState : pfpState.filter((trait) => trait.isModifiable)
+        // Default: pick first trait from each category
+        const defaultTraits: TraitWithEarnedBool[] = demoAssetData
+            .map((tc) => tc.traits[0])
+            .filter((t): t is TraitWithEarnedBool => !!t)
 
-            setIsUpdatingTraitsModalOpen(true)
+        if (defaultTraits.length > 0) {
+            const assembled = traitsToAssembledNftTraits(defaultTraits)
+            setPfpState(assembled)
+            setPreviewPfpState(assembled)
+        }
+    }, [traitCategories, avatarState, pfpState.length])
 
-            createOrUpdateNftMetadata.mutate({
-                projectSlug,
-                requestedTraits: pfpStateToRequestedTraits(sendablePfpState),
-                chainNetwork: network,
-                signature: data,
-            })
-        },
-        onError(error) {
-            console.error(error)
-            toast.error('Error signing message.')
-        },
-    })
-
-    // TODO maybe un-hardcode homestead?
-    const contractAddress = network === 'homestead' ? project?.contractAddress : project?.testContractAddress
-    const placeholderHex = '0x00' as `0x${string}`
-
-    // Minting functions
-
-    const [preventingMintError, setPreventingMintError] = useState<string | null>(null)
-    const { config } = usePrepareContractWrite({
-        address: contractAddress as `0x${string}`,
-        abi: llamaPfpABI,
-        functionName: 'mintWithSignature',
-        args: [
-            address as `0x${string}`,
-            signatureForMint?.v || 0,
-            signatureForMint?.r || placeholderHex,
-            signatureForMint?.s || placeholderHex,
-        ],
-        enabled: !!contractAddress && !!signatureForMint,
-        onSuccess: () => {
-            setPreventingMintError(null)
-        },
-        onError: (error: any) => {
-            const message = (error.error?.message || error.message).toString() as string
-            toast.error(message)
-            setPreventingMintError(error.error.message)
-        },
-    })
-
-    const { data: txResponse, write: mint } = useContractWrite({
-        ...config,
-        onSuccess: (txResult) => {
-            console.log('txResult:', txResult)
-            setTxHash(txResult.hash)
-        },
-    })
-
-    // note that mintStatus is the HTTP request, not the successful transaction on Ethereum
-    // To see whether the txn was reverted, we need to check postMintData.status === 0
-    const { status: mintStatus } = useWaitForTransaction({
-        hash: txResponse?.hash,
-        onSuccess(txReceipt) {
-            if (txReceipt.status === 0) {
-                toast.error('Transaction reverted. Please try again.')
-            } else {
-                const { tokenId } = getDecodedTransferEvent(txReceipt.logs, llamaPfpABI)
-                console.log('tokenId:', tokenId)
-                addTokenId.mutate({
-                    tokenId,
-                    projectSlug,
-                    network: network,
-                })
-            }
-        },
-        onError(error) {
-            console.log('error:', error)
-            toast.error(`Something went wrong. Please try again.`)
-        },
-    })
-
-    const addTokenId = trpc.nftMetadata.addTokenId.useMutation({
-        onSuccess: () => {
-            trpcUtils.member.nftMetadata.invalidate()
-            setNftState(NftState.hasDataAndNft)
-            toast.success(`Your ${project?.name} was minted successfully!`)
-        },
-    })
+    // Convert trait categories to the format expected by TraitSelector
+    const assetData = traitCategories?.map((tc) => ({
+        ...tc,
+        traits: tc.traits.map((t) => ({
+            ...t,
+            earned: true, // In demo mode, all traits are available
+            category: tc.name,
+            zIndex: tc.zIndex,
+            isModifiable: tc.isModifiable,
+        })),
+    }))
 
     const updatePfpState = (newTrait: TraitWithEarnedBool): void => {
         if (!newTrait.category) {
             setPfpState([])
+            return
         }
         const oldStateMinusNewTrait = pfpState.filter((t) => t.category !== newTrait.category)
-        const updatedState = [...oldStateMinusNewTrait, newTrait]
-
-        const statesAreSame = areTraitArraysEqual(updatedState, existingNftMetadata?.traits)
-
-        const stateToActionMap = {
-            [NftState.noDataNoNft]: AllowedAction.create,
-            [NftState.hasDataNoNft]: statesAreSame ? AllowedAction.mint : AllowedAction.update,
-            [NftState.hasDataAndNft]: AllowedAction.update,
-        }
-        setAllowedAction(stateToActionMap[nftState])
-
-        setPfpState(traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait]))
+        const updatedState = traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait])
+        setPfpState(updatedState)
     }
 
     const updatePreviewPfpState = (newTrait: TraitWithEarnedBool): void => {
         if (!newTrait.category) {
             setPreviewPfpState([])
+            return
         }
         const oldStateMinusNewTrait = pfpState.filter((t) => t.category !== newTrait.category)
         setPreviewPfpState(traitsToAssembledNftTraits([...oldStateMinusNewTrait, newTrait]))
     }
 
-    if (!assetData || !chain) return <FullPageLoading />
+    const handleSave = () => {
+        setSaveStatus(Status.loading)
 
-    const openseaUrl = getOpenseaUrl(chain, contractAddress, existingNftMetadata?.tokenId)
+        // Create selected traits record
+        const selectedTraitsRecord: Record<string, string> = {}
+        for (const trait of pfpState) {
+            selectedTraitsRecord[trait.category] = trait.name
+        }
 
-    const sheFiTitle = allowedAction === AllowedAction.update ? `Update your ${project?.name}` : 'Build-a-Nova'
-    const genericTitle =
-        allowedAction === AllowedAction.update ? `Update your ${project?.name}` : `Create your ${project?.name}`
-    const title = project?.slug === 'robo-nova' ? sheFiTitle : genericTitle
+        // For demo mode, we just save the trait selections
+        // Image composition via mergeImages often fails due to CORS with S3 images
+        // The preview already shows the composed avatar visually
 
-    const sheFiSubtext = `Unlock traits as you participate and contribute to SheFi`
-    const genericSubtext = `Earn more traits over time`
-    const subtext = project?.slug === 'robo-nova' ? sheFiSubtext : genericSubtext
+        // Save to localStorage via context
+        saveAvatarState({
+            projectSlug: DEMO_PROJECT_SLUG,
+            selectedTraits: selectedTraitsRecord,
+            composedImageUrl: null, // We'll rely on the live preview instead
+            lastUpdatedAt: new Date().toISOString(),
+        })
+
+        // Update existing state
+        setExistingPfpState(pfpState)
+        setSaveStatus(Status.success)
+        toast.success(`Your ${project?.name || 'avatar'} has been saved!`)
+    }
+
+    if (!ready || !assetData || status !== 'success') return <FullPageLoading />
+
+    // Check if user has saved by looking at selectedTraits instead of composedImageUrl
+    const hasSaved = !!(avatarState?.selectedTraits && Object.keys(avatarState.selectedTraits).length > 0)
+    const title = hasSaved ? `Update your ${project?.name}` : `Create your ${project?.name}`
+    const subtext = `Select traits to customize your avatar`
 
     const Header = () => {
         return (
@@ -320,65 +177,18 @@ const EditAvatar = () => {
         )
     }
 
-    const actionCopy = allowedAction === AllowedAction.update ? 'Updating' : 'Creating'
-
     return (
         <>
-            <Modal
-                open={isChainModalOpen}
-                setOpen={setIsChainModalOpen}
-                title={`Please switch to ${correctChain?.network}`}
-                initialFocusRef={switchChainRef}
-                hideButtons
-            >
-                <div className="flex flex-col items-center justify-center">
-                    <button
-                        className="btn-primary"
-                        disabled={!switchNetwork}
-                        onClick={() => switchNetwork?.(correctChain.id)}
-                        ref={switchChainRef}
-                    >
-                        {correctChain.name}
-                        {isLoading && pendingChainId === correctChain.id && ` (switching)`}
-                    </button>
-                </div>
-            </Modal>
-            <Modal
-                open={isUpdatingTraitsModalOpen}
-                setOpen={setIsUpdatingTraitsModalOpen}
-                hideButtons
-                uncloseable
-                className="flex h-64 max-w-screen-md flex-col justify-center"
-            >
-                <div className="flex h-auto flex-col justify-center gap-6 text-left">
-                    <div className="text-center text-2xl">{`${actionCopy} your ${project?.name}`}</div>
-                    <div className="text-lg">
-                        {`${actionCopy} your ${project?.name} takes time. ${
-                            !(allowedAction === AllowedAction.update)
-                                ? `Once it's done being assembled, you will be able to mint it! `
-                                : ''
-                        }`}
-                    </div>
-                    <Loading />
-                </div>
-            </Modal>
             <Shell Header={<Header />} pageTitle={project?.name || 'loading...'} leftWidth="half">
                 <motion.div layout transition={springAnimation} className="sticky top-0">
-                    <PfpPreview
+                    <DemoPfpPreview
                         pfpState={pfpState}
                         previewPfpState={previewPfpState}
-                        txHash={txHash}
-                        openSeaUrl={openseaUrl}
                         existingPfpState={existingPfpState}
-                        signMessage={signMessage}
-                        userIsSigning={userIsSigning}
-                        createNftMetadataStatus={createOrUpdateNftMetadata.status as Status}
-                        allowedAction={allowedAction}
-                        mintFunction={mint}
-                        mintStatus={mintStatus as Status}
+                        onSave={handleSave}
+                        saveStatus={saveStatus}
                         projectName={project?.name || ''}
-                        contractAddress={contractAddress}
-                        preventingMintError={preventingMintError}
+                        hasSaved={hasSaved}
                     />
                 </motion.div>
                 <motion.div transition={springAnimation}>
@@ -387,8 +197,7 @@ const EditAvatar = () => {
                             {assetData
                                 ?.sort((a, b) => a.zIndex - b.zIndex)
                                 .map((tc) => {
-                                    // only show modifiable traits once they've chosen their permanent traits (TODO might disappear between sign & mint)
-                                    return !!existingPfpState && !tc.isModifiable ? null : (
+                                    return (
                                         <TraitSelector
                                             key={tc.name}
                                             traitCategory={tc}

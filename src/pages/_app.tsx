@@ -1,9 +1,8 @@
-import { PrivyProvider, type User as PrivyUser } from '@privy-io/react-auth'
-import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
+import { DemoProvider } from 'contexts/DemoContext'
 import Footer from 'components/Footer'
 import Navbar from 'components/Navbar'
 import { Toaster } from 'components/Toast'
-import { env } from 'env/client.mjs'
+import DemoBanner from 'components/DemoBanner'
 import { type AppType } from 'next/app'
 import shefiLogoSvg from 'public/assets/SheFi Logo Blue.svg'
 import { useEffect, useState } from 'react'
@@ -11,15 +10,6 @@ import 'styles/globals.css'
 import { trpc } from 'utils/trpc'
 import type { SubdomainConfig } from 'utils/types'
 import { SubdomainOrgs } from 'utils/types'
-import { configureChains } from 'wagmi'
-import { mainnet, optimism, polygon, sepolia } from 'wagmi/chains'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
-import { publicProvider } from 'wagmi/providers/public'
-
-export const configureChainsConfig = configureChains(
-    [mainnet, sepolia, polygon, optimism],
-    [alchemyProvider({ apiKey: env.NEXT_PUBLIC_ALCHEMY_PROJECT_ID }), publicProvider()],
-)
 
 export const defaultConfig: SubdomainConfig = {
     name: SubdomainOrgs.default,
@@ -51,16 +41,8 @@ const getSubdomainConfig = (host: string | null): SubdomainConfig => {
 }
 
 const MyApp: AppType = ({ Component, pageProps }) => {
-    const createOrUpdateUser = trpc.member.createOrUpdate.useMutation()
-
     const host = getHost()
     const subdomainConfig = getSubdomainConfig(host)
-
-    const onLoginSuccess = async (privyUser: PrivyUser) => {
-        await createOrUpdateUser.mutateAsync({
-            privyUser,
-        })
-    }
 
     const [mounted, setMounted] = useState(false)
 
@@ -75,18 +57,15 @@ const MyApp: AppType = ({ Component, pageProps }) => {
     if (!mounted) return null
 
     return (
-        <PrivyProvider appId={env.NEXT_PUBLIC_PRIVY_APP_ID} onSuccess={onLoginSuccess}>
-            {/* <WagmiConfig client={wagmiClient}> */}
-            <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
-                <div>
-                    <Toaster />
-                    <Navbar subdomainConfig={subdomainConfig} />
-                    <Component {...pageProps} subdomainConfig={subdomainConfig} />
-                    <Footer />
-                </div>
-            </PrivyWagmiConnector>
-            {/* </WagmiConfig> */}
-        </PrivyProvider>
+        <DemoProvider>
+            <div>
+                <Toaster />
+                <DemoBanner />
+                <Navbar subdomainConfig={subdomainConfig} />
+                <Component {...pageProps} subdomainConfig={subdomainConfig} />
+                <Footer />
+            </div>
+        </DemoProvider>
     )
 }
 

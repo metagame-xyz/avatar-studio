@@ -1,8 +1,6 @@
-import { getAccessToken } from '@privy-io/react-auth'
 import { httpBatchLink, loggerLink, TRPCClientError } from '@trpc/client'
 import { createTRPCNext } from '@trpc/next'
 import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server'
-import { getNetwork } from '@wagmi/core'
 import Router from 'next/router'
 import { type AppRouter } from 'server/trpc/router/_app'
 import superjson from 'superjson'
@@ -27,20 +25,6 @@ const getSlugs = (): Record<string, string | undefined> => {
     return { projectslug, orgslug }
 }
 
-//TODO maybe don't do this anymore bc it fucks up useQuery's caching (use input instead of ctx)
-const getChain = (): string => {
-    if (typeof window === 'undefined') return 'undefined'
-    const { chain } = getNetwork()
-    // console.log('chain', chain)
-    return chain?.network ?? 'undefined'
-}
-
-// const getNetwork = async () => {
-//     if (typeof window === 'undefined') return ''
-//     const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-//     return chainId // returns as 0x5
-// }
-
 export class AirtableAuthError extends Error {
     constructor(message: string) {
         super(message)
@@ -60,16 +44,11 @@ export const trpc = createTRPCNext<AppRouter>({
                 }),
                 httpBatchLink({
                     url: `${getBaseUrl()}/api/trpc`,
-                    async headers() {
-                        const accessToken = await getAccessToken()
+                    headers() {
                         const slugs = getSlugs()
-                        const chain = getChain()
-                        // console.log('chain2: ', chain)
-                        // const network = await getNetwork()
+                        // Demo mode: no auth token or chain needed
                         return {
-                            Authorization: `Bearer ${accessToken}`,
                             ...slugs,
-                            chain,
                         }
                     },
                 }),

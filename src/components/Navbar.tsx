@@ -1,24 +1,16 @@
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { usePrivy } from '@privy-io/react-auth'
-import makeBlockie from 'ethereum-blockies-base64'
+import { useDemoContext } from 'contexts/DemoContext'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { defaultConfig } from 'pages/_app'
 import { Fragment, useEffect, useState } from 'react'
-import { truncateAddress } from 'utils'
-import { networkStrings } from 'utils/constants'
 import type { SubdomainConfig } from 'utils/types'
-import { useAccount, useEnsAvatar, useEnsName, useSwitchNetwork } from 'wagmi'
+import { DEMO_PROJECT_SLUG } from 'utils/demo/constants'
 
 const navigation = [
-    // { name: 'Dashboard', href: '#', current: true },
-    // { name: 'Team', href: '#', current: false },
-    // { name: 'Projects', href: '#', current: false },
-    // { name: 'Calendar', href: '#', current: false },
     { name: 'Help', href: 'https://t.me/brennerspear', current: false, external: true },
-    // { name: 'About', href: '/about', current: false },
 ]
 
 function classNames(...classes: string[]) {
@@ -26,22 +18,15 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainConfig?: SubdomainConfig }) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { switchNetwork } = useSwitchNetwork()
-    const { address } = useAccount()
     const router = useRouter()
-    const { logout: privyLogout } = usePrivy()
-    // const address = user?.wallet?.address as `0x${string}`
-    const { data: ensName } = useEnsName({ address, enabled: !!address, chainId: 1 })
-    const { data: ensAvatarUrl } = useEnsAvatar({ address, enabled: !!address, chainId: 1 })
-    const avatarUrl = ensAvatarUrl || makeBlockie(address || '0x0')
+    const { user, isLoggedIn, logout: demoLogout, clearAllData } = useDemoContext()
 
-    const readableName = ensName || truncateAddress(address)
+    const displayName = user?.displayName || 'Demo User'
 
     const [mounted, setMounted] = useState(false)
 
-    const logout = async () => {
-        await privyLogout()
+    const logout = () => {
+        demoLogout()
         router.push('/')
     }
 
@@ -76,7 +61,7 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
                             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                                 <div className="flex flex-shrink-0 items-center">
                                     <div className="block h-8 w-auto">
-                                        <Link href={'/home'}>
+                                        <Link href={isLoggedIn ? `/project/${DEMO_PROJECT_SLUG}` : '/'}>
                                             <div className={`relative block ${subdomainConfig.logoSize}`}>
                                                 <Image
                                                     src={subdomainConfig.logoSrc}
@@ -135,19 +120,14 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
                                     />
                                 </button> */}
                                 {/* Profile dropdown */}
-                                {mounted && address && avatarUrl ? (
+                                {mounted && isLoggedIn ? (
                                     <Menu as="div" className="relative">
                                         <div>
                                             <Menu.Button className="flex rounded-full bg-black text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-black">
                                                 <span className="sr-only">Open user menu</span>
-                                                <Image
-                                                    className="h-8 w-8 rounded-full"
-                                                    src={avatarUrl}
-                                                    alt=""
-                                                    unoptimized
-                                                    height={32}
-                                                    width={32}
-                                                />
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600 text-white">
+                                                    {displayName.charAt(0).toUpperCase()}
+                                                </div>
                                             </Menu.Button>
                                         </div>
 
@@ -163,46 +143,42 @@ export default function Navbar({ subdomainConfig = defaultConfig }: { subdomainC
                                             <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                                 <Menu.Item>
                                                     {({ active }) => (
-                                                        <a
-                                                            href={`https://${networkStrings.etherscan}etherscan.io/address/${address}`}
-                                                            target="_blank"
-                                                            rel="noreferrer"
+                                                        <span
                                                             className={classNames(
                                                                 active ? 'bg-gray-100' : '',
                                                                 'block px-4 py-2 text-sm text-gray-700',
                                                             )}
                                                         >
-                                                            {readableName}
-                                                        </a>
+                                                            {displayName}
+                                                        </span>
                                                     )}
                                                 </Menu.Item>
-                                                {/* <Menu.Item>
-                                                    {({ active }) => (
-                                                        <a
-                                                            href="#"
-                                                            className={classNames(
-                                                                active ? 'bg-gray-100' : '',
-                                                                'block px-4 py-2 text-sm text-gray-700',
-                                                            )}
-                                                        >
-                                                            Settings
-                                                        </a>
-                                                    )}
-                                                </Menu.Item> */}
                                                 <Menu.Item>
                                                     {({ active }) => (
-                                                        <a
-                                                            href="#"
+                                                        <button
+                                                            type="button"
                                                             className={classNames(
                                                                 active ? 'bg-gray-100' : '',
-                                                                'block px-4 py-2 text-sm text-gray-700',
+                                                                'block w-full px-4 py-2 text-left text-sm text-gray-700',
                                                             )}
-                                                            onClick={async () => {
-                                                                await logout()
-                                                            }}
+                                                            onClick={clearAllData}
+                                                        >
+                                                            Reset Demo Data
+                                                        </button>
+                                                    )}
+                                                </Menu.Item>
+                                                <Menu.Item>
+                                                    {({ active }) => (
+                                                        <button
+                                                            type="button"
+                                                            className={classNames(
+                                                                active ? 'bg-gray-100' : '',
+                                                                'block w-full px-4 py-2 text-left text-sm text-gray-700',
+                                                            )}
+                                                            onClick={logout}
                                                         >
                                                             Log out
-                                                        </a>
+                                                        </button>
                                                     )}
                                                 </Menu.Item>
                                             </Menu.Items>
